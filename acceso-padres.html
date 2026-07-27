@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal de Padres | Learning Project Institute</title>
+  <meta name="robots" content="noindex" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1B3D7A" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="LPI Padres" />
+  <link rel="apple-touch-icon" href="fotos/oso-icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #1B3D7A;
+      --primary-dark: #112960;
+      --gold: #E8A020;
+      --white: #ffffff;
+      --off-white: #F8F9FC;
+      --gray: #8899AA;
+      --dark: #1A2035;
+      --text: #3A4560;
+      --transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:'Poppins',sans-serif; color:var(--text); background:linear-gradient(160deg,#f4f7fc,#e9f0f9); min-height:100vh; }
+
+    .portal-topbar { background:#fff; padding:16px 5%; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 20px rgba(27,61,122,0.08); }
+    .portal-topbar .brand { display:flex; align-items:center; gap:12px; }
+    .portal-topbar img { height:38px; }
+    .portal-topbar .brand-name { font-family:'Playfair Display',serif; font-weight:700; color:var(--primary-dark); font-size:1.05rem; }
+    .portal-topbar a.back { color:var(--gray); text-decoration:none; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px; }
+    .portal-topbar a.back:hover { color:var(--primary); }
+
+    .calif-section { padding:60px 5% 90px; }
+    .levels-header { text-align:center; margin-bottom:40px; max-width:640px; margin-left:auto; margin-right:auto; }
+    .section-tag { display:inline-block; background:rgba(27,61,122,0.08); color:var(--primary); font-size:0.78rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 16px; border-radius:50px; margin-bottom:14px; border:1px solid rgba(27,61,122,0.15); }
+    .section-title { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3.5vw,2.6rem); color:var(--primary-dark); font-weight:700; line-height:1.2; margin-bottom:14px; }
+    .section-title span { color:var(--gold); }
+    .section-text { color:var(--text); font-size:1.02rem; line-height:1.8; }
+
+    .calif-card { max-width:560px; margin:0 auto; background:#fff; border-radius:20px; box-shadow:0 16px 44px rgba(27,61,122,0.12); padding:40px; text-align:center; }
+    .calif-card .lock-ic { width:64px; height:64px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.55rem; margin:0 auto 18px; }
+    .calif-card h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--primary-dark); margin:0 0 8px; }
+    .calif-card .desc { font-size:0.9rem; color:var(--gray); margin-bottom:24px; line-height:1.6; }
+    .calif-field { text-align:left; margin-bottom:16px; }
+    .calif-field label { display:block; font-size:0.8rem; font-weight:600; color:var(--dark); margin-bottom:6px; }
+    .calif-field input { width:100%; padding:13px 16px; border:1.5px solid rgba(27,61,122,0.15); border-radius:10px; font-family:'Poppins',sans-serif; font-size:0.95rem; outline:none; transition:var(--transition); }
+    .calif-field input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,160,32,0.15); }
+    .calif-btn { width:100%; padding:15px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-family:'Poppins',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; transition:var(--transition); display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
+    .calif-btn:hover { background:var(--primary-dark); transform:translateY(-2px); }
+    .calif-note { font-size:0.76rem; color:var(--gray); margin-top:14px; }
+    .calif-msg { margin-top:16px; font-size:0.88rem; padding:12px 14px; border-radius:10px; display:none; line-height:1.5; }
+    .calif-msg.err { background:#FDECEC; color:#C0392B; display:block; }
+    .calif-msg.info { background:#EAF1FB; color:var(--primary); display:block; }
+    .calif-result { max-width:760px; margin:0 auto; background:#fff; border-radius:20px; box-shadow:0 16px 44px rgba(27,61,122,0.12); padding:34px; display:none; }
+    .calif-result.show { display:block; }
+    .calif-student { display:flex; align-items:center; gap:14px; border-bottom:1.5px solid #eef1f6; padding-bottom:18px; margin-bottom:18px; }
+    .calif-student .av { width:50px; height:50px; border-radius:12px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.2rem; flex-shrink:0; }
+    .calif-student h4 { margin:0; font-size:1.15rem; color:var(--primary-dark); }
+    .calif-student span { font-size:0.82rem; color:var(--gray); }
+    .calif-table { width:100%; border-collapse:collapse; }
+    .calif-table th { text-align:left; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--gray); border-bottom:1.5px solid #eef1f6; padding:8px 10px; }
+    .calif-table td { padding:11px 10px; border-bottom:1px solid #eef1f6; font-size:0.92rem; color:var(--dark); }
+    .calif-grade { font-weight:700; }
+    .calif-grade.ok { color:#2ECC71; } .calif-grade.mid { color:#E8A020; } .calif-grade.low { color:#E84040; }
+    .calif-back { margin-top:20px; background:none; border:none; color:var(--primary); font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; font-size:0.9rem; }
+    .calif-back:hover { text-decoration:underline; }
+    .portal-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+    .portal-tab { background:#f4f7fc; border:1.5px solid transparent; border-radius:10px; padding:10px 16px; font-family:'Poppins',sans-serif; font-size:0.85rem; font-weight:600; color:var(--gray); cursor:pointer; transition:var(--transition); display:flex; align-items:center; gap:7px; }
+    .portal-tab:hover { background:#eaf1fb; color:var(--primary); }
+    .portal-tab.active { background:var(--primary); color:#fff; }
+    .portal-loading { text-align:center; padding:30px; color:var(--gray); }
+    .portal-empty { text-align:center; color:var(--gray); padding:24px; }
+    .portal-empty i { font-size:1.6rem; margin-bottom:8px; display:block; }
+    .portal-attend { text-align:center; margin-bottom:18px; }
+    .portal-attend .pct { font-size:2rem; font-weight:800; color:var(--primary); }
+    .portal-attend .lbl { font-size:0.82rem; color:var(--gray); }
+    .portal-aviso { border-bottom:1px solid #eef1f6; padding:14px 0; }
+    .portal-aviso:last-child { border-bottom:none; }
+    .portal-aviso .head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .portal-aviso h4 { margin:0; font-size:0.98rem; color:var(--primary-dark); }
+    .portal-aviso .date { font-size:0.74rem; color:var(--gray); white-space:nowrap; }
+    .portal-aviso p { margin:6px 0 0; font-size:0.86rem; color:var(--text); }
+    .portal-fact { border:1.5px solid #eef1f6; border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+    .portal-fact .head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+    .portal-fact h4 { margin:0; font-size:0.96rem; color:var(--primary-dark); }
+    .portal-fact .sub { font-size:0.78rem; color:var(--gray); margin-top:3px; }
+    .portal-fact .monto { font-weight:700; color:var(--primary); font-size:1.05rem; }
+    .portal-fact-badge { font-size:0.72rem; font-weight:700; padding:4px 11px; border-radius:50px; white-space:nowrap; }
+    .portal-fact-badge.pend { background:#FDF3E3; color:#C47D10; }
+    .portal-fact-badge.timb { background:#E9F9EF; color:#1E9E52; }
+    .portal-fact-actions { margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    .portal-fact-btn { background:var(--primary); color:#fff; border:none; border-radius:8px; padding:9px 16px; font-family:'Poppins',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; text-decoration:none; }
+    .portal-fact-btn:hover { background:var(--primary-dark); }
+    .portal-fact-btn.dl { background:#16A085; }
+    .portal-fact-form { margin-top:14px; border-top:1px dashed #dbe3ef; padding-top:14px; display:none; }
+    .portal-fact-form.show { display:block; }
+    .portal-fact-form .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+    .portal-fact-form label { display:block; font-size:0.74rem; font-weight:600; color:var(--gray); margin-bottom:4px; }
+    .portal-fact-form input, .portal-fact-form select { width:100%; padding:9px 11px; border:1.5px solid rgba(27,61,122,0.15); border-radius:8px; font-family:'Poppins',sans-serif; font-size:0.85rem; outline:none; }
+  </style>
+</head>
+<body>
+
+  <div class="portal-topbar">
+    <div class="brand">
+      <img src="https://static.wixstatic.com/media/2f20e7_809ae5cf3f514c2ea32cae018caeb600~mv2.png/v1/crop/x_0,y_296,w_1024,h_587/fill/w_240,h_138,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/2f20e7_809ae5cf3f514c2ea32cae018caeb600~mv2.png" alt="Learning Project Institute" onerror="this.style.display='none';" />
+      <span class="brand-name">Learning Project Institute</span>
+    </div>
+    <a class="back" href="index.html"><i class="fas fa-arrow-left"></i> Volver al sitio</a>
+  </div>
+
+  <section id="calificaciones" class="calif-section">
+    <div class="levels-header">
+      <div class="section-tag">Acceso Padres</div>
+      <h2 class="section-title">Portal de <span>Padres de Familia</span></h2>
+      <p class="section-text">Ingresa con el usuario y contraseña que la escuela te entregó al inscribir a tu hijo/a.</p>
+    </div>
+    <div class="calif-card" id="calif-card">
+      <div class="lock-ic"><i class="fas fa-lock"></i></div>
+      <h3>Ingresa a tu cuenta</h3>
+      <p class="desc">Cada alumno/a inscrito tiene su propio usuario y contraseña. Si tienes más de un hijo/a en la escuela, cada uno cuenta con un acceso distinto.</p>
+      <div id="hijos-chips" style="display:none;margin-bottom:14px;"></div>
+      <div class="calif-field"><label>Usuario</label><input id="padre-usuario" type="text" placeholder="Ej. juan.perez45" autocomplete="username" /></div>
+      <div class="calif-field"><label>Contraseña</label><input id="padre-pass" type="password" placeholder="Tu contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginPadre()" /></div>
+      <button class="calif-btn" onclick="loginPadre()"><i class="fas fa-sign-in-alt"></i> Ingresar</button>
+      <div class="calif-msg" id="calif-msg"></div>
+      <p class="calif-note"><i class="fas fa-shield-alt"></i> Solo verás la información del alumno/a asociado a tu cuenta.</p>
+    </div>
+    <div class="calif-result" id="calif-result">
+      <div class="calif-student"><div class="av" id="calif-av">A</div><div><h4 id="calif-nombre">Alumno</h4><span id="calif-meta">Nivel · Grado</span></div></div>
+      <div class="portal-tabs">
+        <button class="portal-tab active" data-tab="califs" onclick="portalTab('califs',this)"><i class="fas fa-star-half-alt"></i> Calificaciones</button>
+        <button class="portal-tab" data-tab="asist" onclick="portalTab('asist',this)"><i class="fas fa-clipboard-check"></i> Asistencia</button>
+        <button class="portal-tab" data-tab="horario" onclick="portalTab('horario',this)"><i class="fas fa-calendar-alt"></i> Horario</button>
+        <button class="portal-tab" data-tab="avisos" onclick="portalTab('avisos',this)"><i class="fas fa-bullhorn"></i> Avisos</button>
+        <button class="portal-tab" data-tab="calendario" onclick="portalTab('calendario',this)"><i class="fas fa-calendar-days"></i> Calendario</button>
+        <button class="portal-tab" data-tab="factura" onclick="portalTab('factura',this)"><i class="fas fa-file-invoice"></i> Factura</button>
+      </div>
+      <div id="portal-tabbody"></div>
+      <button class="calif-back" onclick="cerrarCalificaciones()"><i class="fas fa-arrow-left"></i> Cerrar sesión</button>
+    </div>
+  </section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Cliente Supabase (publico) para el portal de padres
+  var _sbPub = (window.supabase ? window.supabase.createClient('https://bvmeunsyhrurigtgpedz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2bWV1bnN5aHJ1cmlndGdwZWR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTM4OTIsImV4cCI6MjA5NzkyOTg5Mn0.dw9m8xkDVgOFDAZ-PNVedOM90ylQ56eBC7PgVkptiH0') : null);
+
+  // ── Portal de Padres (login individual por alumno) ──
+  // Nota de seguridad: todas las lecturas del portal pasan por funciones de Supabase (RPC)
+  // que revalidan usuario+contraseña en cada consulta y solo devuelven lo que el portal necesita.
+  // Esta página ya no lee las tablas directo (alumnos, calificaciones, etc. quedan fuera de alcance de esta app).
+  var _padreAlumno = null;
+  var _padreUsuario = null;
+  var _padrePass = null;
+  var _portalDestino = new URLSearchParams(location.search).get('tab');
+
+  // ── Selector de hijos (multi-hijo por dispositivo) ──
+  // Guarda solo (usuario, nombre) en este dispositivo para acceso rápido; la contraseña
+  // NUNCA se guarda y siempre debe volver a escribirse por seguridad.
+  var HIJOS_KEY = 'lpi_hijos_dispositivo';
+  function getHijosGuardados(){
+    try{ return JSON.parse(localStorage.getItem(HIJOS_KEY) || '[]'); }catch(e){ return []; }
+  }
+  function guardarHijoDispositivo(usuario, nombre){
+    try{
+      var arr = getHijosGuardados().filter(function(h){ return h.usuario !== usuario; });
+      arr.unshift({usuario: usuario, nombre: nombre});
+      arr = arr.slice(0, 5);
+      localStorage.setItem(HIJOS_KEY, JSON.stringify(arr));
+    }catch(e){}
+  }
+  function quitarHijoDispositivo(usuario, ev){
+    if(ev) ev.stopPropagation();
+    try{
+      var arr = getHijosGuardados().filter(function(h){ return h.usuario !== usuario; });
+      localStorage.setItem(HIJOS_KEY, JSON.stringify(arr));
+      renderHijosChips();
+    }catch(e){}
+  }
+  function seleccionarHijo(usuario){
+    var u=document.getElementById('padre-usuario'), p=document.getElementById('padre-pass');
+    if(u) u.value = usuario;
+    if(p){ p.value=''; p.focus(); }
+  }
+  function renderHijosChips(){
+    var cont = document.getElementById('hijos-chips');
+    if(!cont) return;
+    var arr = getHijosGuardados();
+    if(!arr.length){ cont.style.display='none'; cont.innerHTML=''; return; }
+    cont.style.display='block';
+    cont.innerHTML = '<label style="font-size:.78rem;font-weight:700;color:var(--gray);display:block;margin-bottom:6px;">Hijos guardados en este dispositivo</label>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+      arr.map(function(h){
+        var u = String(h.usuario||'').replace(/'/g,'');
+        return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--off-white);border:1px solid #e2e5ea;border-radius:20px;padding:6px 12px;font-size:.8rem;cursor:pointer;" onclick="seleccionarHijo(\''+u+'\')">'+
+          '<i class="fas fa-user-graduate" style="color:var(--primary)"></i>'+(h.nombre||h.usuario)+
+          '<i class="fas fa-times" style="opacity:.5;margin-left:2px;" onclick="quitarHijoDispositivo(\''+u+'\',event)"></i></span>';
+      }).join('') + '</div>';
+  }
+  document.addEventListener('DOMContentLoaded', renderHijosChips);
+
+  async function loginPadre(){
+    var usuario=(document.getElementById('padre-usuario').value||'').trim();
+    var pass=(document.getElementById('padre-pass').value||'').trim();
+    var msg=document.getElementById('calif-msg'); msg.className='calif-msg';
+    if(!usuario || !pass){ msg.className='calif-msg err'; msg.textContent='Ingresa tu usuario y contraseña.'; return; }
+    if(!_sbPub){ msg.className='calif-msg err'; msg.textContent='No se pudo conectar con el servidor. Intenta más tarde.'; return; }
+    msg.className='calif-msg info'; msg.textContent='Verificando acceso...';
+    try{
+      var q=await _sbPub.rpc('portal_login', {p_usuario: usuario, p_pass: pass});
+      if(q.error) throw q.error;
+      var al=(q.data||[])[0];
+      if(!al){ msg.className='calif-msg err'; msg.textContent='Usuario o contraseña incorrectos. Verifícalos con la escuela.'; return; }
+      guardarHijoDispositivo(usuario, al.nombre);
+      _padreAlumno=al;
+      _padreUsuario=usuario;
+      _padrePass=pass;
+      abrirPortalPadre(al);
+    }catch(e){ console.error('loginPadre:',e); msg.className='calif-msg err'; msg.textContent='Ocurrió un error al ingresar. Intenta de nuevo en un momento.'; }
+  }
+
+  function abrirPortalPadre(al){
+    document.getElementById('calif-card').style.display='none';
+    document.getElementById('calif-msg').className='calif-msg';
+    document.getElementById('calif-nombre').textContent=al.nombre;
+    document.getElementById('calif-meta').textContent=(al.nivel||'')+' · '+(al.grado||'');
+    document.getElementById('calif-av').textContent=(al.nombre||'A').trim().charAt(0).toUpperCase();
+    document.getElementById('calif-result').classList.add('show');
+    portalTab(_portalDestino||'califs');
+    _portalDestino=null;
+  }
+
+  function cerrarCalificaciones(){
+    document.getElementById('calif-result').classList.remove('show');
+    document.getElementById('calif-card').style.display='block';
+    document.getElementById('calif-msg').className='calif-msg';
+    document.getElementById('padre-usuario').value='';
+    document.getElementById('padre-pass').value='';
+    renderHijosChips();
+    _padreAlumno=null;
+    _portalDestino=null;
+    _padreUsuario=null;
+    _padrePass=null;
+  }
+
+  async function portalTab(tab, btn){
+    document.querySelectorAll('.portal-tab').forEach(function(b){ b.classList.remove('active'); });
+    if(btn){ btn.classList.add('active'); } else { var b=document.querySelector('.portal-tab[data-tab="'+tab+'"]'); if(b) b.classList.add('active'); }
+    var body=document.getElementById('portal-tabbody');
+    if(!_padreAlumno) return;
+    body.innerHTML='<div class="portal-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+    try{
+      var html='';
+      if(tab==='califs') html=await renderPortalCalifs(_padreAlumno);
+      else if(tab==='asist') html=await renderPortalAsist(_padreAlumno);
+      else if(tab==='horario') html=await renderPortalHorario(_padreAlumno);
+      else if(tab==='avisos') html=await renderPortalAvisos(_padreAlumno);
+      else if(tab==='calendario') html=await renderPortalCalendario(_padreAlumno);
+      else if(tab==='factura') html=await renderPortalFactura(_padreAlumno);
+      body.innerHTML=html;
+    }catch(e){ console.error('portalTab:',e); body.innerHTML='<div class="portal-empty"><i class="fas fa-exclamation-triangle"></i>Ocurrió un error al cargar la información. Intenta de nuevo.</div>'; }
+  }
+
+  async function renderPortalCalifs(al){
+    var q=await _sbPub.rpc('portal_calificaciones', {p_usuario: _padreUsuario, p_pass: _padrePass});
+    if(q.error) throw q.error;
+    var rows=(q.data||[]);
+    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-star-half-alt"></i>Aún no hay calificaciones publicadas.</div>';
+    var trs=rows.map(function(c){ var v=parseFloat(c.calificacion); var cls=v>=8?'ok':v>=6?'mid':'low'; return '<tr><td>'+c.materia+'</td><td class="calif-grade '+cls+'">'+c.calificacion+'</td><td>'+c.periodo+'</td></tr>'; }).join('');
+    return '<table class="calif-table"><thead><tr><th>Materia</th><th>Calificación</th><th>Periodo</th></tr></thead><tbody>'+trs+'</tbody></table>';
+  }
+
+  async function renderPortalAsist(al){
+    var q=await _sbPub.rpc('portal_asistencia', {p_usuario: _padreUsuario, p_pass: _padrePass});
+    if(q.error) throw q.error;
+    var rows=(q.data||[]);
+    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-clipboard-check"></i>Aún no hay registros de asistencia.</div>';
+    var presentes=rows.filter(function(r){ return r.estado==='A'; }).length;
+    var pct=Math.round(presentes/rows.length*100);
+    var nombres={A:'Asistió',F:'Faltó',T:'Tarde'};
+    var trs=rows.map(function(r){
+      var d=new Date(r.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
+      var cls=r.estado==='A'?'ok':r.estado==='T'?'mid':'low';
+      return '<tr><td>'+d+'</td><td class="calif-grade '+cls+'">'+(nombres[r.estado]||r.estado)+'</td></tr>';
+    }).join('');
+    return '<div class="portal-attend"><div class="pct">'+pct+'%</div><div class="lbl">Asistencia en los últimos '+rows.length+' días registrados</div></div>'+
+      '<table class="calif-table"><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+trs+'</tbody></table>';
+  }
+
+  async function renderPortalHorario(al){
+    var grupo=((al.grado||'')+' '+(al.nivel||'')).trim();
+    var q=await _sbPub.rpc('portal_horario', {p_usuario: _padreUsuario, p_pass: _padrePass});
+    if(q.error) throw q.error;
+    var rows=(q.data||[]);
+    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-calendar-alt"></i>Aún no hay horario publicado para el grupo '+grupo+'.</div>';
+    var franjas=['7:00–8:00','8:00–9:00','9:00–10:00','10:30–11:30','11:30–12:30','12:30–13:30'];
+    var dias=['Lunes','Martes','Miércoles','Jueves','Viernes'];
+    var grid={};
+    rows.forEach(function(r){ grid[r.dia+'|'+r.franja]=r.materia; });
+    var thead='<th>Hora</th>'+dias.map(function(d){ return '<th>'+d+'</th>'; }).join('');
+    var trs=franjas.map(function(f,idx){
+      return '<tr><td style="font-size:.78rem;color:var(--gray)">'+f+'</td>'+dias.map(function(d){ return '<td>'+(grid[d+'|'+idx]||'—')+'</td>'; }).join('')+'</tr>';
+    }).join('');
+    return '<div style="font-size:.8rem;color:var(--gray);margin-bottom:10px">Grupo: <b style="color:var(--primary)">'+grupo+'</b></div><table class="calif-table"><thead><tr>'+thead+'</tr></thead><tbody>'+trs+'</tbody></table>';
+  }
+
+  async function renderPortalAvisos(al){
+    var q=await _sbPub.rpc('portal_avisos', {p_usuario: _padreUsuario, p_pass: _padrePass});
+    if(q.error) throw q.error;
+    var rows=(q.data||[]);
+    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-bullhorn"></i>No hay avisos publicados por el momento.</div>';
+    return rows.map(function(c){
+      var d=c.fecha?new Date(c.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
+      return '<div class="portal-aviso"><div class="head"><h4>'+c.titulo+'</h4><span class="date">'+d+'</span></div><p>'+(c.preview||'')+'</p></div>';
+    }).join('');
+  }
+
+  async function renderPortalCalendario(al){
+    var q=await _sbPub.rpc('portal_calendario', {p_usuario: _padreUsuario, p_pass: _padrePass});
+    if(q.error) throw q.error;
+    var rows=(q.data||[]);
+    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-calendar-days"></i>No hay eventos publicados en el calendario por el momento.</div>';
+    var iconos={'Vacaciones':'fa-umbrella-beach','Examen':'fa-file-signature','Junta':'fa-users','Día festivo':'fa-flag','Actividad':'fa-star','Evento':'fa-calendar-day'};
+    return rows.map(function(e){
+      var d1=e.fecha_inicio?new Date(e.fecha_inicio+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
+      var d2=e.fecha_fin?new Date(e.fecha_fin+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
+      var rango=d2&&d2!==d1? (d1+' – '+d2) : d1;
+      return '<div class="portal-aviso"><div class="head"><h4><i class="fas '+(iconos[e.tipo]||'fa-calendar-day')+'" style="margin-right:8px;color:var(--primary)"></i>'+e.titulo+'</h4><span class="date">'+rango+'</span></div>'+(e.descripcion?'<p>'+e.descripcion+'</p>':'')+'</div>';
+    }).join('');
+  }
+
+  function fmtMoneyMX(n){ return '$'+(parseFloat(n)||0).toLocaleString('es-MX',{minimumFractionDigits:2})+' MXN'; }
+
+  // ── Factura online (pagos ya realizados → solicitud de CFDI) ──
+  async function renderPortalFactura(al){
+    var q=await _sbPub.rpc('portal_facturas', {p_usuario: _padreUsuario, p_pass: _padrePass});
+    if(q.error) throw q.error;
+    var rows=(q.data||[]);
+    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-file-invoice"></i>Aún no hay pagos registrados para generar factura.</div>';
+    return rows.map(function(p){
+      var fechaStr=p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
+      var badge='', actions='', form='';
+      if(!p.factura_id){
+        actions='<div class="portal-fact-actions"><button class="portal-fact-btn" onclick="toggleFacturaForm('+p.pago_id+')"><i class="fas fa-file-invoice"></i> Solicitar factura</button></div>';
+        form='<div class="portal-fact-form" id="fact-form-'+p.pago_id+'">'+
+          '<div class="row"><div><label>RFC</label><input id="ff-rfc-'+p.pago_id+'" maxlength="13" placeholder="XAXX010101000"></div>'+
+          '<div><label>Nombre / Razón social</label><input id="ff-razon-'+p.pago_id+'" placeholder="Nombre completo o razón social"></div></div>'+
+          '<div class="row"><div><label>CP fiscal</label><input id="ff-cp-'+p.pago_id+'" maxlength="5" placeholder="52140"></div>'+
+          '<div><label>Uso de CFDI</label><select id="ff-uso-'+p.pago_id+'"><option value="D10" selected>D10 – Pagos por servicios educativos</option><option value="G03">G03 – Gastos en general</option></select></div></div>'+
+          '<div class="row"><div><label>Correo para envío</label><input id="ff-correo-'+p.pago_id+'" value="'+(al.email||'')+'" placeholder="correo@ejemplo.com"></div>'+
+          '<div style="display:flex;align-items:flex-end;"><button class="portal-fact-btn" style="width:100%;justify-content:center;" onclick="solicitarFactura('+p.pago_id+')"><i class="fas fa-paper-plane"></i> Enviar solicitud</button></div></div>'+
+          '</div>';
+      } else if(p.factura_estado==='Timbrada'){
+        badge='<span class="portal-fact-badge timb">Timbrada</span>';
+        actions='<div class="portal-fact-actions">'+
+          (p.tiene_xml?'<button class="portal-fact-btn dl" onclick="descargarFacturaArchivo(\''+p.factura_id+'\',\'xml\')"><i class="fas fa-file-code"></i> XML</button>':'')+
+          (p.tiene_pdf?'<button class="portal-fact-btn dl" onclick="descargarFacturaArchivo(\''+p.factura_id+'\',\'pdf\')"><i class="fas fa-file-pdf"></i> PDF</button>':'')+
+          '</div>';
+      } else {
+        badge='<span class="portal-fact-badge pend">Pendiente de timbrado</span>';
+        actions='<div style="font-size:0.78rem;color:var(--gray);margin-top:8px;">Tu solicitud ya fue enviada a la escuela. Te avisaremos por correo cuando esté lista.</div>';
+      }
+      return '<div class="portal-fact"><div class="head"><div><h4>'+(p.concepto||'Colegiatura')+'</h4><div class="sub">'+fechaStr+'</div></div>'+
+        '<div style="text-align:right;"><div class="monto">'+fmtMoneyMX(p.monto)+'</div>'+badge+'</div></div>'+actions+form+'</div>';
+    }).join('');
+  }
+
+  function toggleFacturaForm(pagoId){
+    var el=document.getElementById('fact-form-'+pagoId);
+    if(el) el.classList.toggle('show');
+  }
+
+  async function solicitarFactura(pagoId){
+    if(!_padreAlumno) return;
+    var rfc=(document.getElementById('ff-rfc-'+pagoId).value||'').trim().toUpperCase();
+    var razon=(document.getElementById('ff-razon-'+pagoId).value||'').trim();
+    var cp=(document.getElementById('ff-cp-'+pagoId).value||'').trim();
+    var uso=document.getElementById('ff-uso-'+pagoId).value;
+    var correo=(document.getElementById('ff-correo-'+pagoId).value||'').trim();
+    if(!rfc||rfc.length<12){ alert('Ingresa un RFC válido (mínimo 12 caracteres).'); return; }
+    if(!razon){ alert('Ingresa el nombre o razón social.'); return; }
+    if(!cp||cp.length!==5){ alert('Ingresa el código postal fiscal (5 dígitos).'); return; }
+    if(!correo){ alert('Ingresa un correo para recibir la factura.'); return; }
+    try{
+      var ins=await _sbPub.rpc('portal_solicitar_factura', {
+        p_usuario: _padreUsuario, p_pass: _padrePass, p_pago_id: pagoId,
+        p_rfc: rfc, p_razon: razon, p_cp: cp, p_uso_cfdi: uso, p_correo: correo
+      });
+      if(ins.error) throw ins.error;
+      portalTab('factura');
+    }catch(e){ console.error('solicitarFactura:',e); alert('No se pudo enviar la solicitud. Intenta de nuevo en un momento.'); }
+  }
+
+  async function descargarFacturaArchivo(facturaId, tipo){
+    try{
+      var q=await _sbPub.rpc('portal_descargar_factura', {p_usuario: _padreUsuario, p_pass: _padrePass, p_factura_id: facturaId, p_tipo: tipo});
+      if(q.error) throw q.error;
+      var contenido=q.data; if(!contenido){ alert('Este archivo aún no está disponible.'); return; }
+      var blob, filename;
+      if(tipo==='xml'){ blob=new Blob([contenido],{type:'application/xml'}); filename=facturaId+'.xml'; }
+      else { var byteChars=atob((contenido||'').split(',').pop()); var bytes=new Uint8Array(byteChars.length);
+        for(var i=0;i<byteChars.length;i++) bytes[i]=byteChars.charCodeAt(i);
+        blob=new Blob([bytes],{type:'application/pdf'}); filename=facturaId+'.pdf'; }
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }catch(e){ console.error('descargarFacturaArchivo:',e); alert('No se pudo descargar el archivo.'); }
+  }
+
+  // ── PWA: registro del service worker (app instalable, cascarón offline) ──
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW register failed:', e); });
+    });
+  }
+</script>
+</body>
+</html>

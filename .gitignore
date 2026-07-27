@@ -1,0 +1,14 @@
+# Archivos sensibles — NUNCA subir a GitHub
+CLAVES_ERP_LPI.txt
+vercel_token.txt
+debug.txt
+vercel_log.txt
+*.zip
+
+# Respaldos y basura pesada de la etapa de Hostinger
+zitGz9GO
+.fuse_hidden*
+erp_anterior_*.html
+
+# Local
+.vercel/

@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/erp", "dest": "/erp-nuevo.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
+    { "src": "/erp-nuevo", "dest": "/erp-nuevo.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
+    { "src": "/erp-nuevo.html", "dest": "/erp-nuevo.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
+    { "src": "/build-info.json", "dest": "/build-info.json", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
+    { "src": "/erp-anterior", "dest": "/erp.html" },
+    { "src": "/inscripciones-secundaria", "dest": "/inscripciones-secundaria.html" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}

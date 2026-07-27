@@ -1,0 +1,18 @@
+{
+  "name": "Portal de Padres | Learning Project Institute",
+  "short_name": "LPI Padres",
+  "description": "Consulta calificaciones, asistencia, horario, avisos, calendario y facturación de tu hijo/a en Learning Project Institute.",
+  "start_url": "/acceso-padres.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f7fc",
+  "theme_color": "#1B3D7A",
+  "lang": "es-MX",
+  "icons": [
+    { "src": "fotos/oso-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "fotos/oso-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "fotos/oso-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "fotos/oso-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

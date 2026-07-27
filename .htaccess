@@ -1,0 +1,11 @@
+# Learning Project Institute - rewrite para URLs limpias
+RewriteEngine On
+
+# /erp -> erp.html
+RewriteRule ^erp/?$ erp.html [L]
+
+# /inscripciones-secundaria -> inscripciones-secundaria.html
+RewriteRule ^inscripciones-secundaria/?$ inscripciones-secundaria.html [L]
+
+# Pagina de inicio por defecto
+DirectoryIndex index.html
