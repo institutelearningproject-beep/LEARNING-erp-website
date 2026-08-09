@@ -1,12 +1,30 @@
 {
   "version": 2,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
+      ]
+    }
+  ],
   "routes": [
-    { "src": "/erp", "dest": "/erp-nuevo.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
-    { "src": "/erp-nuevo", "dest": "/erp-nuevo.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
-    { "src": "/erp-nuevo.html", "dest": "/erp-nuevo.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
+    { "src": "/erp", "dest": "/erp.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
+    { "src": "/erp.html", "dest": "/erp.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
     { "src": "/build-info.json", "dest": "/build-info.json", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
-    { "src": "/erp-anterior", "dest": "/erp.html" },
     { "src": "/inscripciones-secundaria", "dest": "/inscripciones-secundaria.html" },
+
+    { "src": "/\\.well-known/assetlinks\\.json", "dest": "/assetlinks.json", "headers": { "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } },
+    { "src": "/padres", "dest": "/acceso-padres.html" },
+    { "src": "/app", "dest": "/acceso-padres.html" },
+    { "src": "/acceso-padres.html", "dest": "/acceso-padres.html", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate" } },
+    { "src": "/sw.js", "dest": "/sw.js", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate", "Service-Worker-Allowed": "/" } },
+    { "src": "/manifest.json", "dest": "/manifest.json", "headers": { "Cache-Control": "no-store, max-age=0, must-revalidate", "Content-Type": "application/manifest+json" } },
+
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }

@@ -338,6 +338,17 @@
     @keyframes aiPulse { 0%{box-shadow:0 0 0 0 rgba(74,222,128,.5)} 70%{box-shadow:0 0 0 7px rgba(74,222,128,0)} 100%{box-shadow:0 0 0 0 rgba(74,222,128,0)} }
     .ai-panel-head .ai-ph-x { margin-left:auto; background:rgba(255,255,255,.15); border:none; color:#fff; width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:.9rem; }
     .ai-panel-head .ai-ph-x:hover { background:rgba(255,255,255,.28); }
+    /* ── RESPONSIVE (Miss desde tablet/celular) ── */
+    @media (max-width: 900px) {
+      #sidebar { position: fixed; left: -260px; top: 0; bottom: 0; z-index: 900; transition: left .25s ease; }
+      #sidebar.open { left: 0; box-shadow: 4px 0 24px rgba(0,0,0,.25); }
+      #menu-toggle { display: inline-flex !important; }
+      .topbar-search { display: none; }
+      .fwindow { inset: 8px 8px 52px 8px !important; width: auto !important; height: auto !important; }
+      #nivel-selector-host { order: 10; width: 100%; margin: 6px 0 0 0 !important; }
+      #topbar { flex-wrap: wrap; height: auto !important; min-height: 60px; padding: 8px 12px; }
+      .dash-card { padding: 14px !important; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -391,12 +402,19 @@
       <div class="sidebar-section">
         <div class="sidebar-section-label">Académico</div>
         <div class="nav-item" onclick="openWindow('calificaciones',this)"><i class="fas fa-star-half-alt"></i> Calificaciones</div>
+        <div class="nav-item" onclick="openWindow('evalcual',this)"><i class="fas fa-child-reaching"></i> Eval. Cualitativas</div>
+        <div class="nav-item" onclick="openWindow('tareas',this)"><i class="fas fa-book-open"></i> Tareas</div>
+        <div class="nav-item" onclick="openWindow('materias',this)"><i class="fas fa-book-bookmark"></i> Materias</div>
+        <div class="nav-item" onclick="openWindow('cambridge',this)"><i class="fas fa-graduation-cap"></i> Cambridge</div>
         <div class="nav-item" onclick="openWindow('asistencia',this)"><i class="fas fa-clipboard-check"></i> Asistencia</div>
         <div class="nav-item" onclick="openWindow('horarios',this)"><i class="fas fa-calendar-alt"></i> Horarios</div>
+        <div class="nav-item" onclick="openWindow('kardex',this)"><i class="fas fa-award"></i> Kardex y Certificación</div>
+        <div class="nav-item" onclick="openWindow('academico',this)"><i class="fas fa-sitemap"></i> Estructura Académica</div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-section-label">Personal</div>
         <div class="nav-item" onclick="openWindow('maestros',this)"><i class="fas fa-chalkboard-teacher"></i> Maestros</div>
+        <div class="nav-item" onclick="openWindow('personal',this)"><i class="fas fa-id-badge"></i> Personal y RH</div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-section-label">Contabilidad</div>
@@ -407,7 +425,20 @@
       <div class="sidebar-section">
         <div class="sidebar-section-label">Comunicación</div>
         <div class="nav-item" onclick="openWindow('comunicados',this)"><i class="fas fa-bullhorn"></i> Comunicados</div>
+        <div class="nav-item" onclick="openWindow('bitacora',this)"><i class="fas fa-baby"></i> Bitácora / Reporte diario</div>
         <div class="nav-item" onclick="openWindow('eventoscal',this)"><i class="fas fa-calendar-days"></i> Calendario Escolar</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Recursos</div>
+        <div class="nav-item" onclick="openWindow('aulas',this)"><i class="fas fa-door-open"></i> Aulas y Espacios</div>
+        <div class="nav-item" onclick="openWindow('biblioteca',this)"><i class="fas fa-book"></i> Biblioteca</div>
+        <div class="nav-item" onclick="openWindow('extracurriculares',this)"><i class="fas fa-futbol"></i> Extracurriculares</div>
+        <div class="nav-item" onclick="openWindow('inventario',this)"><i class="fas fa-boxes"></i> Inventario</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Dirección</div>
+        <div class="nav-item" onclick="openWindow('estadisticas',this)"><i class="fas fa-chart-line"></i> Estadísticas</div>
+        <div class="nav-item" onclick="openWindow('reportes',this)"><i class="fas fa-chart-bar"></i> Reportes</div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-section-label">Sistema</div>
@@ -433,7 +464,9 @@
   <!-- MAIN -->
   <div id="main">
     <div id="topbar">
+      <button id="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none;background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--primary);font-size:1rem;margin-right:10px;align-items:center"><i class="fas fa-bars"></i></button>
       <span class="topbar-title" id="topbarTitle">Dashboard</span>
+      <div id="nivel-selector-host" style="margin-left:14px;"></div>
       <div class="topbar-search">
         <i class="fas fa-search"></i>
         <input type="text" placeholder="Buscar alumnos, maestros..." oninput="globalSearch(this.value)" />
@@ -468,12 +501,8 @@
           <div id="pendientes-body"><div style="text-align:center;color:var(--gray);font-size:.85rem;padding:16px;">Cargando...</div></div>
         </div>
 
-        <!-- ── BIENVENIDA (limpio: módulos se presentarán conforme se creen y prueben) ── -->
-        <div class="dash-card" style="text-align:center;padding:60px 24px;">
-          <div style="font-size:2.4rem;margin-bottom:14px;">🐻</div>
-          <div style="font-size:1.15rem;font-weight:700;color:var(--primary-dark);margin-bottom:8px;">Learning Project Institute</div>
-          <div style="font-size:0.9rem;color:var(--gray);max-width:460px;margin:0 auto;line-height:1.55;">Sistema en construcción. Iremos activando los módulos uno por uno conforme los creemos y probemos.</div>
-        </div>
+        <!-- ── DASHBOARD POR ROL (se llena según el rol del usuario) ── -->
+        <div id="dash-rol-host"></div>
 
       </div><!-- /dashboard -->
     </div>
@@ -588,21 +617,39 @@ function enviarWhatsApp(a, mensaje){
 
 async function loadAllData() {
   try {
+    const _pAuth = { p_usuario: currentUser && currentUser.usuario, p_pass: currentUser && currentUser.pass };
     const [a,m,p,f,c,u,h,as2,ins,inc,ev,nom,baj] = await Promise.all([
-      _sb.from('alumnos').select('*').order('nombre'),
-      _sb.from('maestros').select('*').order('nombre'),
-      _sb.from('pagos').select('*').order('created_at',{ascending:false}),
-      _sb.from('facturas').select('*').order('created_at',{ascending:false}),
-      _sb.from('comunicados').select('*').order('created_at',{ascending:false}),
-      _sb.from('usuarios_sistema').select('*').order('id'),
-      _sb.from('horarios').select('*'),
-      _sb.from('asistencia').select('*,alumnos(nombre)').order('fecha',{ascending:false}),
-      _sb.from('inscripciones').select('*').order('created_at',{ascending:false}),
-      _sb.from('incidencias').select('*').order('fecha',{ascending:false}),
-      _sb.from('eventos_calendario').select('*').order('fecha_inicio'),
-      _sb.from('nomina').select('*').order('fecha_pago',{ascending:false}),
-      _sb.from('bajas_alumnos').select('*').order('fecha',{ascending:false}),
+      _sb.rpc('staff_listar_alumnos', _pAuth),
+      _sb.rpc('staff_listar_maestros', _pAuth),
+      _sb.rpc('staff_listar_pagos', _pAuth),
+      _sb.rpc('staff_listar_facturas', _pAuth),
+      _sb.rpc('staff_listar_comunicados', _pAuth),
+      _sb.rpc('staff_listar_usuarios', _pAuth),
+      _sb.rpc('staff_listar_horarios', _pAuth),
+      _sb.rpc('staff_listar_asistencia', _pAuth),
+      _sb.rpc('staff_listar_inscripciones', _pAuth),
+      _sb.rpc('staff_listar_incidencias', _pAuth),
+      _sb.rpc('staff_listar_eventos', _pAuth),
+      _sb.rpc('staff_listar_nomina', _pAuth),
+      _sb.rpc('staff_listar_bajas', _pAuth),
     ]);
+    // Módulos nuevos (en paralelo aparte para no romper el destructuring existente)
+    const [tar,tcu,mat,evc,bit,cam,lec] = await Promise.all([
+      _sb.rpc('staff_listar_tareas', _pAuth),
+      _sb.rpc('staff_listar_tareas_cumplimiento', _pAuth),
+      _sb.rpc('staff_listar_materias', _pAuth),
+      _sb.rpc('staff_listar_evalcual', _pAuth),
+      _sb.rpc('staff_listar_bitacora', _pAuth),
+      _sb.rpc('staff_listar_cambridge', _pAuth),
+      Promise.resolve({data:[]}), // comunicados_lecturas: función aún no implementada (no se usa en la UI)
+    ]);
+    tareasData.length=0; tareasData.push(...(tar.data||[]));
+    tareasCumpl.length=0; tareasCumpl.push(...(tcu.data||[]));
+    materiasData.length=0; materiasData.push(...(mat.data||[]));
+    evalCualData.length=0; evalCualData.push(...(evc.data||[]));
+    bitacoraData.length=0; bitacoraData.push(...(bit.data||[]));
+    cambridgeData.length=0; cambridgeData.push(...(cam.data||[]));
+    lecturasComunicados.length=0; lecturasComunicados.push(...(lec.data||[]));
     alumnos.length=0; alumnos.push(...(a.data||[]));
     maestros.length=0; maestros.push(...(m.data||[]).map(x=>({...x,correo:x.email||x.correo||''})));
     pagos.length=0; pagos.push(...(p.data||[]).map(x=>({...x,monto:parseFloat(x.monto)||0})));
@@ -615,11 +662,34 @@ async function loadAllData() {
     nomina.length=0; nomina.push(...(nom.data||[]).map(x=>({...x,sueldo:parseFloat(x.sueldo)||0})));
     bajasAlumnos.length=0; bajasAlumnos.push(...(baj.data||[]));
     try{ if(typeof loadCatalogo==='function'){ nivelesData=await loadCatalogo('niveles'); aulasCfgData=await loadCatalogo('aulas'); franjasCfgData=await loadCatalogo('horarios_franjas'); } }catch(e){ console.warn('catalogos',e); }
-    // Load schedules
+    // Load schedules — POR GRUPO (cada grupo tiene su propio horario)
+    Object.keys(scheduleData).forEach(function(k){ delete scheduleData[k]; });
     (h.data||[]).forEach(function(r){
-      if(!scheduleData[r.dia]) scheduleData[r.dia]=['','','','','',''];
-      scheduleData[r.dia][r.franja]=r.materia||'';
+      var g = r.grupo || 'General';
+      if(!scheduleData[g]) scheduleData[g]={};
+      if(!scheduleData[g][r.dia]) scheduleData[g][r.dia]=['','','','','',''];
+      scheduleData[g][r.dia][r.franja]=r.materia||'';
     });
+    // Módulos operativos (personal, biblioteca, talleres, inventario)
+    try {
+      const [per,bib,tal,inv] = await Promise.all([
+        _sb.rpc('staff_listar_personal', _pAuth),
+        _sb.rpc('staff_listar_biblioteca', _pAuth),
+        _sb.rpc('staff_listar_talleres', _pAuth),
+        _sb.rpc('staff_listar_inventario', _pAuth),
+      ]);
+      personalData.length=0; personalData.push(...(per.data||[]));
+      bibliotecaData.length=0; bibliotecaData.push(...(bib.data||[]));
+      talleresData.length=0; talleresData.push(...(tal.data||[]));
+      inventarioData.length=0; inventarioData.push(...(inv.data||[]));
+    } catch(eOp){ console.warn('módulos operativos:', eOp); }
+    // Ciclo escolar vigente (configuración)
+    try {
+      const cic = await _sb.rpc('staff_get_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: 'ciclo_escolar' });
+      if(cic.data) _cicloEscolar = cic.data;
+    } catch(eCic){}
+    // Reconstruir catálogo de GRUPOS con datos reales
+    rebuildGrupos();
     // Load attendance into asistenciaRecords
     asistenciaRecords.length=0;
     const byFechaGrupo={};
@@ -634,9 +704,8 @@ async function loadAllData() {
     nextPagoId=pagos.length?Math.max(...pagos.map(x=>x.id))+1:1;
     nextComId=comunicados.length?Math.max(...comunicados.map(x=>x.id))+1:1;
     nextFacturaId=facturas.length?facturas.length+1:1;
-    // sync estudiantesCalif from alumnos (filtrado por sección del usuario logueado)
-    estudiantesCalif.length=0;
-    alumnosVisibles().forEach(function(a){estudiantesCalif.push({id:a.id,n:a.nombre,gs:materiasCalif.map(()=>0)});});
+    // Calificaciones del grupo activo: se cargan reales desde Supabase
+    try{ cargarCalifGrupo(); }catch(eCal){ console.warn('califs:',eCal); }
   } catch(e) {
     console.error('Supabase loadAllData error:',e);
     showToast('Error conectando con la base de datos','error');
@@ -665,6 +734,14 @@ let incidencias = [];
 let eventosCalendario = [];
 let nomina = [];
 let bajasAlumnos = [];
+// ── Módulos nuevos (reestructuración jul 2026) ──
+let tareasData = [];
+let tareasCumpl = [];
+let materiasData = [];
+let evalCualData = [];
+let bitacoraData = [];
+let cambridgeData = [];
+let lecturasComunicados = [];
 
 // ══════════════════════════════
 //  LOGIN
@@ -682,38 +759,126 @@ const ROLE_COLORS = {'Director General':'blue','Director':'blue','Coordinador':'
 // ── SECCIONES DE LA ESCUELA (para filtrar datos por área) ──
 const SECCIONES = ['Maternal','Preescolar','Primaria','Secundaria'];
 
-// ── PLANTILLAS DE ROL (según la estructura real de LPI) ──
+// ── PLANTILLAS DE ROL (matriz RBAC oficial LPI — jul 2026) ──
 // Cada plantilla precarga módulos + secciones al crear un usuario; queda editable después.
 const ROLE_TEMPLATES = [
   { nombre:'Director General', secciones:['__all__'], acceso:['__all__'] },
-  { nombre:'Directora Maternal y Preescolar', secciones:['Maternal','Preescolar'], acceso:['maestros','alumnos','asistencia','horarios','calificaciones','incidencias','comunicados'] },
-  { nombre:'Maestra / Auxiliar Maternal y Preescolar', secciones:['Maternal','Preescolar'], acceso:['alumnos','asistencia','horarios','calificaciones','incidencias','comunicados'] },
-  { nombre:'Directora Primaria y Secundaria', secciones:['Primaria','Secundaria'], acceso:['maestros','alumnos','asistencia','horarios','calificaciones','incidencias','comunicados'] },
-  { nombre:'Maestra / Auxiliar Primaria y Secundaria', secciones:['Primaria','Secundaria'], acceso:['alumnos','asistencia','horarios','calificaciones','incidencias','comunicados'] },
+  { nombre:'Directora Maternal y Preescolar', secciones:['Maternal','Preescolar'], acceso:['comunicados','alumnos','eventoscal','evalcual','bitacora','horarios','asistencia','incidencias','maestros','reportes'] },
+  { nombre:'Coordinadora de Maternal', secciones:['Maternal'], acceso:['comunicados'] },
+  { nombre:'Miss de Maternal', secciones:['Maternal'], acceso:['bitacora','alumnos','eventoscal','horarios','comunicados'] },
+  { nombre:'Miss de Preescolar', secciones:['Preescolar'], acceso:['eventoscal','comunicados','alumnos','evalcual'] },
+  { nombre:'Directora Primaria y Secundaria', secciones:['Primaria','Secundaria'], acceso:['comunicados','calificaciones','eventoscal','tareas','horarios','cambridge','alumnos','materias','asistencia','incidencias','maestros','reportes'] },
+  { nombre:'Coordinadora de Primaria', secciones:['Primaria'], acceso:['comunicados','calificaciones','eventoscal','tareas','horarios','cambridge'] },
+  { nombre:'Miss de Primaria', secciones:['Primaria'], acceso:['comunicados','calificaciones','eventoscal','tareas','horarios','cambridge'] },
+  { nombre:'Miss de Secundaria', secciones:['Secundaria'], acceso:['horarios','calificaciones','tareas','eventoscal','comunicados','cambridge','alumnos','materias'] },
   { nombre:'Administración — Facturación y Nómina', secciones:['__all__'], acceso:['facturacion','pagos','nomina'] },
   { nombre:'Administración — Inscripciones', secciones:['__all__'], acceso:['alumnos','inscripciones','bajas','archivo'] },
   { nombre:'Administración — Comunicación', secciones:['__all__'], acceso:['comunicados','eventoscal'] },
 ];
 
+// ── IDENTIDAD POR NIVEL (colores + ositos, coherente con el sitio web) ──
+const NIVEL_META = {
+  'Maternal':   { color:'#E4707E', bg:'rgba(228,112,126,.12)', oso:'fotos/oso-maternal.png',   emoji:'🐻' },
+  'Preescolar': { color:'#E8A020', bg:'rgba(232,160,32,.12)',  oso:'fotos/oso-preescolar.png', emoji:'🐻' },
+  'Primaria':   { color:'#2C5FA8', bg:'rgba(44,95,168,.12)',   oso:'fotos/oso-primaria.png',   emoji:'🐻' },
+  'Secundaria': { color:'#16A085', bg:'rgba(22,160,133,.12)',  oso:'fotos/oso-secundaria.png', emoji:'🐻' },
+};
+function nivelChip(nivel){
+  var m = NIVEL_META[nivel]; if(!m) return '<span class="chip">'+(nivel||'—')+'</span>';
+  return '<span class="chip" style="background:'+m.bg+';color:'+m.color+';font-weight:700"><img src="'+m.oso+'" style="width:14px;height:14px;object-fit:contain;vertical-align:-2px;margin-right:4px" onerror="this.style.display=\'none\'">'+nivel+'</span>';
+}
+// Nivel activo (selector del topbar para roles multi-nivel); null = todos los permitidos
+let nivelActivo = null;
+
 // ── Catálogo de grupos usado en Calificaciones/Asistencia/Horarios ──
-// (se filtra por sección permitida del usuario logueado)
-const GRUPOS_DEMO = [
+// Se reconstruye con DATOS REALES (alumnos registrados + horarios guardados).
+// Solo si no hay ningún alumno aún, se usan los grupos base del colegio.
+const GRUPOS_DEMO = [];
+const GRUPOS_BASE = [
   { label:'Maternal Matutino', nivel:'Maternal' },
   { label:'3°A Preescolar', nivel:'Preescolar' },
-  { label:'4°A Primaria', nivel:'Primaria' },
-  { label:'6°A Primaria', nivel:'Primaria' },
-  { label:'1°B Secundaria', nivel:'Secundaria' },
-  { label:'3°A Secundaria', nivel:'Secundaria' },
+  { label:'1°A Primaria', nivel:'Primaria' },
+  { label:'1°A Secundaria', nivel:'Secundaria' },
 ];
-function seccionesDe(u){ if(!u) return []; if(esAdminUser(u)) return ['__all__']; return u.secciones||[]; }
+let _cicloEscolar = '2026-2027';
+
+// scheduleData[grupo][dia] = [materia x 6 franjas] — horario independiente por grupo.
+// OJO: esta declaración vive aquí a propósito, ARRIBA de rebuildGrupos().
+// Antes estaba en el módulo de Horarios (~línea 3300) y rebuildGrupos() la usaba desde
+// la llamada temprana de abajo, cuando todavía estaba en zona muerta temporal (TDZ).
+// Con `const`/`let` eso lanza ReferenceError — incluso el `typeof` lo lanza, a diferencia
+// de `var` — y como era un error no capturado, DETENÍA la ejecución del resto del script:
+// cientos de funciones declaradas más abajo (openWindow, listados de alumnos y usuarios…)
+// quedaban inutilizables y el ERP se veía vacío. No moverla de aquí.
+const scheduleData = {};
+
+function rebuildGrupos(){
+  var vistos={}, out=[];
+  alumnos.forEach(function(a){
+    var label=((a.grado||'')+' '+(a.nivel||'')).trim();
+    if(!label||vistos[label]) return; vistos[label]=1;
+    out.push({label:label, nivel:a.nivel});
+  });
+  Object.keys(scheduleData).forEach(function(gl){
+    if(vistos[gl]||gl==='General') return; vistos[gl]=1;
+    var niv=SECCIONES.find(function(n){ return gl.indexOf(n)>=0; })||'';
+    out.push({label:gl, nivel:niv});
+  });
+  GRUPOS_DEMO.length=0;
+  if(out.length){
+    var ordenNivel={'Maternal':0,'Preescolar':1,'Primaria':2,'Secundaria':3};
+    out.sort(function(a,b){ return (ordenNivel[a.nivel]||9)-(ordenNivel[b.nivel]||9) || a.label.localeCompare(b.label); });
+    out.forEach(function(g){ GRUPOS_DEMO.push(g); });
+  } else {
+    GRUPOS_BASE.forEach(function(g){ GRUPOS_DEMO.push(g); });
+  }
+}
+// Llamada temprana: llena GRUPOS_DEMO con los grupos base mientras no hay alumnos cargados.
+// Tras el login, loadAllData() vuelve a llamarla con los datos reales.
+// El try/catch se conserva como red de seguridad: si algo aquí truena, NO debe detener
+// la ejecución del resto del script (ver la nota sobre scheduleData más arriba).
+try{ rebuildGrupos(); }catch(e){ console.warn('rebuildGrupos (init temprano, se recalcula tras login):', e); }
+function seccionesDe(u){ if(!u) return []; if(esAccesoTotal(u)) return ['__all__']; return u.secciones||[]; }
 function tieneTodasLasSecciones(u){ return seccionesDe(u).indexOf('__all__')>=0; }
 function puedeVerNivel(u, nivel){ var s=seccionesDe(u); return s.indexOf('__all__')>=0 || s.indexOf(nivel)>=0; }
-function alumnosVisibles(){ return tieneTodasLasSecciones(currentUser) ? alumnos : alumnos.filter(function(a){ return puedeVerNivel(currentUser, a.nivel); }); }
-function maestrosVisibles(){ return tieneTodasLasSecciones(currentUser) ? maestros : maestros.filter(function(m){ return puedeVerNivel(currentUser, m.nivel); }); }
+// ── Filtro combinado: secciones del rol + nivel activo elegido en el topbar ──
+function nivelPasaFiltro(nivel){
+  if(nivelActivo && nivel!==nivelActivo) return false;
+  return tieneTodasLasSecciones(currentUser) || puedeVerNivel(currentUser, nivel);
+}
+function alumnosVisibles(){ return alumnos.filter(function(a){ return nivelPasaFiltro(a.nivel); }); }
+function maestrosVisibles(){ return maestros.filter(function(m){ return !m.nivel ? tieneTodasLasSecciones(currentUser) : nivelPasaFiltro(m.nivel); }); }
 function opcionesGrupo(){
-  var permitidos = tieneTodasLasSecciones(currentUser) ? GRUPOS_DEMO : GRUPOS_DEMO.filter(function(g){ return puedeVerNivel(currentUser, g.nivel); });
+  var permitidos = GRUPOS_DEMO.filter(function(g){ return nivelPasaFiltro(g.nivel); });
+  if(!permitidos.length) permitidos = tieneTodasLasSecciones(currentUser) ? GRUPOS_DEMO : GRUPOS_DEMO.filter(function(g){ return puedeVerNivel(currentUser, g.nivel); });
   if(!permitidos.length) permitidos = GRUPOS_DEMO;
   return permitidos.map(function(g){ return '<option>'+g.label+'</option>'; }).join('');
+}
+// ── Selector de nivel en topbar (solo roles con más de un nivel) ──
+function nivelesPermitidos(){
+  if(tieneTodasLasSecciones(currentUser)) return SECCIONES.slice();
+  return SECCIONES.filter(function(s){ return puedeVerNivel(currentUser, s); });
+}
+function renderNivelSelector(){
+  var host = document.getElementById('nivel-selector-host');
+  if(!host) return;
+  var nivs = nivelesPermitidos();
+  if(!currentUser || nivs.length<2){ host.innerHTML = nivs.length===1 ? nivelChip(nivs[0]) : ''; nivelActivo = nivs.length===1 ? null : nivelActivo; return; }
+  host.innerHTML = '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
+    '<button onclick="setNivelActivo(null)" style="border:none;cursor:pointer;padding:5px 12px;border-radius:50px;font-family:Poppins,sans-serif;font-size:.74rem;font-weight:700;'+(!nivelActivo?'background:var(--primary);color:#fff':'background:var(--off-white);color:var(--gray)')+'">Todos</button>'+
+    nivs.map(function(n){
+      var m=NIVEL_META[n], act=nivelActivo===n;
+      return '<button onclick="setNivelActivo(\''+n+'\')" style="border:none;cursor:pointer;padding:5px 12px;border-radius:50px;font-family:Poppins,sans-serif;font-size:.74rem;font-weight:700;display:inline-flex;align-items:center;gap:5px;'+(act?('background:'+m.color+';color:#fff'):('background:'+m.bg+';color:'+m.color))+'">'+
+        '<img src="'+m.oso+'" style="width:16px;height:16px;object-fit:contain" onerror="this.style.display=\'none\'">'+n+'</button>';
+    }).join('')+'</div>';
+}
+function setNivelActivo(n){
+  nivelActivo = n;
+  renderNivelSelector();
+  // refrescar ventanas abiertas y dashboard para aplicar el filtro
+  Object.keys(openWindows||{}).forEach(function(k){ try{ refreshWindow(k); }catch(e){} });
+  try{ initDashboard(); }catch(e){}
+  showToast(n ? ('Viendo solo: '+n) : 'Viendo todos tus niveles', 'success');
 }
 function primerGrupoPermitido(){
   var permitidos = tieneTodasLasSecciones(currentUser) ? GRUPOS_DEMO : GRUPOS_DEMO.filter(function(g){ return puedeVerNivel(currentUser, g.nivel); });
@@ -735,19 +900,13 @@ async function doLogin() {
       const { data, error: errRpc } = await _sb.rpc('staff_login', { p_usuario: u, p_pass: p });
       if (!errRpc && Array.isArray(data) && data.length) found = data[0];
     } catch(eRpc) { console.warn('staff_login no disponible aún:', eRpc); }
-    // Respaldo temporal: solo funciona ANTES de cifrar las contraseñas (transición).
-    if (!found) {
-      try {
-        const { data: rowsLegacy } = await _sb.from('usuarios_sistema').select('*').ilike('usuario', u);
-        if (rowsLegacy && rowsLegacy.length) found = rowsLegacy.find(function(x){ return x.usuario.toLowerCase()===u && x.pass===p; }) || null;
-      } catch(eLeg) { console.warn('Login legacy falló:', eLeg); }
-    }
     if (found) {
       // La contraseña en claro solo vive en memoria/sesión de este navegador
       // (se reutiliza para revalidar acciones como los respaldos). En la base
       // de datos únicamente existe el hash.
       currentUser = {...found, pass: p, lastAcceso: new Date().toLocaleString('es-MX')};
-      guardarSesion(currentUser);
+      // La contraseña solo permanece en memoria durante esta pestaña.
+      // No se guarda en localStorage/sessionStorage.
       showToast('Cargando datos...', 'success');
       try { await loadAllData(); } catch(eLoad) { console.warn('loadAllData falló (Supabase?):', eLoad); }
       const av = initials(found.nombre);
@@ -811,6 +970,55 @@ function confirmLogout() {
 // ══════════════════════════════
 //  DASHBOARD
 // ══════════════════════════════
+// ── DASHBOARD POR ROL ──
+function renderDashDocente(){
+  var host=document.getElementById('dash-rol-host'); if(!host||!currentUser) return;
+  var esEjecutivo = (currentUser.acceso||[]).indexOf('__all__')>=0;
+  var hoy=new Date().toISOString().slice(0,10);
+  var misAlumnos=alumnosVisibles();
+  var evProx=eventosCalendario.filter(function(e){ return (e.fecha_inicio||'')>=hoy && (!e.nivel||e.nivel==='Todos'||nivelPasaFiltro(e.nivel)); }).slice(0,4);
+  // El widget "Pendientes de hoy" es financiero/administrativo: solo para acceso total
+  var pw=document.getElementById('pendientes-widget'); if(pw) pw.style.display=esEjecutivo?'':'none';
+
+  if(esEjecutivo){
+    // Panel ejecutivo: KPIs globales del colegio
+    var cobrado=pagos.filter(function(p){return p.estado==='Pagado';}).reduce(function(s,p){return s+(p.monto||0);},0);
+    var vencidos=pagos.filter(function(p){return p.estado==='Vencido';}).length;
+    var kpis=[
+      {n:misAlumnos.length, t:'Alumnos', icon:'fa-user-graduate', c:'#1B3D7A', win:'alumnos'},
+      {n:maestros.filter(function(m){return m.estado!=='Inactivo';}).length, t:'Maestros activos', icon:'fa-chalkboard-teacher', c:'#C47D10', win:'maestros'},
+      {n:fmtMoney(cobrado), t:'Cobrado', icon:'fa-dollar-sign', c:'#27AE60', win:'pagos'},
+      {n:vencidos, t:'Pagos vencidos', icon:'fa-triangle-exclamation', c:'#C0392B', win:'pagos'},
+    ];
+    host.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px">'+
+      kpis.map(function(k){return '<div class="dash-card" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:18px" onclick="openWindow(\''+k.win+'\')">'+
+        '<div style="width:44px;height:44px;border-radius:12px;background:'+k.c+'18;color:'+k.c+';display:flex;align-items:center;justify-content:center;font-size:1.1rem"><i class="fas '+k.icon+'"></i></div>'+
+        '<div><div style="font-size:1.3rem;font-weight:800;color:var(--primary-dark)">'+k.n+'</div><div style="font-size:.74rem;color:var(--gray)">'+k.t+'</div></div></div>';}).join('')+'</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">'+
+      SECCIONES.map(function(n){ var m=NIVEL_META[n]; var cnt=alumnos.filter(function(a){return a.nivel===n;}).length;
+        return '<div class="dash-card" style="padding:14px;display:flex;align-items:center;gap:12px;border-left:4px solid '+m.color+'">'+
+          '<img src="'+m.oso+'" style="width:38px;height:38px;object-fit:contain" onerror="this.style.display=\'none\'">'+
+          '<div><div style="font-weight:800;color:'+m.color+';font-size:1.1rem">'+cnt+'</div><div style="font-size:.72rem;color:var(--gray)">'+n+'</div></div></div>';}).join('')+'</div>';
+    return;
+  }
+
+  // Panel docente/coordinación: su día, sus grupos, accesos rápidos a SUS módulos
+  var accesos=(currentUser.acceso||[]).filter(function(k){ return MODULES.some(function(m){return m.key===k;}); }).slice(0,8);
+  var nivs=nivelesPermitidos();
+  host.innerHTML='<div class="dash-card" style="margin-bottom:16px;padding:20px">'+
+    '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">'+
+      nivs.map(function(n){var m=NIVEL_META[n];return '<img src="'+m.oso+'" style="width:42px;height:42px;object-fit:contain" onerror="this.style.display=\'none\'">';}).join('')+
+      '<div><div style="font-weight:700;color:var(--primary-dark)">'+cfgEsc(currentUser.rol||'')+'</div>'+
+      '<div style="font-size:.78rem;color:var(--gray)">'+nivs.join(' · ')+' — '+misAlumnos.length+' alumno'+(misAlumnos.length!==1?'s':'')+' a tu cargo</div></div></div></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">'+
+    accesos.map(function(k){ var m=MODULES.find(function(x){return x.key===k;});
+      return '<div class="dash-card" style="cursor:pointer;padding:14px;text-align:center" onclick="openWindow(\''+k+'\')">'+
+        '<div style="width:38px;height:38px;border-radius:10px;background:'+m.color+'18;color:'+m.color+';display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i class="fas '+m.icon+'"></i></div>'+
+        '<div style="font-size:.76rem;font-weight:700;color:var(--dark)">'+m.name+'</div></div>';}).join('')+'</div>'+
+    (evProx.length?('<div class="dash-card" style="padding:16px"><div style="font-weight:700;color:var(--primary-dark);font-size:.9rem;margin-bottom:10px"><i class="fas fa-calendar-days" style="color:var(--gold);margin-right:6px"></i>Próximos eventos de tus niveles</div>'+
+      evProx.map(function(e){return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.8rem"><span>'+cfgEsc(e.titulo)+'</span><span style="color:var(--gray)">'+(e.fecha_inicio||'')+'</span></div>';}).join('')+'</div>'):'');
+}
+
 function initDashboard() {
   const now = new Date();
   const h = now.getHours();
@@ -820,6 +1028,7 @@ function initDashboard() {
 
   renderPendientesHoy();
   renderAvisoGeneral();
+  renderDashDocente();
 
   // Asistente IA · burbuja flotante
   const aiFab = document.getElementById('ai-fab');
@@ -922,13 +1131,13 @@ function puedeEditarAvisoGeneral(){
 }
 async function loadAvisoGeneral(){
   try{
-    var r = await _sb.from('configuracion').select('valor').eq('clave','aviso_general').maybeSingle();
-    var v = r && r.data ? r.data.valor : null;
+    var r = await _sb.rpc('staff_get_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: 'aviso_general' });
+    var v = r && r.data ? r.data : null;
     return v ? (typeof v==='string'? JSON.parse(v) : v) : null;
   }catch(e){ console.warn('loadAvisoGeneral', e); return null; }
 }
 async function guardarAvisoGeneralDB(obj){
-  try{ await _sb.from('configuracion').upsert({clave:'aviso_general', valor: JSON.stringify(obj), updated_at:new Date().toISOString()}, {onConflict:'clave'}); }
+  try{ await _sb.rpc('staff_set_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: 'aviso_general', p_valor: JSON.stringify(obj) }); }
   catch(e){ console.warn('guardarAvisoGeneralDB', e); }
 }
 async function renderAvisoGeneral(){
@@ -981,6 +1190,11 @@ const MODULES = [
   { key:'inscripciones',    name:'Inscripciones',          desc:'Altas y reinscripciones',           icon:'fa-file-signature',      color:'#2C5FA8' },
   { key:'academico',        name:'Estructura Académica',   desc:'Ciclos, materias y grupos',         icon:'fa-sitemap',             color:'#8E44AD' },
   { key:'calificaciones',   name:'Calificaciones',         desc:'Captura y boletas',                 icon:'fa-star-half-alt',       color:'#E8A020' },
+  { key:'evalcual',         name:'Eval. Cualitativas',     desc:'Observaciones preescolar',          icon:'fa-child-reaching',      color:'#E8A020' },
+  { key:'tareas',           name:'Tareas',                 desc:'Asignación y seguimiento',          icon:'fa-book-open',           color:'#2C5FA8' },
+  { key:'materias',         name:'Materias',               desc:'Catálogo y docentes',               icon:'fa-book-bookmark',       color:'#16A085' },
+  { key:'cambridge',        name:'Cambridge',              desc:'Seguimiento certificación',         icon:'fa-graduation-cap',      color:'#8E44AD' },
+  { key:'bitacora',         name:'Bitácora / Reporte diario', desc:'Comunicación con padres',        icon:'fa-baby',                color:'#E4707E' },
   { key:'asistencia',       name:'Asistencia',             desc:'Registro diario por grupo',         icon:'fa-clipboard-check',     color:'#2ECC71' },
   { key:'horarios',         name:'Horarios',               desc:'Por grupo, maestro y aula',         icon:'fa-calendar-alt',        color:'#16A085' },
   { key:'aulas',            name:'Aulas y Espacios',       desc:'Salones, labs y talleres',          icon:'fa-door-open',           color:'#0d7a6b' },
@@ -1055,7 +1269,15 @@ const openWindows = {};
 const posBase = [[60,40],[140,90],[220,60],[80,120],[160,50]];
 let posIdx = 0;
 
+// Módulos que cualquier usuario logueado puede abrir sin importar su lista de acceso
+// (el Asistente IA ya filtra sus propias respuestas por permiso/nivel; "config" solo
+// muestra la pestaña de perfil si el usuario no tiene permiso de administración).
+const WINDOWS_SIEMPRE_PERMITIDAS = ['asistente','config'];
 function openWindow(type, navEl) {
+  if (currentUser && WINDOWS_SIEMPRE_PERMITIDAS.indexOf(type)<0 && !usuarioPuede(currentUser, type)) {
+    showToast('No tienes permiso para abrir este módulo', 'error');
+    return;
+  }
   document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
   if (navEl) navEl.classList.add('active');
 
@@ -1133,7 +1355,14 @@ function maxWin(type) {
 function refreshWindow(type) {
   const cfg = windowConfigs[type];
   const body = document.getElementById('body-' + type);
-  if (body && cfg) body.innerHTML = cfg.content();
+  if (body && cfg) {
+    body.innerHTML = cfg.content();
+    body.querySelectorAll('script').forEach(function(old){
+      var sc = document.createElement('script');
+      if (old.src) { sc.src = old.src; } else { sc.textContent = old.textContent; }
+      old.parentNode.replaceChild(sc, old);
+    });
+  }
 }
 
 function setTopbarTitle(t) { document.getElementById('topbarTitle').textContent = t; }
@@ -1563,14 +1792,22 @@ async function _saveAlumnoCore(id) {
     historial: historial,
     documentos: alumnoDocsTmp,
   };
+  const rpcParams = {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id || null,
+    p_nombre: data.nombre, p_nivel: data.nivel, p_grado: data.grado, p_tutor: data.tutor,
+    p_tel: data.tel, p_email: data.email, p_pago: data.pago, p_asist: data.asist,
+    p_foto: data.foto, p_matricula: data.matricula, p_edad: data.edad,
+    p_anio_cursante: data.anio_cursante, p_fecha_ingreso: data.fecha_ingreso,
+    p_tutores: data.tutores, p_historial: data.historial, p_documentos: data.documentos
+  };
   if (id) {
-    const { error } = await _sb.from('alumnos').update(data).eq('id', id);
+    const { error } = await _sb.rpc('staff_guardar_alumno', rpcParams);
     if (error) { showToast('Error al actualizar: ' + error.message, 'error'); return; }
     const idx = alumnos.findIndex(a => a.id === id);
     if (idx >= 0) alumnos[idx] = { ...alumnos[idx], ...data };
     showToast(`Alumno actualizado: ${nombre}`, 'success');
   } else {
-    const { data: row, error } = await _sb.from('alumnos').insert(data).select().single();
+    const { data: row, error } = await _sb.rpc('staff_guardar_alumno', rpcParams);
     if (error) { showToast('Error al registrar: ' + error.message, 'error'); return; }
     if (row) { alumnos.unshift(row); nextAlumnoId = row.id + 1; }
     showToast(`Alumno registrado: ${nombre}`, 'success');
@@ -1602,8 +1839,8 @@ function deleteAlumno(id) {
 async function confirmDeleteAlumno(id) {
   const idx = alumnos.findIndex(a => a.id === id);
   const nombre = idx >= 0 ? alumnos[idx].nombre : '?';
-  const { error } = await _sb.from('alumnos').delete().eq('id', id);
-  if (error) { showToast('Error al eliminar alumno', 'error'); return; }
+  const { error } = await _sb.rpc('staff_eliminar_alumno', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if (error) { showToast('Error al eliminar alumno: ' + (error.message||''), 'error'); return; }
   if (idx >= 0) alumnos.splice(idx, 1);
   closeModal();
   showToast(`Alumno eliminado: ${nombre}`, 'error');
@@ -1628,21 +1865,22 @@ function _randPass(len){
 }
 async function crearAccesoPadre(alumno){
   var usuario=_slugUsuario(alumno.nombre, alumno.id), pass=_randPass(8);
-  var ins=await _sb.from('padres_acceso').insert({alumno_id:alumno.id, usuario:usuario, pass:pass, activo:true}).select().single();
+  var ins=await _sb.rpc('staff_crear_acceso_padre', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumno.id, p_usuario_padre: usuario, p_pass_padre: pass });
   if (ins.error) {
     console.warn('crearAccesoPadre:', ins.error.message);
     // reintenta una vez con sufijo distinto por si el usuario ya existe
     usuario = usuario + Math.floor(Math.random()*90+10);
-    ins = await _sb.from('padres_acceso').insert({alumno_id:alumno.id, usuario:usuario, pass:pass, activo:true}).select().single();
+    ins = await _sb.rpc('staff_crear_acceso_padre', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumno.id, p_usuario_padre: usuario, p_pass_padre: pass });
   }
   if (ins.error) return null;
-  var acc = ins.data;
+  var acc = Array.isArray(ins.data) ? ins.data[0] : ins.data;
+  if (!acc) return null;
   acc.pass = pass; // conservar la contraseña en claro solo para mostrarla (en la base queda cifrada)
   acc.emailEnviado = await enviarCorreoAccesoPadre(alumno, acc);
   return acc;
 }
 async function obtenerAccesoPadre(alumnoId){
-  var q=await _sb.from('padres_acceso').select('*').eq('alumno_id', alumnoId).order('id',{ascending:false}).limit(1);
+  var q=await _sb.rpc('staff_obtener_acceso_padre', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumnoId });
   return (q.data||[])[0]||null;
 }
 async function verAccesoPadre(id){
@@ -1657,7 +1895,7 @@ async function regenerarAccesoPadre(id){
   var acc=await obtenerAccesoPadre(id);
   var pass=_randPass(8);
   if(acc){
-    await _sb.from('padres_acceso').update({pass:pass, activo:true}).eq('id', acc.id);
+    await _sb.rpc('staff_regenerar_acceso_padre', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: acc.id, p_pass_nueva: pass });
     acc.pass=pass; acc.activo=true;
     acc.emailEnviado = await enviarCorreoAccesoPadre(a, acc);
   } else {
@@ -1740,15 +1978,16 @@ async function saveMaestro(id) {
   const nombre = document.getElementById('fm-nombre').value.trim();
   if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
   const data = { nombre, materia: document.getElementById('fm-materia').value, nivel: document.getElementById('fm-nivel').value, tel: document.getElementById('fm-tel').value, email: document.getElementById('fm-correo').value, estado: 'Activo' };
+  const rpcMaestro = { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id||null, p_nombre: data.nombre, p_materia: data.materia, p_nivel: data.nivel, p_tel: data.tel, p_email: data.email };
   if (id) {
-    const { error } = await _sb.from('maestros').update(data).eq('id', id);
-    if (error) { showToast('Error al actualizar maestro', 'error'); return; }
+    const { error } = await _sb.rpc('staff_guardar_maestro', rpcMaestro);
+    if (error) { showToast('Error al actualizar maestro: ' + error.message, 'error'); return; }
     const idx = maestros.findIndex(m => m.id === id);
     if (idx >= 0) maestros[idx] = { ...maestros[idx], ...data, correo: data.email };
     showToast(`Maestro actualizado: ${nombre}`, 'success');
   } else {
-    const { data: row, error } = await _sb.from('maestros').insert(data).select().single();
-    if (error) { showToast('Error al registrar maestro', 'error'); return; }
+    const { data: row, error } = await _sb.rpc('staff_guardar_maestro', rpcMaestro);
+    if (error) { showToast('Error al registrar maestro: ' + error.message, 'error'); return; }
     if (row) { maestros.unshift({...row, correo: row.email}); nextMaestroId = row.id + 1; }
     showToast(`Maestro registrado: ${nombre}`, 'success');
   }
@@ -1768,8 +2007,8 @@ function deleteMaestro(id) {
 async function confirmDeleteMaestro(id) {
   const idx = maestros.findIndex(m => m.id === id);
   const nombre = idx >= 0 ? maestros[idx].nombre : '?';
-  const { error } = await _sb.from('maestros').delete().eq('id', id);
-  if (error) { showToast('Error al eliminar maestro', 'error'); return; }
+  const { error } = await _sb.rpc('staff_eliminar_maestro', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if (error) { showToast('Error al eliminar maestro: ' + error.message, 'error'); return; }
   if (idx >= 0) maestros.splice(idx, 1);
   closeModal(); showToast(`Maestro eliminado: ${nombre}`, 'error'); renderMaestrosTable();
 }
@@ -1805,7 +2044,10 @@ async function savePago() {
   const fecha = raw || new Date().toISOString().split('T')[0];
   const estado = document.getElementById('fp-estado').value;
   const alumnoRec = alumnos.find(a => a.nombre === alumno);
-  const { data: row, error } = await _sb.from('pagos').insert({alumno_id: alumnoRec?.id||null, alumno, concepto, monto, estado, fecha}).select().single();
+  const { data: row, error } = await _sb.rpc('staff_guardar_pago', {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+    p_alumno_id: alumnoRec?.id||null, p_alumno: alumno, p_concepto: concepto, p_monto: monto, p_estado: estado, p_fecha: fecha
+  });
   if (error) { showToast('Error al registrar pago', 'error'); return; }
   if (row) { pagos.unshift({...row, monto: parseFloat(row.monto)}); nextPagoId = row.id + 1; }
   const badge = document.getElementById('badge-pagos'); if (badge) badge.textContent = pagos.filter(p=>p.estado==='Vencido').length||pagos.length;
@@ -1837,8 +2079,8 @@ async function saveComunicado() {
   if (!titulo || !preview) { showToast('Título y contenido son requeridos', 'error'); return; }
   const fecha = new Date().toISOString().split('T')[0];
   const dest = document.getElementById('fc-dest').value;
-  const { data: row, error } = await _sb.from('comunicados').insert({titulo, fecha, dest, preview, enviado: false}).select().single();
-  if (error) { showToast('Error al crear comunicado', 'error'); return; }
+  const { data: row, error } = await _sb.rpc('staff_guardar_comunicado', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_titulo: titulo, p_fecha: fecha, p_dest: dest, p_preview: preview });
+  if (error) { showToast('Error al crear comunicado: ' + error.message, 'error'); return; }
   if (row) comunicados.unshift({...row, enviado: false, fechaEnvio: null, canalEnvio: null});
   closeModal(); showToast('Comunicado creado', 'success'); refreshWindow('comunicados');
 }
@@ -1869,9 +2111,8 @@ async function saveIncidencia() {
   const fecha = document.getElementById('fi-fecha').value || new Date().toISOString().split('T')[0];
   const descripcion = document.getElementById('fi-desc').value.trim();
   if (!alumno_id || !descripcion) { showToast('Alumno y descripción son requeridos', 'error'); return; }
-  const registrado_por = (currentUser && (currentUser.nombre || currentUser.usuario)) || 'Staff';
-  const { data: row, error } = await _sb.from('incidencias').insert({alumno_id, tipo, fecha, descripcion, registrado_por}).select().single();
-  if (error) { showToast('Error al registrar incidencia', 'error'); return; }
+  const { data: row, error } = await _sb.rpc('staff_guardar_incidencia', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumno_id, p_tipo: tipo, p_fecha: fecha, p_descripcion: descripcion });
+  if (error) { showToast('Error al registrar incidencia: ' + error.message, 'error'); return; }
   if (row) incidencias.unshift(row);
   closeModal(); showToast('Incidencia registrada', 'success'); refreshWindow('incidencias');
 }
@@ -1885,8 +2126,8 @@ async function eliminarIncidencia(id) {
     </div>`);
 }
 async function confirmEliminarIncidencia(id) {
-  const { error } = await _sb.from('incidencias').delete().eq('id', id);
-  if (error) { showToast('Error al eliminar', 'error'); return; }
+  const { error } = await _sb.rpc('staff_eliminar_incidencia', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
   const ix = incidencias.findIndex(i => i.id === id);
   if (ix >= 0) incidencias.splice(ix, 1);
   closeModal(); showToast('Incidencia eliminada', 'success'); refreshWindow('incidencias');
@@ -1923,8 +2164,8 @@ async function saveEvento() {
   const nivel = document.getElementById('fe-nivel').value;
   const descripcion = document.getElementById('fe-desc').value.trim();
   if (!titulo || !fecha_inicio) { showToast('Título y fecha de inicio son requeridos', 'error'); return; }
-  const { data: row, error } = await _sb.from('eventos_calendario').insert({titulo, tipo, fecha_inicio, fecha_fin, nivel, descripcion}).select().single();
-  if (error) { showToast('Error al crear evento', 'error'); return; }
+  const { data: row, error } = await _sb.rpc('staff_guardar_evento', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_titulo: titulo, p_tipo: tipo, p_fecha_inicio: fecha_inicio, p_fecha_fin: fecha_fin, p_nivel: nivel, p_descripcion: descripcion });
+  if (error) { showToast('Error al crear evento: ' + error.message, 'error'); return; }
   if (row) { eventosCalendario.push(row); eventosCalendario.sort((a,b) => (a.fecha_inicio||'').localeCompare(b.fecha_inicio||'')); }
   closeModal(); showToast('Evento agregado al calendario', 'success'); refreshWindow('eventoscal');
 }
@@ -1938,8 +2179,8 @@ async function eliminarEvento(id) {
     </div>`);
 }
 async function confirmEliminarEvento(id) {
-  const { error } = await _sb.from('eventos_calendario').delete().eq('id', id);
-  if (error) { showToast('Error al eliminar', 'error'); return; }
+  const { error } = await _sb.rpc('staff_eliminar_evento', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
   const ix = eventosCalendario.findIndex(e => e.id === id);
   if (ix >= 0) eventosCalendario.splice(ix, 1);
   closeModal(); showToast('Evento eliminado', 'success'); refreshWindow('eventoscal');
@@ -1971,8 +2212,8 @@ async function saveNomina() {
   const fecha_pago = document.getElementById('fn-fecha').value || null;
   const estado = document.getElementById('fn-estado').value;
   if (!empleado || !periodo || !sueldo) { showToast('Empleado, periodo y sueldo son requeridos', 'error'); return; }
-  const { data: row, error } = await _sb.from('nomina').insert({empleado, puesto, periodo, sueldo, fecha_pago, estado}).select().single();
-  if (error) { showToast('Error al registrar nómina', 'error'); return; }
+  const { data: row, error } = await _sb.rpc('staff_guardar_nomina', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_empleado: empleado, p_puesto: puesto, p_periodo: periodo, p_sueldo: sueldo, p_fecha_pago: fecha_pago, p_estado: estado });
+  if (error) { showToast('Error al registrar nómina: ' + error.message, 'error'); return; }
   if (row) nomina.unshift({...row, sueldo: parseFloat(row.sueldo)||0});
   closeModal(); showToast('Pago de nómina registrado', 'success'); refreshWindow('nomina');
 }
@@ -1985,8 +2226,8 @@ async function eliminarNomina(id) {
     </div>`);
 }
 async function confirmEliminarNomina(id) {
-  const { error } = await _sb.from('nomina').delete().eq('id', id);
-  if (error) { showToast('Error al eliminar', 'error'); return; }
+  const { error } = await _sb.rpc('staff_eliminar_nomina', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
   const ix = nomina.findIndex(n => n.id === id);
   if (ix >= 0) nomina.splice(ix, 1);
   closeModal(); showToast('Registro eliminado', 'success'); refreshWindow('nomina');
@@ -2014,14 +2255,14 @@ async function saveBaja() {
   const motivo = document.getElementById('fb-motivo').value.trim();
   if (!alumno_id || !motivo) { showToast('Alumno y motivo son requeridos', 'error'); return; }
   const al = alumnos.find(a => a.id === alumno_id);
-  const { data: row, error } = await _sb.from('bajas_alumnos').insert({alumno_id, alumno_nombre: al?al.nombre:'', fecha, motivo}).select().single();
-  if (error) { showToast('Error al registrar la baja', 'error'); return; }
+  const { data: row, error } = await _sb.rpc('staff_guardar_baja', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumno_id, p_alumno_nombre: al?al.nombre:'', p_fecha: fecha, p_motivo: motivo });
+  if (error) { showToast('Error al registrar la baja: ' + error.message, 'error'); return; }
   if (row) bajasAlumnos.unshift(row);
   closeModal(); showToast('Baja registrada', 'success'); refreshWindow('bajas');
 }
 async function eliminarBaja(id) {
-  const { error } = await _sb.from('bajas_alumnos').delete().eq('id', id);
-  if (error) { showToast('Error al eliminar', 'error'); return; }
+  const { error } = await _sb.rpc('staff_eliminar_baja', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
   const ix = bajasAlumnos.findIndex(b => b.id === id);
   if (ix >= 0) bajasAlumnos.splice(ix, 1);
   showToast('Baja eliminada (el alumno vuelve a aparecer como activo)', 'success'); refreshWindow('bajas');
@@ -2395,13 +2636,17 @@ async function guardarBorrador() {
   const rfc = document.getElementById('c-rfc')?.value;
   if (!rfc || !pu) { showToast('RFC del receptor y precio unitario son requeridos', 'error'); return; }
   const newId = 'LPI-' + new Date().getFullYear() + '-' + String(nextFacturaId).padStart(4,'0');
-  const { data: row, error } = await _sb.from('facturas').insert({
-    id: newId, alumno: document.querySelector('#c-alumno option:checked')?.text||'N/A',
-    tutor: document.getElementById('c-rnom')?.value||'',
-    rfc, razon: document.getElementById('c-rnom')?.value||'',
-    concepto: desc||'Colegiatura', monto: pu, estado:'Pendiente', folio_sat: null,
-    cp: document.getElementById('c-cprec')?.value||''
-  }).select().single();
+  const alumnoTexto = document.querySelector('#c-alumno option:checked')?.text||'N/A';
+  const alumnoRecF = alumnos.find(a => a.nombre === alumnoTexto);
+  const { data: row, error } = await _sb.rpc('staff_guardar_factura', {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+    p_id: newId, p_alumno: alumnoTexto,
+    p_tutor: document.getElementById('c-rnom')?.value||'',
+    p_rfc: rfc, p_razon: document.getElementById('c-rnom')?.value||'',
+    p_concepto: desc||'Colegiatura', p_monto: pu, p_estado:'Pendiente',
+    p_cp: document.getElementById('c-cprec')?.value||'',
+    p_alumno_id: alumnoRecF?.id||null, p_correo: alumnoRecF?.email||null
+  });
   if (error) { showToast('Error al guardar borrador: ' + error.message, 'error'); return; }
   if (row) { facturas.unshift({...row, folio: '-'}); nextFacturaId++; }
   showToast(`CFDI guardado como borrador: ${newId}`, 'warning');
@@ -2442,10 +2687,12 @@ async function confirmSubirCfdiTimbrado(id) {
     const xmlText = await xmlFile.text();
     let pdfBase64 = null;
     if (pdfFile) pdfBase64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(pdfFile); });
+    const fechaIso = new Date().toISOString().slice(0,10);
     const fechaHoy = new Date().toLocaleDateString('es-MX');
-    const { error } = await _sb.from('facturas').update({
-      estado:'Timbrada', folio_sat: folio, xml_cfdi: xmlText, pdf_cfdi: pdfBase64, fecha: fechaHoy
-    }).eq('id', id);
+    const { error } = await _sb.rpc('staff_timbrar_factura', {
+      p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+      p_id: id, p_folio_sat: folio, p_xml_cfdi: xmlText, p_pdf_cfdi: pdfBase64, p_fecha: fechaIso
+    });
     if (error) { showToast('Error al guardar CFDI: ' + error.message, 'error'); return; }
     Object.assign(f, { estado:'Timbrada', folio_sat: folio, folio, xml_cfdi: xmlText, pdf_cfdi: pdfBase64, fecha: fechaHoy });
     closeModal();
@@ -2453,7 +2700,7 @@ async function confirmSubirCfdiTimbrado(id) {
     if (f.correo) {
       const enviado = await notificarPortalPadre({email:f.correo, nombre:f.alumno}, 'Factura disponible',
         `Tu factura de "${f.concepto}" por ${fmtMoney(parseFloat(f.monto)||0)} ya está disponible. Entra a tu portal de padres, pestaña Factura, para descargarla.`);
-      if (enviado) await _sb.from('facturas').update({notificado:true}).eq('id', id);
+      if (enviado) await _sb.rpc('staff_marcar_notificada_factura', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
       showToast(enviado ? `Correo de aviso enviado a ${f.correo}` : 'No se pudo enviar el correo de aviso', enviado?'success':'warning');
     } else {
       showToast('CFDI guardado (sin correo del padre para notificar)', 'warning');
@@ -2550,7 +2797,7 @@ function cancelarFactura(id) {
 }
 
 async function confirmCancelarFactura(id) {
-  const { error } = await _sb.from('facturas').update({estado: 'Cancelada'}).eq('id', id);
+  const { error } = await _sb.rpc('staff_cancelar_factura', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
   if (error) { showToast('Error al cancelar factura', 'error'); return; }
   const f = facturas.find(x => x.id === id);
   if (f) { f.estado = 'Cancelada'; f.folio = (f.folio||'') + ' (CANC)'; }
@@ -2628,13 +2875,40 @@ function printHTML(title, bodyHTML) {
 //  CALIFICACIONES
 // ══════════════════════════════
 const estudiantesCalif = [];
-const materiasCalif = ['Español','Matemáticas','Inglés','Ciencias','Arte'];
-let currentGrupoCalif = '4°A Primaria', currentPeriodo = 'Periodo 2 (Abr–Jun)';
+const materiasCalif = ['Español','Matemáticas','Inglés','Ciencias','Arte']; // respaldo si aún no hay catálogo
+let currentGrupoCalif = '', currentPeriodo = '1er Trimestre';
 const savedGrades = {};
+// Materias reales del grupo (catálogo de Materias filtrado por nivel); respaldo a las básicas
+function materiasDeGrupo(grupo){
+  var g=GRUPOS_DEMO.find(function(x){return x.label===grupo;});
+  var niv=g?g.nivel:'';
+  var ms=[]; materiasData.forEach(function(m){ if((!niv||m.nivel===niv) && ms.indexOf(m.nombre)<0) ms.push(m.nombre); });
+  return ms.length?ms:materiasCalif.slice();
+}
+function alumnosDeGrupo(grupo){
+  var lista=alumnosVisibles().filter(function(a){ return ((a.grado||'')+' '+(a.nivel||'')).trim()===grupo; });
+  return lista.length?lista:[];
+}
+// Carga las calificaciones REALES del grupo+periodo desde Supabase y rearma la tabla
+async function cargarCalifGrupo(){
+  if(!currentGrupoCalif) currentGrupoCalif = primerGrupoPermitido();
+  var mats = materiasDeGrupo(currentGrupoCalif);
+  var lista = alumnosDeGrupo(currentGrupoCalif);
+  var porAlumno = {};
+  try{
+    var q = await _sb.rpc('staff_listar_calificaciones', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_grupo: currentGrupoCalif, p_periodo: currentPeriodo });
+    (q.data||[]).forEach(function(r){ if(!porAlumno[r.alumno_id]) porAlumno[r.alumno_id]={}; porAlumno[r.alumno_id][r.materia]=parseFloat(r.calificacion)||0; });
+  }catch(e){ console.warn('cargarCalifGrupo:',e); }
+  estudiantesCalif.length=0;
+  lista.forEach(function(a){
+    var reg = porAlumno[a.id]||{};
+    estudiantesCalif.push({ id:a.id, n:a.nombre, gs:mats.map(function(m){ return reg[m]!=null?reg[m]:0; }) });
+  });
+  try{ refreshWindow('calificaciones'); }catch(e){}
+}
 
 async function saveCalificaciones() {
-  const key = currentGrupoCalif + '|' + currentPeriodo;
-  savedGrades[key] = [];
+  const mats = materiasDeGrupo(currentGrupoCalif);
   const upsertRows = [];
   document.querySelectorAll('#grade-tbody tr').forEach(function(row) {
     const id = parseInt(row.dataset.id);
@@ -2642,39 +2916,21 @@ async function saveCalificaciones() {
     if (!est) return;
     const gs = Array.from(row.querySelectorAll('.grade-input')).map(function(i){return parseFloat(i.value)||0;});
     est.gs = gs;
-    savedGrades[key].push({id:id, nombre:est.n, gs:gs});
-    materiasCalif.forEach(function(materia, mi) {
-      upsertRows.push({alumno_id: id, grupo: currentGrupoCalif, periodo: currentPeriodo, materia: materia, calificacion: gs[mi]||0});
+    mats.forEach(function(materia, mi) {
+      upsertRows.push({alumno_id: id, materia: materia, calificacion: gs[mi]||0});
     });
   });
-  if (upsertRows.length) {
-    const { error } = await _sb.from('calificaciones').upsert(upsertRows, {onConflict: 'alumno_id,grupo,periodo,materia'});
-    if (error) { showToast('Error al guardar calificaciones: ' + error.message, 'error'); return; }
-  }
-  // ── Generar/registrar la CLAVE de acceso para padres ──
-  try {
-    const grupo = currentGrupoCalif, periodo = currentPeriodo, ciclo = '2024-2025';
-    let clave;
-    const q = await _sb.from('claves_padres').select('clave').eq('grupo', grupo).eq('periodo', periodo).eq('activa', true).limit(1);
-    if (q.data && q.data.length) { clave = q.data[0].clave; }
-    else {
-      clave = grupo.replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,6) + '-' + Math.random().toString(36).slice(2,5).toUpperCase();
-      const ins = await _sb.from('claves_padres').insert({ clave: clave, grupo: grupo, periodo: periodo, ciclo: ciclo, activa: true });
-      if (ins.error) throw ins.error;
-    }
-    openModal('Calificaciones publicadas',
-      '<div style="text-align:center;padding:6px 4px 14px">' +
-      '<i class="fas fa-check-circle" style="font-size:2.4rem;color:var(--green);margin-bottom:10px;display:block"></i>' +
-      '<div style="color:var(--gray);font-size:.86rem;margin-bottom:6px">Clave de acceso para los padres del grupo <b>' + grupo + '</b> · ' + periodo + ':</div>' +
-      '<div style="font-size:1.7rem;font-weight:800;letter-spacing:3px;color:var(--primary);background:#EAF1FB;padding:14px;border-radius:12px;margin:8px 0 14px;user-select:all">' + clave + '</div>' +
-      '<div style="color:var(--gray);font-size:.82rem;margin-bottom:16px">Entrégala a los padres del grupo. Con esta clave podrán ver las calificaciones de su hijo/a en el sitio web.</div>' +
-      '<button class="btn-save" onclick="closeModal()"><i class="fas fa-check"></i> Entendido</button></div>');
-  } catch(e) { console.warn('clave padres:', e); showToast('Calificaciones guardadas (la clave de padres no se pudo generar)', 'warning'); return; }
-  showToast('Calificaciones guardadas: ' + currentGrupoCalif + ' · ' + currentPeriodo, 'success');
+  if (!upsertRows.length) { showToast('No hay alumnos en este grupo', 'warning'); return; }
+  const { error } = await _sb.rpc('staff_guardar_calificaciones', {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+    p_grupo: currentGrupoCalif, p_periodo: currentPeriodo, p_filas: upsertRows
+  });
+  if (error) { showToast('Error al guardar calificaciones: ' + error.message, 'error'); return; }
+  showToast('Calificaciones guardadas: ' + currentGrupoCalif + ' · ' + currentPeriodo + '. Los padres ya las ven en su portal.', 'success');
 }
 function exportCalifExcel() {
   if (!estudiantesCalif.length) { showToast('No hay calificaciones para exportar','warning'); return; }
-  const headers = ['Alumno'].concat(materiasCalif).concat(['Promedio']);
+  const headers = ['Alumno'].concat(materiasDeGrupo(currentGrupoCalif)).concat(['Promedio']);
   const rows = estudiantesCalif.map(function(e) {
     const avg = e.gs.length ? (e.gs.reduce(function(a,b){return a+b;},0)/e.gs.length).toFixed(1) : '—';
     return [e.n].concat(e.gs).concat([avg]);
@@ -2683,7 +2939,7 @@ function exportCalifExcel() {
 }
 function exportCalifPDF() {
   if (!estudiantesCalif.length) { showToast('No hay calificaciones para exportar','warning'); return; }
-  const hdrs = '<th>Alumno</th>' + materiasCalif.map(function(m){return '<th>' + m + '</th>';}).join('') + '<th>Promedio</th>';
+  const hdrs = '<th>Alumno</th>' + materiasDeGrupo(currentGrupoCalif).map(function(m){return '<th>' + m + '</th>';}).join('') + '<th>Promedio</th>';
   const rows = estudiantesCalif.map(function(e) {
     const avg = e.gs.length ? (e.gs.reduce(function(a,b){return a+b;},0)/e.gs.length).toFixed(1) : '—';
     const cls = parseFloat(avg)>=9?'good':parseFloat(avg)>=7?'mid':'bad';
@@ -2737,7 +2993,7 @@ function enviarCalifIndividualWA(){
 //  ASISTENCIA
 // ══════════════════════════════
 const asistenciaRecords = [];
-let currentGrupoAsist = '4°A Primaria', currentFechaAsist = new Date().toISOString().split('T')[0];
+let currentGrupoAsist = '', currentFechaAsist = new Date().toISOString().split('T')[0];
 
 async function saveAsistencia() {
   const fechaISO = currentFechaAsist;
@@ -2749,10 +3005,13 @@ async function saveAsistencia() {
     const active = row.querySelector('.attend-btn.active');
     const estado = active ? active.dataset.state : 'A';
     datos[id] = estado;
-    upsertRows.push({alumno_id: id, grupo: currentGrupoAsist, fecha: fechaISO, estado: estado});
+    upsertRows.push({alumno_id: id, estado: estado});
   });
   if (upsertRows.length) {
-    const { error } = await _sb.from('asistencia').upsert(upsertRows, {onConflict: 'alumno_id,fecha'});
+    const { error } = await _sb.rpc('staff_guardar_asistencia', {
+      p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+      p_grupo: currentGrupoAsist, p_fecha: fechaISO, p_filas: upsertRows
+    });
     if (error) { showToast('Error al guardar asistencia: ' + error.message, 'error'); return; }
   }
   const idx = asistenciaRecords.findIndex(function(r){return r.fecha===fechaDisplay && r.grupo===currentGrupoAsist;});
@@ -2834,11 +3093,26 @@ function enviarAsistIndividualWA(){
 // ══════════════════════════════
 //  HORARIOS
 // ══════════════════════════════
-let currentGrupoHorario = '4°A Primaria';
+let currentGrupoHorario = '';
 const horarioFranjas = [['7:00','8:00'],['8:00','9:00'],['9:00','10:00'],['10:30','11:30'],['11:30','12:30'],['12:30','13:30']];
 const materiasList = ['','Español','Matemáticas','Inglés','Ciencias','Arte','Ed. Física','Historia','Geografía','Tecnología','Cambridge','Valores'];
 const materiaColors = {'Español':'#1B3D7A','Matemáticas':'#E8A020','Inglés':'#2ECC71','Ciencias':'#8E44AD','Arte':'#E84040','Ed. Física':'#16A085'};
-const scheduleData = {'Lunes':['','','','','',''],'Martes':['','','','','',''],'Miércoles':['','','','','',''],'Jueves':['','','','','',''],'Viernes':['','','','','','']};
+// scheduleData se declara mucho más arriba (junto a GRUPOS_DEMO / rebuildGrupos),
+// porque rebuildGrupos() la necesita antes de que se ejecute esta sección.
+function sdGrupo(){
+  if(!currentGrupoHorario) currentGrupoHorario = primerGrupoPermitido();
+  if(!scheduleData[currentGrupoHorario]) scheduleData[currentGrupoHorario]={};
+  return scheduleData[currentGrupoHorario];
+}
+// Materias disponibles para el horario: catálogo real del nivel del grupo + básicas
+function materiasListParaHorario(){
+  var g=GRUPOS_DEMO.find(function(x){return x.label===currentGrupoHorario;});
+  var niv=g?g.nivel:'';
+  var reales=materiasData.filter(function(m){ return !niv||m.nivel===niv; }).map(function(m){ return m.nombre; });
+  var todas=[''].concat(reales);
+  materiasList.forEach(function(m){ if(m&&todas.indexOf(m)<0) todas.push(m); });
+  return todas;
+}
 
 function renderHorarioTable() {
   const container = document.getElementById('horario-container');
@@ -2848,10 +3122,11 @@ function renderHorarioTable() {
   h += '<th style="padding:10px;background:#1B3D7A;color:white;font-size:.75rem;width:76px">Hora</th>';
   dias.forEach(function(d){h += '<th style="padding:10px;background:#1B3D7A;color:white;font-size:.75rem">' + d + '</th>';});
   h += '</tr></thead><tbody>';
+  const sd = sdGrupo();
   horarioFranjas.forEach(function(fr,i) {
     h += '<tr><td style="padding:7px;font-size:.72rem;color:var(--gray);text-align:center;font-weight:600;background:var(--off-white);white-space:nowrap;border-bottom:1px solid var(--border)">' + fr[0] + '<br>─<br>' + fr[1] + '</td>';
     dias.forEach(function(d) {
-      const mat = (scheduleData[d]||[])[i]||'';
+      const mat = (sd[d]||[])[i]||'';
       const bg = mat ? (materiaColors[mat]||'#1B3D7A') : '';
       if (mat) {
         h += '<td style="padding:4px;border-bottom:1px solid var(--border)"><div onclick="editHorarioCell(\'' + d + '\',' + i + ')" style="background:' + bg + ';color:white;border-radius:7px;padding:8px 6px;font-size:.76rem;font-weight:600;text-align:center;cursor:pointer">' + mat + '</div></td>';
@@ -2865,8 +3140,8 @@ function renderHorarioTable() {
   container.innerHTML = h;
 }
 function editHorarioCell(dia, idx) {
-  const actual = (scheduleData[dia]||[])[idx]||'';
-  const opts = materiasList.map(function(m){return '<option value="' + m + '"' + (m===actual?' selected':'') + '>' + (m||'— Vacío —') + '</option>';}).join('');
+  const actual = (sdGrupo()[dia]||[])[idx]||'';
+  const opts = materiasListParaHorario().map(function(m){return '<option value="' + m + '"' + (m===actual?' selected':'') + '>' + (m||'— Vacío —') + '</option>';}).join('');
   openModal('Editar · ' + dia + ' ' + horarioFranjas[idx][0] + '–' + horarioFranjas[idx][1],
     '<div class="form-group" style="margin-bottom:16px"><label>Materia</label><select id="h-mat" class="fw-select" style="width:100%">' + opts + '</select></div>' +
     '<div style="display:flex;gap:10px;justify-content:flex-end">' +
@@ -2874,20 +3149,23 @@ function editHorarioCell(dia, idx) {
     '<button class="btn-save" onclick="saveHorarioCell(\'' + dia + '\',' + idx + ')"><i class="fas fa-save"></i> Guardar</button></div>');
 }
 async function saveHorarioCell(dia, idx) {
-  if (!scheduleData[dia]) scheduleData[dia] = ['','','','','',''];
+  const sd = sdGrupo();
+  if (!sd[dia]) sd[dia] = ['','','','','',''];
   const materia = document.getElementById('h-mat').value;
-  scheduleData[dia][idx] = materia;
-  await _sb.from('horarios').upsert({grupo: currentGrupoHorario, dia: dia, franja: idx, materia: materia}, {onConflict: 'grupo,dia,franja'});
+  sd[dia][idx] = materia;
+  const rH = await _sb.rpc('staff_guardar_horario', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_grupo: currentGrupoHorario, p_dia: dia, p_franja: idx, p_materia: materia });
+  if (rH.error) { showToast('Error al guardar: '+rH.error.message,'error'); return; }
   closeModal(); renderHorarioTable();
   showToast('Horario actualizado: ' + dia + ' ' + horarioFranjas[idx][0], 'success');
 }
 function exportHorarioPDF() {
   const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
   let rows = '';
+  const sdPdf = sdGrupo();
   horarioFranjas.forEach(function(fr,i) {
     rows += '<tr><td style="font-size:10px;color:#888;text-align:center;background:#f8f9fb">' + fr[0] + '–' + fr[1] + '</td>';
     dias.forEach(function(d) {
-      const mat = (scheduleData[d]||[])[i]||'';
+      const mat = (sdPdf[d]||[])[i]||'';
       const bg = mat?(materiaColors[mat]||'#1B3D7A'):'';
       rows += mat ? '<td style="padding:5px"><div style="background:' + bg + ';color:white;border-radius:5px;padding:7px;font-size:11px;font-weight:600;text-align:center">' + mat + '</div></td>'
                   : '<td style="background:#fafafa"></td>';
@@ -2994,8 +3272,8 @@ async function confirmEnviarCom(id) {
   }
   closeModal();
   const fechaEnvio = new Date().toISOString();
-  const { error } = await _sb.from('comunicados').update({enviado: true, fecha_envio: fechaEnvio, canal_envio: 'Correo'}).eq('id', id);
-  if (error) { showToast('Error al actualizar el comunicado', 'error'); }
+  const { error } = await _sb.rpc('staff_marcar_enviado_comunicado', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id, p_canal: 'Correo' });
+  if (error) { showToast('Error al actualizar el comunicado: ' + error.message, 'error'); }
   c.enviado = true; c.fechaEnvio = new Date().toLocaleString('es-MX'); c.canalEnvio = 'Correo';
   refreshWindow('comunicados');
   if (alcance === 'individual') {
@@ -3107,9 +3385,10 @@ function lpiAsk(raw){
 
   // — Kardex / expediente de un alumno —
   if(has('kardex','expediente','historial de','ficha de','informacion de','datos de','muestrame a','dame el de','perfil de')){
+    if(!aiPuede('alumnos')) return aiSinPermiso('Alumnos');
     var al = aiFindAlumno(raw);
     if(al) return aiAlumnoDetalle(al);
-    return aiH('🔔 No encontré a ese alumno')+'<div style="font-size:.82rem;color:var(--gray)">Dime el nombre completo, por ejemplo: <b>kardex de Juan Pérez</b>. Hay '+alumnos.length+' alumnos registrados.</div>';
+    return aiH('🔔 No encontré a ese alumno')+'<div style="font-size:.82rem;color:var(--gray)">Dime el nombre completo, por ejemplo: <b>kardex de Juan Pérez</b>. Hay '+alumnosVisibles().length+' alumnos en tu alcance.</div>';
   }
 
   // — Adeudos / morosidad —
@@ -3155,13 +3434,15 @@ function lpiAsk(raw){
   }
 
   // — Búsqueda libre —
-  if(has('busca','buscar','encuentra','localiza')){
+  if(has('busca','buscar','encuentra','localiza') && aiPuede('alumnos')){
     var al2 = aiFindAlumno(raw);
     if(al2) return aiAlumnoDetalle(al2);
   }
   // intento final: ¿es un nombre de alumno?
-  var posible = aiFindAlumno(raw);
-  if(posible) return aiAlumnoDetalle(posible);
+  if(aiPuede('alumnos')){
+    var posible = aiFindAlumno(raw);
+    if(posible) return aiAlumnoDetalle(posible);
+  }
 
   // — Fallback —
   return aiH('🔔 No estoy seguro de haber entendido')+
@@ -3187,7 +3468,7 @@ function aiFindAlumno(raw){
   if(!toks.length) return null;
   // mejor coincidencia: máximo de tokens contenidos en el nombre
   var best=null, bestScore=0;
-  alumnos.forEach(function(a){
+  alumnosVisibles().forEach(function(a){
     var n = lpiNorm(a.nombre);
     var score = toks.filter(function(t){ return n.indexOf(t)>-1; }).length;
     if(score>bestScore){ bestScore=score; best=a; }
@@ -3223,8 +3504,9 @@ function aiAlumnoDetalle(a){
 }
 
 function aiAdeudos(){
-  var morosos = alumnos.filter(function(a){ return a.pago==='Vencido'; });
-  var pend = alumnos.filter(function(a){ return a.pago==='Pendiente'; });
+  if(!aiPuede('pagos')) return aiSinPermiso('Pagos y Cobranza');
+  var morosos = alumnosVisibles().filter(function(a){ return a.pago==='Vencido'; });
+  var pend = alumnosVisibles().filter(function(a){ return a.pago==='Pendiente'; });
   var pagosVenc = pagos.filter(function(p){ return p.estado==='Vencido'; });
   var totalVenc = pagosVenc.reduce(function(s,p){return s+p.monto;},0);
   if(!morosos.length && !pend.length && !pagosVenc.length){
@@ -3244,6 +3526,7 @@ function aiAdeudos(){
 }
 
 function aiPromedios(){
+  if(!aiPuede('calificaciones')) return aiSinPermiso('Calificaciones');
   var datos = (typeof estudiantesCalif!=='undefined') ? estudiantesCalif : [];
   var conNotas = datos.filter(function(e){ return e.gs && e.gs.some(function(g){return g>0;}); });
   if(!conNotas.length){
@@ -3261,8 +3544,10 @@ function aiPromedios(){
 }
 
 function aiAsistencia(){
-  var bajos = alumnos.filter(function(a){ var v=parseInt(a.asist); return !isNaN(v) && v<85; });
-  var prom = alumnos.length ? Math.round(alumnos.reduce(function(s,a){return s+(parseInt(a.asist)||0);},0)/alumnos.length) : 0;
+  if(!aiPuede('asistencia')) return aiSinPermiso('Asistencia');
+  var visibles = alumnosVisibles();
+  var bajos = visibles.filter(function(a){ var v=parseInt(a.asist); return !isNaN(v) && v<85; });
+  var prom = visibles.length ? Math.round(visibles.reduce(function(s,a){return s+(parseInt(a.asist)||0);},0)/visibles.length) : 0;
   var registros = (typeof asistenciaRecords!=='undefined') ? asistenciaRecords.length : 0;
   var html = aiH('📊 Asistencia institucional')+
     aiKpi(prom+'%','Promedio')+aiKpi(registros,'Días registrados')+aiKpi(bajos.length,'Bajo 85%');
@@ -3278,6 +3563,7 @@ function aiAsistencia(){
 }
 
 function aiFinanzas(){
+  if(!aiPuede('pagos')) return aiSinPermiso('Pagos y Cobranza');
   var cobrado = pagos.filter(function(p){return p.estado==='Pagado';}).reduce(function(a,b){return a+b.monto;},0);
   var pendiente = pagos.filter(function(p){return p.estado==='Pendiente';}).reduce(function(a,b){return a+b.monto;},0);
   var vencido = pagos.filter(function(p){return p.estado==='Vencido';}).reduce(function(a,b){return a+b.monto;},0);
@@ -3297,6 +3583,7 @@ function aiFinanzas(){
 }
 
 function aiFacturas(){
+  if(!aiPuede('facturacion')) return aiSinPermiso('Facturación CFDI');
   if(!facturas.length) return aiH('🔔 Sin facturas')+'<div style="font-size:.82rem;color:var(--gray)">No hay CFDI emitidos. Genera uno en el módulo <b>Facturación · CFDI 4.0</b>.</div>';
   var timbradas = facturas.filter(function(f){return f.estado==='Timbrada';});
   var montoT = timbradas.reduce(function(a,b){return a+(parseFloat(b.monto)||0);},0);
@@ -3308,15 +3595,18 @@ function aiFacturas(){
 }
 
 function aiMaestros(){
-  if(!maestros.length) return aiH('🔔 Sin maestros')+'<div style="font-size:.82rem;color:var(--gray)">Registra docentes en el módulo <b>Maestros</b>.</div>';
-  var activos = maestros.filter(function(m){return m.estado==='Activo';});
+  if(!aiPuede('maestros')) return aiSinPermiso('Maestros');
+  var vis = maestrosVisibles();
+  if(!vis.length) return aiH('🔔 Sin maestros')+'<div style="font-size:.82rem;color:var(--gray)">Registra docentes en el módulo <b>Maestros</b>.</div>';
+  var activos = vis.filter(function(m){return m.estado==='Activo';});
   return aiH('👩‍🏫 Plantilla docente')+
-    aiKpi(maestros.length,'Total')+aiKpi(activos.length,'Activos')+
+    aiKpi(vis.length,'Total')+aiKpi(activos.length,'Activos')+
     '<table><tr><th>Maestro</th><th>Materia</th><th>Nivel</th><th>Estado</th></tr>'+
-    maestros.slice(0,10).map(function(m){ return '<tr><td>'+m.nombre+'</td><td>'+(m.materia||'—')+'</td><td>'+(m.nivel||'—')+'</td><td>'+(m.estado||'—')+'</td></tr>'; }).join('')+'</table>';
+    vis.slice(0,10).map(function(m){ return '<tr><td>'+m.nombre+'</td><td>'+(m.materia||'—')+'</td><td>'+(m.nivel||'—')+'</td><td>'+(m.estado||'—')+'</td></tr>'; }).join('')+'</table>';
 }
 
 function aiComunicados(){
+  if(!aiPuede('comunicados')) return aiSinPermiso('Comunicados');
   if(!comunicados.length) return aiH('🔔 Sin comunicados')+'<div style="font-size:.82rem;color:var(--gray)">Crea avisos en el módulo <b>Comunicados y Avisos</b>.</div>';
   var enviados = comunicados.filter(function(c){return c.enviado;}).length;
   return aiH('📣 Comunicados')+
@@ -3326,18 +3616,22 @@ function aiComunicados(){
 }
 
 function aiAlumnosResumen(){
-  if(!alumnos.length) return aiH('🔔 Sin alumnos')+'<div style="font-size:.82rem;color:var(--gray)">Aún no hay alumnos registrados. Agrégalos en el módulo <b>Alumnos</b>.</div>';
+  if(!aiPuede('alumnos')) return aiSinPermiso('Alumnos');
+  var vis = alumnosVisibles();
+  if(!vis.length) return aiH('🔔 Sin alumnos')+'<div style="font-size:.82rem;color:var(--gray)">Aún no hay alumnos registrados. Agrégalos en el módulo <b>Alumnos</b>.</div>';
   var niveles = {Maternal:0,Preescolar:0,Primaria:0,Secundaria:0};
-  alumnos.forEach(function(a){ if(niveles[a.nivel]!=null) niveles[a.nivel]++; });
-  var alCorriente = alumnos.filter(function(a){return a.pago==='Al corriente';}).length;
-  return aiH('📋 Población estudiantil')+
-    aiKpi(alumnos.length,'Total')+aiKpi(alCorriente,'Al corriente')+aiKpi(alumnos.length-alCorriente,'Con adeudo')+
+  vis.forEach(function(a){ if(niveles[a.nivel]!=null) niveles[a.nivel]++; });
+  var alCorriente = vis.filter(function(a){return a.pago==='Pagado';}).length;
+  return aiH('📋 Población estudiantil'+(tieneTodasLasSecciones(currentUser)?'':' (tus niveles)'))+
+    aiKpi(vis.length,'Total')+aiKpi(alCorriente,'Al corriente')+aiKpi(vis.length-alCorriente,'Con adeudo')+
     '<table><tr><th>Nivel</th><th>Alumnos</th></tr>'+
-    Object.keys(niveles).map(function(n){ return '<tr><td>'+n+'</td><td><b>'+niveles[n]+'</b></td></tr>'; }).join('')+'</table>';
+    Object.keys(niveles).filter(function(n){return nivelPasaFiltro(n);}).map(function(n){ return '<tr><td>'+n+'</td><td><b>'+niveles[n]+'</b></td></tr>'; }).join('')+'</table>';
 }
 
 function aiAlumnosNivel(nivel){
-  var lista = alumnos.filter(function(a){ return a.nivel===nivel; });
+  if(!aiPuede('alumnos')) return aiSinPermiso('Alumnos');
+  if(!puedeVerNivel(currentUser, nivel)) return aiSinPermiso(nivel);
+  var lista = alumnosVisibles().filter(function(a){ return a.nivel===nivel; });
   if(!lista.length) return aiH('🔔 '+nivel)+'<div style="font-size:.82rem;color:var(--gray)">No hay alumnos registrados en '+nivel+'.</div>';
   return aiH('📋 '+nivel+' · '+lista.length+' alumno(s)')+
     '<table><tr><th>Alumno</th><th>Grado</th><th>Pago</th></tr>'+
@@ -3375,6 +3669,9 @@ function aiAppend(prefix, who, html){
   return wrap;
 }
 
+// El asistente respeta el mismo permiso/nivel que el resto del ERP.
+function aiPuede(key){ return esAdminUser(currentUser) || usuarioPuede(currentUser, key); }
+function aiSinPermiso(modulo){ return aiH('🔒 Sin acceso')+'<div style="font-size:.82rem;color:var(--gray)">Tu usuario no tiene permiso para consultar <b>'+modulo+'</b>. Pídele a Dirección que amplíe tu acceso si lo necesitas.</div>'; }
 function aiSend(prefix){
   var inp = document.getElementById('ai-input-'+prefix);
   if(!inp) return;
@@ -3412,7 +3709,277 @@ function aiToggleFab(){
 // ══════════════════════════════
 //  WINDOW CONFIGS
 // ══════════════════════════════
+// ══════════════════════════════════════════════════
+//  MÓDULOS NUEVOS (reestructuración jul 2026)
+//  Tareas · Materias · Cambridge · Eval. Cualitativas · Bitácora
+// ══════════════════════════════════════════════════
+const PERIODOS_LPI = ['1er Trimestre','2do Trimestre','3er Trimestre'];
+const AREAS_PREESCOLAR = ['Lenguaje y Comunicación','Pensamiento Matemático','Exploración y Comprensión del Mundo','Educación Socioemocional','Educación Física y Salud','Inglés'];
+const NIVELES_CAMBRIDGE = ['Pre A1 Starters','A1 Movers','A2 Flyers','A2 Key (KET)','B1 Preliminary (PET)'];
+function _yo(){ return (currentUser&&currentUser.nombre)||'Sistema'; }
+function _optAlumnos(filtroNivel){
+  return alumnosVisibles().filter(function(a){ return !filtroNivel || a.nivel===filtroNivel; })
+    .map(function(a){ return '<option value="'+a.id+'">'+cfgEsc(a.nombre)+' — '+a.nivel+' '+(a.grado||'')+'</option>'; }).join('');
+}
+
+// ── TAREAS ──
+function openAddTarea(){
+  openModal('Nueva tarea',
+    '<div class="form-group"><label>Título *</label><input id="t-titulo" type="text" placeholder="Ej. Lectura cap. 3 + resumen"></div>'+
+    '<div class="form-group"><label>Descripción</label><textarea id="t-desc" style="min-height:70px" placeholder="Instrucciones para el alumno"></textarea></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Grupo *</label><select id="t-grupo">'+opcionesGrupo()+'</select></div>'+
+    '<div class="form-group"><label>Materia</label><input id="t-materia" type="text" placeholder="Ej. Español" list="t-materias-list"><datalist id="t-materias-list">'+materiasData.map(function(m){return '<option value="'+cfgEsc(m.nombre)+'">';}).join('')+'</datalist></div>'+
+    '<div class="form-group"><label>Fecha de entrega *</label><input id="t-entrega" type="date"></div>'+
+    '</div>'+
+    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveTarea()"><i class="fas fa-check"></i> Guardar tarea</button></div>');
+}
+async function saveTarea(){
+  var titulo=document.getElementById('t-titulo').value.trim();
+  var grupo=document.getElementById('t-grupo').value;
+  var entrega=document.getElementById('t-entrega').value;
+  if(!titulo||!grupo||!entrega){ showToast('Título, grupo y fecha de entrega son obligatorios','error'); return; }
+  var g=GRUPOS_DEMO.find(function(x){return x.label===grupo;});
+  var r=await _sb.rpc('staff_guardar_tarea', { p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+    p_titulo: titulo, p_descripcion: document.getElementById('t-desc').value.trim(), p_materia: document.getElementById('t-materia').value.trim(),
+    p_nivel: (g?g.nivel:''), p_grupo: grupo, p_fecha_entrega: entrega });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  tareasData.push(r.data); closeModal(); refreshWindow('tareas'); showToast('Tarea creada','success');
+}
+async function eliminarTarea(id){
+  var r=await _sb.rpc('staff_eliminar_tarea', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  var ix=tareasData.findIndex(function(t){return t.id===id;}); if(ix>=0) tareasData.splice(ix,1);
+  refreshWindow('tareas'); showToast('Tarea eliminada','success');
+}
+function verCumplimiento(id){
+  var t=tareasData.find(function(x){return x.id===id;}); if(!t) return;
+  var grupoAl=alumnos.filter(function(a){ return (a.grado?(a.grado+' '+a.nivel):'').trim()===t.grupo || t.grupo.indexOf(a.nivel)>=0 && t.grupo.indexOf(a.grado||' ')>=0; });
+  if(!grupoAl.length) grupoAl=alumnosVisibles().filter(function(a){ return a.nivel===t.nivel; });
+  var estados=['Pendiente','Entregada','Tarde','No entregada'];
+  openModal('Cumplimiento · '+cfgEsc(t.titulo),
+    '<div style="font-size:.8rem;color:var(--gray);margin-bottom:12px">'+t.grupo+' · entrega '+(t.fecha_entrega||'—')+'</div>'+
+    (grupoAl.length?
+    '<table class="data-table"><thead><tr><th>Alumno</th><th>Estado</th></tr></thead><tbody>'+
+      grupoAl.map(function(a){
+        var c=tareasCumpl.find(function(x){return x.tarea_id===id && x.alumno_id===a.id;});
+        return '<tr><td>'+cfgEsc(a.nombre)+'</td><td><select data-alumno="'+a.id+'" class="cumpl-sel" style="padding:5px 8px;border-radius:7px;border:1.5px solid var(--border);font-family:Poppins,sans-serif;font-size:.78rem">'+
+          estados.map(function(e){return '<option'+((c?c.estado:'Pendiente')===e?' selected':'')+'>'+e+'</option>';}).join('')+'</select></td></tr>';
+      }).join('')+'</tbody></table>'
+    :'<div style="text-align:center;color:var(--gray);padding:16px;font-size:.85rem">No hay alumnos registrados en este grupo.</div>')+
+    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cerrar</button>'+(grupoAl.length?'<button class="btn-save" onclick="saveCumplimiento('+id+')"><i class="fas fa-check"></i> Guardar</button>':'')+'</div>');
+}
+async function saveCumplimiento(id){
+  var sels=document.querySelectorAll('.cumpl-sel'); var rows=[];
+  sels.forEach(function(s){ rows.push({tarea_id:id, alumno_id:parseInt(s.getAttribute('data-alumno')), estado:s.value}); });
+  var r=await _sb.rpc('staff_guardar_tareas_cumplimiento', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_filas: rows });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  rows.forEach(function(n){ var ix=tareasCumpl.findIndex(function(x){return x.tarea_id===n.tarea_id&&x.alumno_id===n.alumno_id;}); if(ix>=0) tareasCumpl[ix]=n; else tareasCumpl.push(n); });
+  closeModal(); refreshWindow('tareas'); showToast('Cumplimiento guardado','success');
+}
+
+// ── MATERIAS ──
+function openAddMateria(editId){
+  var m=editId?materiasData.find(function(x){return x.id===editId;}):null;
+  var nivs=nivelesPermitidos();
+  openModal(m?'Editar materia':'Nueva materia',
+    '<div class="form-group"><label>Nombre *</label><input id="m-nombre" type="text" value="'+(m?cfgEsc(m.nombre):'')+'" placeholder="Ej. Matemáticas"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Nivel *</label><select id="m-nivel">'+nivs.map(function(n){return '<option'+((m?m.nivel:'')===n?' selected':'')+'>'+n+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label>Grado / Grupo</label><input id="m-grupo" type="text" value="'+(m?cfgEsc(m.grupo||''):'')+'" placeholder="Ej. 1°B"></div>'+
+    '</div>'+
+    '<div class="form-group"><label>Docente</label><select id="m-docente"><option value="">— Sin asignar —</option>'+maestrosVisibles().map(function(x){return '<option'+((m?m.docente:'')===x.nombre?' selected':'')+'>'+cfgEsc(x.nombre)+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveMateria('+(editId||'null')+')"><i class="fas fa-check"></i> Guardar</button></div>');
+}
+async function saveMateria(id){
+  var nombre=document.getElementById('m-nombre').value.trim();
+  if(!nombre){ showToast('El nombre es obligatorio','error'); return; }
+  var r = await _sb.rpc('staff_guardar_materia', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id||null,
+    p_nombre: nombre, p_nivel: document.getElementById('m-nivel').value, p_grupo: document.getElementById('m-grupo').value.trim(), p_docente: document.getElementById('m-docente').value });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  if(id){ var ix=materiasData.findIndex(function(x){return x.id===id;}); if(ix>=0) materiasData[ix]=r.data; } else materiasData.push(r.data);
+  closeModal(); refreshWindow('materias'); showToast('Materia guardada','success');
+}
+async function eliminarMateria(id){
+  var r=await _sb.rpc('staff_eliminar_materia', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  var ix=materiasData.findIndex(function(x){return x.id===id;}); if(ix>=0) materiasData.splice(ix,1);
+  refreshWindow('materias'); showToast('Materia eliminada','success');
+}
+
+// ── CAMBRIDGE ──
+function openAddCambridge(){
+  openModal('Nuevo seguimiento Cambridge',
+    '<div class="form-group"><label>Alumno *</label><select id="cb-alumno">'+_optAlumnos()+'</select></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Nivel Cambridge *</label><select id="cb-nivel">'+NIVELES_CAMBRIDGE.map(function(n){return '<option>'+n+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label>Periodo</label><select id="cb-periodo">'+PERIODOS_LPI.map(function(p){return '<option>'+p+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label>Avance (%)</label><input id="cb-avance" type="number" min="0" max="100" value="0"></div>'+
+    '</div>'+
+    '<div class="form-group"><label>Observaciones</label><textarea id="cb-obs" style="min-height:70px" placeholder="Progreso, áreas a reforzar, fecha tentativa de examen..."></textarea></div>'+
+    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveCambridge()"><i class="fas fa-check"></i> Guardar</button></div>');
+}
+async function saveCambridge(){
+  var alumnoId=parseInt(document.getElementById('cb-alumno').value);
+  if(!alumnoId){ showToast('Selecciona un alumno','error'); return; }
+  var r=await _sb.rpc('staff_guardar_cambridge', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumnoId,
+    p_nivel_cambridge: document.getElementById('cb-nivel').value, p_periodo: document.getElementById('cb-periodo').value,
+    p_avance: Math.max(0,Math.min(100,parseInt(document.getElementById('cb-avance').value)||0)), p_observaciones: document.getElementById('cb-obs').value.trim() });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  cambridgeData.unshift(r.data); closeModal(); refreshWindow('cambridge'); showToast('Seguimiento guardado','success');
+}
+async function eliminarCambridge(id){
+  var r=await _sb.rpc('staff_eliminar_cambridge', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  var ix=cambridgeData.findIndex(function(x){return x.id===id;}); if(ix>=0) cambridgeData.splice(ix,1);
+  refreshWindow('cambridge'); showToast('Registro eliminado','success');
+}
+
+// ── EVALUACIONES CUALITATIVAS (Preescolar) ──
+function evalCualRender(){
+  var pre=alumnosVisibles().filter(function(a){ return a.nivel==='Preescolar' || a.nivel==='Maternal'; });
+  if(!pre.length) return '<div class="empty-state"><i class="fas fa-child-reaching"></i><p>No hay alumnos de Preescolar/Maternal visibles.</p><small>Registra alumnos de preescolar para capturar sus evaluaciones cualitativas.</small></div>';
+  return '<div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">'+
+    '<div class="form-group" style="margin:0;min-width:260px"><label>Alumno</label><select id="ec-alumno" onchange="evalCualLoad()">'+pre.map(function(a){return '<option value="'+a.id+'">'+cfgEsc(a.nombre)+' — '+a.nivel+' '+(a.grado||'')+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group" style="margin:0"><label>Periodo</label><select id="ec-periodo" onchange="evalCualLoad()">'+PERIODOS_LPI.map(function(p){return '<option>'+p+'</option>';}).join('')+'</select></div>'+
+    '</div><div id="ec-areas"></div>'+
+    '<div style="text-align:right;margin-top:12px"><button class="fw-btn-action" onclick="saveEvalCual()"><i class="fas fa-check"></i> Guardar evaluaciones</button></div>'+
+    '<script>setTimeout(evalCualLoad,50);<\/script>';
+}
+function evalCualLoad(){
+  var host=document.getElementById('ec-areas'); if(!host) return;
+  var alumnoId=parseInt((document.getElementById('ec-alumno')||{}).value||0);
+  var periodo=(document.getElementById('ec-periodo')||{}).value||PERIODOS_LPI[0];
+  host.innerHTML=AREAS_PREESCOLAR.map(function(area){
+    var ex=evalCualData.find(function(e){return e.alumno_id===alumnoId&&e.periodo===periodo&&e.area===area;});
+    return '<div class="form-group"><label style="color:var(--gold-dark)"><i class="fas fa-star" style="font-size:.7rem;margin-right:5px"></i>'+area+
+      (ex&&ex.creado_por?' <span style="font-weight:400;color:var(--gray);font-size:.68rem">· última captura: '+cfgEsc(ex.creado_por)+'</span>':'')+'</label>'+
+      '<textarea class="ec-nota" data-area="'+cfgEsc(area)+'" style="min-height:56px" placeholder="Observación cualitativa (no numérica)...">'+(ex?cfgEsc(ex.nota||''):'')+'</textarea></div>';
+  }).join('');
+}
+async function saveEvalCual(){
+  var alumnoId=parseInt(document.getElementById('ec-alumno').value);
+  var periodo=document.getElementById('ec-periodo').value;
+  var rows=[];
+  document.querySelectorAll('.ec-nota').forEach(function(t){ if(t.value.trim()) rows.push({alumno_id:alumnoId, periodo:periodo, area:t.getAttribute('data-area'), nota:t.value.trim()}); });
+  if(!rows.length){ showToast('Escribe al menos una observación','warning'); return; }
+  var r=await _sb.rpc('staff_guardar_evalcual', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_filas: rows });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  rows.forEach(function(n){ n.creado_por = _yo(); var ix=evalCualData.findIndex(function(x){return x.alumno_id===n.alumno_id&&x.periodo===n.periodo&&x.area===n.area;}); if(ix>=0) evalCualData[ix]=n; else evalCualData.unshift(n); });
+  showToast('Evaluaciones guardadas ('+rows.length+' áreas)','success');
+}
+
+// ── BITÁCORA / REPORTE DIARIO ──
+function openAddBitacora(){
+  openModal('Nuevo registro de bitácora',
+    '<div class="form-group"><label>Alumno *</label><select id="b-alumno">'+_optAlumnos()+'</select></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Tipo</label><select id="b-tipo" onchange="document.getElementById(\'b-diario\').style.display=this.value===\'Reporte diario\'?\'grid\':\'none\'"><option>Reporte diario</option><option>Mensaje</option><option>Observación</option></select></div>'+
+    '<div class="form-group"><label>Fecha</label><input id="b-fecha" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+    '</div>'+
+    '<div id="b-diario" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>🍽 Comida</label><select id="b-comida"><option></option><option>Comió todo</option><option>Comió bien</option><option>Comió poco</option><option>No quiso comer</option></select></div>'+
+    '<div class="form-group"><label>😴 Siesta</label><select id="b-siesta"><option></option><option>Durmió bien</option><option>Durmió poco</option><option>No durmió</option></select></div>'+
+    '<div class="form-group"><label>😊 Ánimo</label><select id="b-animo"><option></option><option>Feliz</option><option>Tranquilo</option><option>Inquieto</option><option>Sensible / lloró</option></select></div>'+
+    '</div>'+
+    '<div class="form-group"><label>Notas para los papás</label><textarea id="b-notas" style="min-height:70px" placeholder="Cómo estuvo su día, actividades, recordatorios..."></textarea></div>'+
+    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveBitacora()"><i class="fas fa-check"></i> Guardar</button></div>');
+}
+async function saveBitacora(){
+  var alumnoId=parseInt(document.getElementById('b-alumno').value);
+  if(!alumnoId){ showToast('Selecciona un alumno','error'); return; }
+  var r=await _sb.rpc('staff_guardar_bitacora', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumnoId,
+    p_tipo: document.getElementById('b-tipo').value, p_fecha: document.getElementById('b-fecha').value,
+    p_comida: document.getElementById('b-comida').value||null, p_siesta: document.getElementById('b-siesta').value||null,
+    p_animo: document.getElementById('b-animo').value||null, p_notas: document.getElementById('b-notas').value.trim()||null });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  bitacoraData.unshift(r.data); closeModal(); refreshWindow('bitacora'); showToast('Registro guardado','success');
+}
+async function eliminarBitacora(id){
+  var r=await _sb.rpc('staff_eliminar_bitacora', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  var ix=bitacoraData.findIndex(function(x){return x.id===id;}); if(ix>=0) bitacoraData.splice(ix,1);
+  refreshWindow('bitacora'); showToast('Registro eliminado','success');
+}
+
 const windowConfigs = {
+  tareas: {
+    title:'Tareas', icon:'<i class="fas fa-book-open"></i>', color:'#2C5FA8', w:860, h:540,
+    toolbar: '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar tarea..." oninput="filterTable(\'tareas-table\',this.value)" /></div>'+
+      '<button class="fw-btn-action" onclick="openAddTarea()"><i class="fas fa-plus"></i> Nueva tarea</button>',
+    content: function(){
+      var vis=tareasData.filter(function(t){ return nivelPasaFiltro(t.nivel); });
+      if(!vis.length) return '<div class="empty-state"><i class="fas fa-book-open"></i><p>No hay tareas asignadas.</p><small>Crea la primera con el botón "Nueva tarea".</small></div>';
+      return '<table class="data-table" id="tareas-table"><thead><tr><th>Tarea</th><th>Materia</th><th>Grupo</th><th>Entrega</th><th>Cumplimiento</th><th>Publicó</th><th>Acciones</th></tr></thead><tbody>'+
+        vis.map(function(t){
+          var cs=tareasCumpl.filter(function(c){return c.tarea_id===t.id;});
+          var done=cs.filter(function(c){return c.estado==='Entregada'||c.estado==='Tarde';}).length;
+          return '<tr data-id="'+t.id+'"><td style="max-width:220px"><b>'+cfgEsc(t.titulo)+'</b>'+(t.descripcion?'<div style="font-size:.72rem;color:var(--gray)">'+cfgEsc(t.descripcion).slice(0,80)+'</div>':'')+'</td>'+
+            '<td>'+cfgEsc(t.materia||'—')+'</td><td>'+nivelChip(t.nivel)+' <span style="font-size:.75rem">'+cfgEsc(t.grupo)+'</span></td>'+
+            '<td>'+(t.fecha_entrega||'—')+'</td><td><span class="chip '+(done&&done>=cs.length&&cs.length?'green':'orange')+'">'+done+(cs.length?('/'+cs.length):'')+' entregadas</span></td>'+
+            '<td style="font-size:.75rem;color:var(--gray)">'+cfgEsc(t.creado_por||'—')+'</td>'+
+            '<td><div class="action-icons"><button class="action-icon view" onclick="verCumplimiento('+t.id+')" title="Cumplimiento"><i class="fas fa-list-check"></i></button>'+
+            '<button class="action-icon del" onclick="eliminarTarea('+t.id+')" title="Eliminar"><i class="fas fa-trash"></i></button></div></td></tr>';
+        }).join('')+'</tbody></table>';
+    }
+  },
+  materias: {
+    title:'Materias', icon:'<i class="fas fa-book-bookmark"></i>', color:'#16A085', w:800, h:520,
+    toolbar: '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar materia..." oninput="filterTable(\'materias-table\',this.value)" /></div>'+
+      '<button class="fw-btn-action" style="background:#16A085" onclick="openAddMateria()"><i class="fas fa-plus"></i> Nueva materia</button>',
+    content: function(){
+      var vis=materiasData.filter(function(m){ return nivelPasaFiltro(m.nivel); });
+      if(!vis.length) return '<div class="empty-state"><i class="fas fa-book-bookmark"></i><p>No hay materias en el catálogo.</p><small>Crea la primera con el botón "Nueva materia" y asígnale docente.</small></div>';
+      return '<table class="data-table" id="materias-table"><thead><tr><th>Materia</th><th>Nivel</th><th>Grado/Grupo</th><th>Docente</th><th>Acciones</th></tr></thead><tbody>'+
+        vis.map(function(m){
+          return '<tr data-id="'+m.id+'"><td><b>'+cfgEsc(m.nombre)+'</b></td><td>'+nivelChip(m.nivel)+'</td><td>'+cfgEsc(m.grupo||'—')+'</td><td>'+cfgEsc(m.docente||'Sin asignar')+'</td>'+
+            '<td><div class="action-icons"><button class="action-icon edit" onclick="openAddMateria('+m.id+')" title="Editar"><i class="fas fa-pen"></i></button>'+
+            '<button class="action-icon del" onclick="eliminarMateria('+m.id+')" title="Eliminar"><i class="fas fa-trash"></i></button></div></td></tr>';
+        }).join('')+'</tbody></table>';
+    }
+  },
+  cambridge: {
+    title:'Cambridge · Seguimiento', icon:'<i class="fas fa-graduation-cap"></i>', color:'#8E44AD', w:880, h:540,
+    toolbar: '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar alumno..." oninput="filterTable(\'cambridge-table\',this.value)" /></div>'+
+      '<button class="fw-btn-action" style="background:#8E44AD" onclick="openAddCambridge()"><i class="fas fa-plus"></i> Nuevo seguimiento</button>',
+    content: function(){
+      var vis=cambridgeData.filter(function(c){ var al=alumnos.find(function(a){return a.id===c.alumno_id;}); return al?nivelPasaFiltro(al.nivel):true; });
+      if(!vis.length) return '<div class="empty-state"><i class="fas fa-graduation-cap"></i><p>Sin registros de seguimiento Cambridge.</p><small>Registra el avance de cada alumno hacia su certificación (Starters, Movers, Flyers, KET, PET).</small></div>';
+      return '<table class="data-table" id="cambridge-table"><thead><tr><th>Alumno</th><th>Nivel Cambridge</th><th>Periodo</th><th>Avance</th><th>Observaciones</th><th>Registró</th><th></th></tr></thead><tbody>'+
+        vis.map(function(c){
+          var al=alumnos.find(function(a){return a.id===c.alumno_id;});
+          return '<tr data-id="'+c.id+'"><td>'+(al?cfgEsc(al.nombre):('#'+c.alumno_id))+(al?' <div style="font-size:.7rem;color:var(--gray)">'+al.nivel+' '+(al.grado||'')+'</div>':'')+'</td>'+
+            '<td><span class="chip" style="background:rgba(142,68,173,.12);color:#8E44AD;font-weight:700">'+cfgEsc(c.nivel_cambridge)+'</span></td><td>'+cfgEsc(c.periodo||'—')+'</td>'+
+            '<td style="min-width:120px"><div style="background:var(--off-white);border-radius:50px;height:10px;overflow:hidden"><div style="width:'+(c.avance||0)+'%;height:100%;background:linear-gradient(90deg,#8E44AD,#B569D4)"></div></div><div style="font-size:.7rem;color:var(--gray);margin-top:2px">'+(c.avance||0)+'%</div></td>'+
+            '<td style="font-size:.78rem;max-width:200px">'+cfgEsc(c.observaciones||'—')+'</td><td style="font-size:.75rem;color:var(--gray)">'+cfgEsc(c.creado_por||'—')+'</td>'+
+            '<td><div class="action-icons"><button class="action-icon del" onclick="eliminarCambridge('+c.id+')" title="Eliminar"><i class="fas fa-trash"></i></button></div></td></tr>';
+        }).join('')+'</tbody></table>';
+    }
+  },
+  evalcual: {
+    title:'Evaluaciones Cualitativas', icon:'<i class="fas fa-child-reaching"></i>', color:'#E8A020', w:780, h:580,
+    content: function(){ return evalCualRender(); }
+  },
+  bitacora: {
+    title:'Bitácora / Reporte diario', icon:'<i class="fas fa-baby"></i>', color:'#E4707E', w:880, h:540,
+    toolbar: '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar alumno..." oninput="filterTable(\'bitacora-table\',this.value)" /></div>'+
+      '<button class="fw-btn-action" style="background:#E4707E" onclick="openAddBitacora()"><i class="fas fa-plus"></i> Nuevo registro</button>',
+    content: function(){
+      var vis=bitacoraData.filter(function(b){ var al=alumnos.find(function(a){return a.id===b.alumno_id;}); return al?nivelPasaFiltro(al.nivel):true; });
+      if(!vis.length) return '<div class="empty-state"><i class="fas fa-baby"></i><p>Sin registros de bitácora.</p><small>Registra el reporte diario (comida, siesta, ánimo) o mensajes para los papás.</small></div>';
+      return '<table class="data-table" id="bitacora-table"><thead><tr><th>Fecha</th><th>Alumno</th><th>Tipo</th><th>Día</th><th>Notas</th><th>Registró</th><th></th></tr></thead><tbody>'+
+        vis.map(function(b){
+          var al=alumnos.find(function(a){return a.id===b.alumno_id;});
+          var chips=[b.comida?('🍽 '+b.comida):null,b.siesta?('😴 '+b.siesta):null,b.animo?('😊 '+b.animo):null].filter(Boolean)
+            .map(function(x){return '<span class="chip" style="background:rgba(228,112,126,.1);color:#C0392B;margin:1px">'+cfgEsc(x)+'</span>';}).join(' ');
+          return '<tr data-id="'+b.id+'"><td style="white-space:nowrap">'+(b.fecha||'')+'</td><td>'+(al?cfgEsc(al.nombre):('#'+b.alumno_id))+(al?' <div style="font-size:.7rem;color:var(--gray)">'+al.nivel+'</div>':'')+'</td>'+
+            '<td><span class="chip '+(b.tipo==='Reporte diario'?'blue':b.tipo==='Mensaje'?'green':'orange')+'">'+cfgEsc(b.tipo)+'</span></td>'+
+            '<td style="max-width:220px">'+(chips||'—')+'</td><td style="font-size:.78rem;max-width:220px">'+cfgEsc(b.notas||'—')+'</td>'+
+            '<td style="font-size:.75rem;color:var(--gray)">'+cfgEsc(b.creado_por||'—')+'</td>'+
+            '<td><div class="action-icons"><button class="action-icon del" onclick="eliminarBitacora('+b.id+')" title="Eliminar"><i class="fas fa-trash"></i></button></div></td></tr>';
+        }).join('')+'</tbody></table>';
+    }
+  },
 
   asistente: {
     title:'Asistente IA', icon:'<i class="fas fa-robot"></i>', color:'var(--primary)', w:560, h:600,
@@ -3438,8 +4005,8 @@ const windowConfigs = {
 
   calificaciones: {
     title:'Calificaciones', icon:'<i class="fas fa-star-half-alt"></i>', color:'var(--purple)', w:940, h:540,
-    toolbar: function() { return '<select class="fw-select" onchange="currentGrupoCalif=this.value">' + opcionesGrupo() + '</select>' +
-      '<select class="fw-select" onchange="currentPeriodo=this.value"><option>Periodo 1 (Ene–Mar)</option><option selected>Periodo 2 (Abr–Jun)</option><option>Periodo 3 (Jul–Sep)</option></select>' +
+    toolbar: function() { return '<select class="fw-select" onchange="currentGrupoCalif=this.value;cargarCalifGrupo()">' + opcionesGrupo() + '</select>' +
+      '<select class="fw-select" onchange="currentPeriodo=this.value;cargarCalifGrupo()">' + PERIODOS_LPI.map(function(p){return '<option'+(p===currentPeriodo?' selected':'')+'>'+p+'</option>';}).join('') + '</select>' +
       '<button class="fw-btn-action" onclick="saveCalificaciones()"><i class="fas fa-save"></i> Guardar</button>' +
       '<button class="fw-btn-action" onclick="exportCalifPDF()"><i class="fas fa-file-pdf"></i> PDF</button>' +
       '<button class="fw-btn-action gold" onclick="exportCalifExcel()"><i class="fas fa-file-excel"></i> Excel</button>' +
@@ -3447,9 +4014,10 @@ const windowConfigs = {
       '<button class="fw-btn-action" style="background:#25D366" onclick="enviarCalifIndividualWA()"><i class="fab fa-whatsapp"></i> WhatsApp</button>' +
       '<button class="fw-btn-action" style="background:var(--gold)" onclick="enviarCalifGrupo()"><i class="fas fa-users"></i> Enviar a grupo</button>'; },
     content: function() {
-      if (!estudiantesCalif.length) return '<div class="empty-state"><i class="fas fa-star-half-alt"></i><p>No hay alumnos en este grupo.</p><small>Registra alumnos en el módulo de Alumnos primero.</small></div>';
+      if (!currentGrupoCalif) { setTimeout(cargarCalifGrupo, 30); return '<div style="text-align:center;color:var(--gray);padding:30px;font-size:.85rem">Cargando calificaciones...</div>'; }
+      if (!estudiantesCalif.length) return '<div class="empty-state"><i class="fas fa-star-half-alt"></i><p>No hay alumnos en el grupo ' + cfgEsc(currentGrupoCalif) + '.</p><small>Verifica que el campo Grado del expediente coincida con el grupo (ej. "1°A" + nivel), o registra alumnos primero.</small></div>';
       return '<div style="font-size:.76rem;color:var(--gray);margin-bottom:8px"><i class="fas fa-info-circle"></i> Marca el círculo de un alumno para enviarle la notificación de forma individual.</div>' +
-        '<table class="grade-table"><thead><tr><th></th><th>Alumno</th>' + materiasCalif.map(function(m){return '<th>' + m + '</th>';}).join('') + '<th>Promedio</th></tr></thead>' +
+        '<table class="grade-table"><thead><tr><th></th><th>Alumno</th>' + materiasDeGrupo(currentGrupoCalif).map(function(m){return '<th>' + m + '</th>';}).join('') + '<th>Promedio</th></tr></thead>' +
         '<tbody id="grade-tbody">' + estudiantesCalif.map(function(e) {
           const avg = e.gs.length ? (e.gs.reduce(function(a,b){return a+b;},0)/e.gs.length).toFixed(1) : '0.0';
           return '<tr data-id="' + e.id + '"><td><input type="radio" name="calif-sel" value="' + e.id + '" /></td><td><span class="td-avatar">' + initials(e.n) + '</span>' + e.n + '</td>' +
@@ -3462,7 +4030,7 @@ const windowConfigs = {
   asistencia: {
     title:'Asistencia', icon:'<i class="fas fa-clipboard-check"></i>', color:'var(--green)', w:760, h:560,
     toolbar: function() { return '<input type="date" class="fw-select" value="' + new Date().toISOString().split('T')[0] + '" onchange="currentFechaAsist=this.value" />' +
-      '<select class="fw-select" onchange="currentGrupoAsist=this.value">' + opcionesGrupo() + '</select>' +
+      '<select class="fw-select" onchange="currentGrupoAsist=this.value;refreshWindow(\'asistencia\')">' + opcionesGrupo() + '</select>' +
       '<button class="fw-btn-action green" onclick="saveAsistencia()"><i class="fas fa-save"></i> Guardar</button>' +
       '<button class="fw-btn-action" onclick="exportAsistenciaPDF()"><i class="fas fa-file-pdf"></i> PDF</button>' +
       '<button class="fw-btn-action gold" onclick="exportAsistenciaExcel()"><i class="fas fa-file-excel"></i> Excel</button>' +
@@ -3470,7 +4038,9 @@ const windowConfigs = {
       '<button class="fw-btn-action" style="background:#25D366" onclick="enviarAsistIndividualWA()"><i class="fab fa-whatsapp"></i> WhatsApp</button>' +
       '<button class="fw-btn-action" style="background:var(--gold)" onclick="enviarAsistGrupo()"><i class="fas fa-users"></i> Enviar a grupo</button>'; },
     content: function() {
-      const listaAsist = alumnosVisibles();
+      if(!currentGrupoAsist) currentGrupoAsist = primerGrupoPermitido();
+      var listaAsist = alumnosDeGrupo(currentGrupoAsist);
+      if (!listaAsist.length) listaAsist = alumnosVisibles();
       if (!listaAsist.length) return '<div class="empty-state"><i class="fas fa-clipboard-check"></i><p>No hay alumnos registrados.</p><small>Registra alumnos en el módulo de Alumnos primero.</small></div>';
       const lastRecord = asistenciaRecords.find(function(r){return r.grupo===currentGrupoAsist;});
       const saved = lastRecord ? lastRecord.datos : {};
@@ -3642,8 +4212,7 @@ const windowConfigs = {
 
   reportes: {
     title:'Reportes', icon:'<i class="fas fa-chart-bar"></i>', color:'var(--purple)', w:780, h:510,
-    toolbar: '<select class="fw-select"><option>Junio 2025</option><option>Mayo 2025</option><option>Abril 2025</option></select>' +
-      '<button class="fw-btn-action" onclick="exportReportePDF()"><i class="fas fa-file-pdf"></i> Reporte PDF</button>' +
+    toolbar: '<button class="fw-btn-action" onclick="exportReportePDF()"><i class="fas fa-file-pdf"></i> Reporte PDF</button>' +
       '<button class="fw-btn-action gold" onclick="exportReporteExcel()"><i class="fas fa-file-excel"></i> Alumnos CSV</button>' +
       '<button class="fw-btn-action teal" onclick="exportPagosExcel()"><i class="fas fa-coins"></i> Pagos CSV</button>',
     content: function() {
@@ -3674,8 +4243,23 @@ const windowConfigs = {
   },
 
   config: {
-    title:'Configuración · Usuarios y Roles', icon:'<i class="fas fa-cog"></i>', color:'var(--gray)', w:980, h:640,
-    content: function() { return `
+    title:'Configuración', icon:'<i class="fas fa-cog"></i>', color:'var(--gray)', w:980, h:640,
+    content: function() {
+      var esAdminTotal = currentUser && (esAdminUser(currentUser) || (currentUser.acceso||[]).indexOf('__all__')>=0);
+      if (!esAdminTotal) {
+        // Cualquier otro rol solo ve su propio perfil, nunca usuarios/respaldos/etc.
+        var u = currentUser||{};
+        return '<div class="dash-card" style="max-width:480px;margin:10px auto;padding:24px;text-align:center">'+
+          '<div style="width:64px;height:64px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;margin:0 auto 14px">'+initials(u.nombre||'')+'</div>'+
+          '<div style="font-weight:700;font-size:1.05rem;color:var(--primary-dark)">'+cfgEsc(u.nombre||'')+'</div>'+
+          '<div style="color:var(--gray);font-size:.85rem;margin-bottom:14px">'+cfgEsc(u.rol||'')+'</div>'+
+          '<div style="text-align:left;border-top:1px solid var(--border);padding-top:14px;font-size:.82rem">'+
+          '<div style="margin-bottom:8px"><b>Usuario:</b> '+cfgEsc(u.usuario||'')+'</div>'+
+          '<div style="margin-bottom:8px"><b>Niveles:</b> '+(nivelesPermitidos().join(', ')||'—')+'</div>'+
+          '<div><b>Módulos con acceso:</b> '+((u.acceso||[]).map(function(k){var m=MODULES.find(function(x){return x.key===k;});return m?m.name:k;}).join(', ')||'—')+'</div>'+
+          '</div><div style="font-size:.74rem;color:var(--gray);margin-top:16px"><i class="fas fa-info-circle"></i> Para cambiar tu contraseña o datos, pide a Dirección que lo actualice en Usuarios y Roles.</div></div>';
+      }
+      return `
       <div class="cfg-tabs" id="cfg-tabs2">
         <div class="cfg-tab active" onclick="cfgTab('usuarios',this)"><i class="fas fa-users-cog"></i> Usuarios y Roles</div>
         <div class="cfg-tab" onclick="cfgTab('niveles',this)"><i class="fas fa-layer-group"></i> Niveles</div>
@@ -3692,8 +4276,7 @@ const windowConfigs = {
   // ════════ ESTADÍSTICAS E INDICADORES ════════
   estadisticas: {
     title:'Estadísticas e Indicadores', icon:'<i class="fas fa-chart-line"></i>', color:'var(--primary)', w:900, h:560,
-    toolbar: '<select class="fw-select"><option>Ciclo 2024-2025</option><option>Ciclo 2023-2024</option></select>' +
-      '<button class="fw-btn-action" onclick="exportReportePDF()"><i class="fas fa-file-pdf"></i> PDF</button>' +
+    toolbar: '<button class="fw-btn-action" onclick="exportReportePDF()"><i class="fas fa-file-pdf"></i> PDF</button>' +
       '<button class="fw-btn-action gold" onclick="exportReporteExcel()"><i class="fas fa-file-excel"></i> Excel</button>',
     content: function() { return renderEstadisticas(); }
   },
@@ -3799,7 +4382,7 @@ function renderEstadisticas(){
   var totalA = alumnos.length;
   var porNivel = {Maternal:0,Preescolar:0,Primaria:0,Secundaria:0};
   alumnos.forEach(function(a){ if(porNivel[a.nivel]!=null) porNivel[a.nivel]++; });
-  var alCorriente = alumnos.filter(function(a){return a.pago==='Al corriente';}).length;
+  var alCorriente = alumnos.filter(function(a){return a.pago==='Pagado';}).length;
   var morosos = alumnos.filter(function(a){return a.pago==='Vencido';}).length;
   var cobrado = pagos.filter(function(p){return p.estado==='Pagado';}).reduce(function(a,b){return a+b.monto;},0);
   var pendiente = pagos.filter(function(p){return p.estado!=='Pagado';}).reduce(function(a,b){return a+b.monto;},0);
@@ -3821,7 +4404,7 @@ function renderEstadisticas(){
       '<div style="height:14px;background:var(--off-white);border-radius:8px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:8px;transition:width .8s"></div></div></div>';
   }).join('');
 
-  return modBanner('fa-chart-line','#1B3D7A','Indicadores Institucionales · Ciclo 2024-2025','Datos en vivo desde la base de datos',[[totalA,'Alumnos'],[efic+'%','Cobranza'],[asistProm+'%','Asistencia']]) +
+  return modBanner('fa-chart-line','#1B3D7A','Indicadores Institucionales · Ciclo ' + _cicloEscolar,'Datos en vivo desde la base de datos',[[totalA,'Alumnos'],[efic+'%','Cobranza'],[asistProm+'%','Asistencia']]) +
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px">' +
     kpis.map(function(k){
       return '<div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px">' +
@@ -3834,7 +4417,7 @@ function renderEstadisticas(){
     '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:.85rem">Cobrado</span><span style="font-weight:700;color:var(--green)">' + moneyMX(cobrado) + '</span></div>' +
     '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:.85rem">Por cobrar</span><span style="font-weight:700;color:var(--orange)">' + moneyMX(pendiente) + '</span></div>' +
     '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:.85rem">Facturas timbradas</span><span style="font-weight:700">' + facturas.filter(function(f){return f.estado==='Timbrada';}).length + '</span></div>' +
-    '<div style="display:flex;justify-content:space-between;padding:10px 0"><span style="font-size:.85rem">Tasa de retención</span><span style="font-weight:700;color:var(--primary)">98%</span></div>' +
+    '<div style="display:flex;justify-content:space-between;padding:10px 0"><span style="font-size:.85rem">Tasa de retención</span><span style="font-weight:700;color:var(--primary)">' + ((alumnos.length+bajasAlumnos.length)>0 ? Math.round(alumnos.length/(alumnos.length+bajasAlumnos.length)*100) : 100) + '%</span></div>' +
     '</div></div>';
 }
 
@@ -3872,8 +4455,8 @@ async function saveInscripcion(){
   var n = document.getElementById('if-alumno').value.trim();
   if(!n){ showToast('El nombre es obligatorio','error'); return; }
   var g=function(id){ var e=document.getElementById(id); return e?e.value:''; };
-  var payload={ alumno:n, nivel:g('if-nivel'), grado:g('if-grado')||'1°', tutor:g('if-tutor')||'—', tel:g('if-tel'), email:g('if-email'), estado:'Preinscrito', fecha:new Date().toISOString().split('T')[0] };
-  var r = await _sb.from('inscripciones').insert(payload).select().single();
+  var fechaHoy = new Date().toISOString().split('T')[0];
+  var r = await _sb.rpc('staff_guardar_inscripcion', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno:n, p_nivel:g('if-nivel'), p_grado:g('if-grado')||'1°', p_tutor:g('if-tutor')||'—', p_tel:g('if-tel'), p_email:g('if-email'), p_estado:'Preinscrito', p_notas:'', p_fecha: fechaHoy });
   if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
   inscripcionesData.unshift(r.data);
   closeModal(); refreshWindow('inscripciones'); showToast('Solicitud registrada','success');
@@ -3885,41 +4468,21 @@ async function avanzarInscripcion(id){
   var nuevo;
   if(i.estado==='Lista de espera'){ nuevo='Preinscrito'; }
   else { var idx=orden.indexOf(i.estado); if(idx<orden.length-1){ nuevo=orden[idx+1]; } else { showToast('Ya está inscrito','warning'); return; } }
-  var r = await _sb.from('inscripciones').update({estado:nuevo}).eq('id',id);
+  var r = await _sb.rpc('staff_actualizar_estado_inscripcion', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id, p_estado: nuevo });
   if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
   i.estado=nuevo;
   refreshWindow('inscripciones'); showToast('Estado actualizado: ' + nuevo,'success');
 }
 async function delInscripcion(id){
-  var r = await _sb.from('inscripciones').delete().eq('id',id);
+  var r = await _sb.rpc('staff_eliminar_inscripcion', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
   if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
   inscripcionesData = inscripcionesData.filter(function(x){return x.id!==id;});
   refreshWindow('inscripciones'); showToast('Solicitud eliminada','error');
 }
 
 // ─────────── ESTRUCTURA ACADÉMICA ───────────
-var ciclosData = [
-  { ciclo:'2024-2025', inicio:'19/08/2024', fin:'11/07/2025', periodos:'Cuatrimestral', estado:'Vigente' },
-  { ciclo:'2023-2024', inicio:'21/08/2023', fin:'12/07/2024', periodos:'Cuatrimestral', estado:'Cerrado' }
-];
-var materiasAcad = [
-  { clave:'ESP', nombre:'Español', tipo:'Obligatoria', creditos:8 },
-  { clave:'MAT', nombre:'Matemáticas', tipo:'Obligatoria', creditos:8 },
-  { clave:'ENG', nombre:'Inglés Cambridge', tipo:'Obligatoria', creditos:10 },
-  { clave:'CIE', nombre:'Ciencias', tipo:'Obligatoria', creditos:6 },
-  { clave:'HIS', nombre:'Historia', tipo:'Obligatoria', creditos:5 },
-  { clave:'ART', nombre:'Arte', tipo:'Optativa', creditos:3 },
-  { clave:'EDF', nombre:'Educación Física', tipo:'Obligatoria', creditos:4 },
-  { clave:'ROB', nombre:'Robótica', tipo:'Optativa', creditos:4 }
-];
-var gruposAcad = [
-  { grupo:'1°A', nivel:'Primaria', turno:'Matutino', cupo:25, inscritos:22, aula:'A-101' },
-  { grupo:'4°A', nivel:'Primaria', turno:'Matutino', cupo:25, inscritos:24, aula:'A-104' },
-  { grupo:'6°A', nivel:'Primaria', turno:'Matutino', cupo:25, inscritos:20, aula:'A-106' },
-  { grupo:'1°B', nivel:'Secundaria', turno:'Matutino', cupo:30, inscritos:28, aula:'B-201' },
-  { grupo:'3°A', nivel:'Secundaria', turno:'Matutino', cupo:30, inscritos:26, aula:'B-203' }
-];
-var nextMatIdx = 0;
+// Estructura Académica: TODO con datos reales (materias del catálogo,
+// grupos derivados de alumnos, ciclo desde Configuración).
 function previewLogo(input){
   var f = input.files && input.files[0];
   if(!f) return;
@@ -3954,66 +4517,50 @@ function switchAcadTab(tab, el){
   var panel = document.getElementById('acadp-' + tab); if(panel) panel.classList.add('active');
 }
 function renderAcadCiclos(){
-  return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="cfg-group-title" style="margin:0"><i class="fas fa-calendar-day"></i> Ciclos escolares</div><button class="fw-btn-action" onclick="showToast(\'Configura el ciclo en Configuración → Académico\',\'warning\')"><i class="fas fa-plus"></i> Nuevo ciclo</button></div>' +
-    '<table class="data-table"><thead><tr><th>Ciclo</th><th>Inicio</th><th>Fin</th><th>Periodos</th><th>Estado</th></tr></thead><tbody>' +
-    ciclosData.map(function(c){ return '<tr><td style="font-weight:600">' + c.ciclo + '</td><td>' + c.inicio + '</td><td>' + c.fin + '</td><td>' + c.periodos + '</td><td>' + statChip(c.estado, c.estado==='Vigente'?'green':'') + '</td></tr>'; }).join('') +
-    '</tbody></table>' +
-    '<div style="margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">' +
-    [['Periodo 1','Ago–Nov'],['Periodo 2','Dic–Mar'],['Periodo 3','Abr–Jul'],['Evaluación','Final']].map(function(p){
-      return '<div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-weight:700;color:var(--primary)">' + p[0] + '</div><div style="font-size:.74rem;color:var(--gray)">' + p[1] + '</div></div>';
+  return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="cfg-group-title" style="margin:0"><i class="fas fa-calendar-day"></i> Ciclo escolar vigente</div><button class="fw-btn-action" onclick="editarCicloEscolar()"><i class="fas fa-pen"></i> Cambiar ciclo</button></div>' +
+    '<div style="border:1.5px solid var(--border);border-radius:12px;padding:22px;text-align:center;margin-bottom:16px">' +
+    '<div style="font-size:1.8rem;font-weight:800;color:var(--primary)">' + cfgEsc(_cicloEscolar) + '</div>' +
+    '<div style="font-size:.8rem;color:var(--gray);margin-top:4px">Este ciclo se usa en boletas, constancias y reportes</div></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">' +
+    PERIODOS_LPI.map(function(p){
+      return '<div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;text-align:center"><div style="font-weight:700;color:var(--primary)">' + p + '</div><div style="font-size:.74rem;color:var(--gray)">Periodo de evaluación</div></div>';
     }).join('') + '</div>';
 }
+function editarCicloEscolar(){
+  openModal('Cambiar ciclo escolar',
+    '<div class="form-group"><label>Ciclo escolar *</label><input id="ciclo-input" type="text" value="'+cfgEsc(_cicloEscolar)+'" placeholder="Ej: 2026-2027"></div>'+
+    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveCicloEscolar()"><i class="fas fa-check"></i> Guardar</button></div>');
+}
+async function saveCicloEscolar(){
+  var v=document.getElementById('ciclo-input').value.trim();
+  if(!v){ showToast('Escribe el ciclo (ej. 2026-2027)','error'); return; }
+  var r=await _sb.rpc('staff_set_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave:'ciclo_escolar', p_valor:v });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  _cicloEscolar=v; closeModal(); refreshWindow('academico'); showToast('Ciclo escolar actualizado: '+v,'success');
+}
 function renderAcadMaterias(){
-  return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="cfg-group-title" style="margin:0"><i class="fas fa-book-open"></i> Catálogo de materias</div><button class="fw-btn-action" onclick="openAddMateria()"><i class="fas fa-plus"></i> Nueva materia</button></div>' +
-    '<table class="data-table" id="materias-acad-table"><thead><tr><th>Clave</th><th>Materia</th><th>Tipo</th><th>Créditos</th></tr></thead><tbody>' +
-    materiasAcad.map(function(m){ return '<tr><td><span style="font-family:monospace;background:var(--off-white);padding:3px 8px;border-radius:6px">' + m.clave + '</span></td><td style="font-weight:600">' + m.nombre + '</td><td>' + statChip(m.tipo, m.tipo==='Obligatoria'?'blue':'orange') + '</td><td>' + m.creditos + '</td></tr>'; }).join('') +
-    '</tbody></table>';
-}
-function openAddMateria(){
-  openModal('Nueva materia',
-    '<div class="fw-form">' +
-    '<div class="form-group"><label>Clave *</label><input id="mf-clave" type="text" placeholder="Ej: MAT" maxlength="5" oninput="this.value=this.value.toUpperCase()" /></div>' +
-    '<div class="form-group"><label>Nombre *</label><input id="mf-nombre" type="text" placeholder="Nombre de la materia" /></div>' +
-    '<div class="form-group"><label>Tipo</label><select id="mf-tipo"><option>Obligatoria</option><option>Optativa</option></select></div>' +
-    '<div class="form-group"><label>Créditos</label><input id="mf-creditos" type="number" value="5" min="1" max="12" /></div>' +
-    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveMateria()">Guardar materia</button></div></div>');
-}
-function saveMateria(){
-  var c = document.getElementById('mf-clave').value.trim(), n = document.getElementById('mf-nombre').value.trim();
-  if(!c||!n){ showToast('Clave y nombre son obligatorios','error'); return; }
-  materiasAcad.push({ clave:c, nombre:n, tipo:document.getElementById('mf-tipo').value, creditos:parseInt(document.getElementById('mf-creditos').value)||5 });
-  closeModal(); refreshWindow('academico');
-  setTimeout(function(){ var t=document.querySelector('#acad-tabs .cfg-tab:nth-child(2)'); if(t) switchAcadTab('materias',t); },0);
-  showToast('Materia agregada','success');
+  // Usa el catálogo REAL de materias (mismo del módulo Materias)
+  return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="cfg-group-title" style="margin:0"><i class="fas fa-book-open"></i> Catálogo de materias (real)</div><button class="fw-btn-action" onclick="openAddMateria()"><i class="fas fa-plus"></i> Nueva materia</button></div>' +
+    (materiasData.length ?
+    '<table class="data-table" id="materias-acad-table"><thead><tr><th>Materia</th><th>Nivel</th><th>Grado/Grupo</th><th>Docente</th></tr></thead><tbody>' +
+    materiasData.map(function(m){ return '<tr><td style="font-weight:600">' + cfgEsc(m.nombre) + '</td><td>' + nivelChip(m.nivel) + '</td><td>' + cfgEsc(m.grupo||'—') + '</td><td>' + cfgEsc(m.docente||'Sin asignar') + '</td></tr>'; }).join('') +
+    '</tbody></table>'
+    : cfgEmpty('Aún no hay materias. Créalas aquí o en el módulo Materias; se usan en horarios y calificaciones.'));
 }
 function renderAcadGrupos(){
-  return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="cfg-group-title" style="margin:0"><i class="fas fa-layer-group"></i> Grupos del ciclo</div><button class="fw-btn-action" onclick="openAddGrupo()"><i class="fas fa-plus"></i> Nuevo grupo</button></div>' +
-    '<table class="data-table"><thead><tr><th>Grupo</th><th>Nivel</th><th>Turno</th><th>Ocupación</th><th>Aula</th></tr></thead><tbody>' +
-    gruposAcad.map(function(g){
-      var pct = Math.round(g.inscritos/g.cupo*100);
-      var col = pct>=95?'var(--red)':pct>=80?'var(--orange)':'var(--green)';
-      return '<tr><td style="font-weight:700;color:var(--primary)">' + g.grupo + '</td><td>' + g.nivel + '</td><td>' + g.turno + '</td>' +
-        '<td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:8px;background:var(--off-white);border-radius:6px;overflow:hidden;min-width:60px"><div style="height:100%;width:' + pct + '%;background:' + col + '"></div></div><span style="font-size:.76rem;color:var(--gray)">' + g.inscritos + '/' + g.cupo + '</span></div></td>' +
-        '<td>' + g.aula + '</td></tr>';
-    }).join('') + '</tbody></table>';
-}
-function openAddGrupo(){
-  openModal('Nuevo grupo',
-    '<div class="fw-form">' +
-    '<div class="form-group"><label>Nombre del grupo *</label><input id="gf-grupo" type="text" placeholder="Ej: 2°A" /></div>' +
-    '<div class="form-group"><label>Nivel</label><select id="gf-nivel">' + ['Maternal','Preescolar','Primaria','Secundaria'].map(function(n){return '<option>'+n+'</option>';}).join('') + '</select></div>' +
-    '<div class="form-group"><label>Turno</label><select id="gf-turno"><option>Matutino</option><option>Vespertino</option></select></div>' +
-    '<div class="form-group"><label>Cupo máximo</label><input id="gf-cupo" type="number" value="25" /></div>' +
-    '<div class="form-group"><label>Aula</label><input id="gf-aula" type="text" placeholder="Ej: A-102" /></div>' +
-    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveGrupo()">Crear grupo</button></div></div>');
-}
-function saveGrupo(){
-  var g = document.getElementById('gf-grupo').value.trim();
-  if(!g){ showToast('El nombre del grupo es obligatorio','error'); return; }
-  gruposAcad.push({ grupo:g, nivel:document.getElementById('gf-nivel').value, turno:document.getElementById('gf-turno').value, cupo:parseInt(document.getElementById('gf-cupo').value)||25, inscritos:0, aula:document.getElementById('gf-aula').value||'—' });
-  closeModal(); refreshWindow('academico');
-  setTimeout(function(){ var t=document.querySelector('#acad-tabs .cfg-tab:nth-child(3)'); if(t) switchAcadTab('grupos',t); },0);
-  showToast('Grupo creado','success');
+  // Grupos REALES derivados de los alumnos registrados (grado + nivel)
+  var grupos = GRUPOS_DEMO.map(function(g){
+    var n = alumnos.filter(function(a){ return ((a.grado||'')+' '+(a.nivel||'')).trim()===g.label; }).length;
+    return { grupo:g.label, nivel:g.nivel, inscritos:n };
+  });
+  return '<div class="cfg-group-title"><i class="fas fa-layer-group"></i> Grupos del ciclo (derivados de los alumnos registrados)</div>' +
+    '<div style="font-size:.78rem;color:var(--gray);margin-bottom:12px">Un grupo aparece automáticamente cuando registras alumnos con ese Grado y Nivel en su expediente. Para crear un grupo nuevo, registra a sus alumnos con ese grado.</div>' +
+    (grupos.length ?
+    '<table class="data-table"><thead><tr><th>Grupo</th><th>Nivel</th><th>Alumnos inscritos</th></tr></thead><tbody>' +
+    grupos.map(function(g){
+      return '<tr><td style="font-weight:700;color:var(--primary)">' + cfgEsc(g.grupo) + '</td><td>' + nivelChip(g.nivel) + '</td><td>' + g.inscritos + '</td></tr>';
+    }).join('') + '</tbody></table>'
+    : cfgEmpty('Sin grupos aún. Registra alumnos para que aparezcan sus grupos.'));
 }
 function renderAcadPlanes(){
   var planes = [
@@ -4026,57 +4573,28 @@ function renderAcadPlanes(){
     planes.map(function(p){
       return '<div style="border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px">' +
         '<div style="width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0"><i class="fas fa-graduation-cap"></i></div>' +
-        '<div style="flex:1"><div style="font-weight:700;color:var(--primary-dark)">' + p[0] + '</div><div style="font-size:.8rem;color:var(--gray)">' + p[1] + '</div></div>' +
-        '<button class="fw-btn-action" style="font-size:.74rem" onclick="showToast(\'Mapa curricular de ' + p[0] + '\',\'success\')"><i class="fas fa-eye"></i> Ver</button></div>';
+        '<div style="flex:1"><div style="font-weight:700;color:var(--primary-dark)">' + p[0] + '</div><div style="font-size:.8rem;color:var(--gray)">' + p[1] + '</div></div></div>';
     }).join('');
 }
 
 // ─────────── AULAS Y ESPACIOS ───────────
-var aulasData = [
-  { codigo:'A-101', tipo:'Salón', cap:25, equip:'Pizarrón, proyector', estado:'Disponible' },
-  { codigo:'A-104', tipo:'Salón', cap:25, equip:'Pizarrón, smart TV', estado:'Ocupada' },
-  { codigo:'B-201', tipo:'Salón', cap:30, equip:'Proyector, AC', estado:'Ocupada' },
-  { codigo:'LAB-1', tipo:'Laboratorio', cap:20, equip:'Ciencias, microscopios', estado:'Disponible' },
-  { codigo:'ROB-1', tipo:'Taller', cap:18, equip:'LEGO, Arduino, PCs', estado:'Disponible' },
-  { codigo:'BIB', tipo:'Biblioteca', cap:40, equip:'Acervo, área lectura', estado:'Disponible' },
-  { codigo:'GIMN', tipo:'Gimnasio', cap:60, equip:'Duela, gradas', estado:'Mantenimiento' },
-  { codigo:'CANCHA', tipo:'Deportivo', cap:80, equip:'Fútbol, básquet', estado:'Disponible' }
-];
-function aulaEstadoClass(e){ return e==='Disponible'?'green':e==='Ocupada'?'orange':'red'; }
+// AULAS: usa el MISMO catálogo real de Configuración → Aulas (guardado en Supabase)
 function renderAulas(){
-  var disp = aulasData.filter(function(a){return a.estado==='Disponible';}).length;
-  var rows = aulasData.map(function(a){
-    return '<tr><td style="font-weight:700;color:var(--teal)">' + a.codigo + '</td><td>' + a.tipo + '</td><td>' + a.cap + ' personas</td><td style="font-size:.82rem;color:var(--gray)">' + a.equip + '</td><td>' + statChip(a.estado, aulaEstadoClass(a.estado)) + '</td></tr>';
+  var rows = aulasCfgData.map(function(a,ix){
+    return '<tr><td style="font-weight:700;color:var(--teal)">' + cfgEsc(a.codigo) + '</td><td>' + cfgEsc(a.tipo||'—') + '</td><td>' + cfgEsc((a.cap||'—')+'') + (a.cap?' personas':'') + '</td>' +
+      '<td><div class="action-icons"><button class="action-icon edit" onclick="openAulaCfgDesdeModulo(' + ix + ')" title="Editar"><i class="fas fa-pen"></i></button>' +
+      '<button class="action-icon del" onclick="delAulaCfgDesdeModulo(' + ix + ')" title="Eliminar"><i class="fas fa-trash"></i></button></div></td></tr>';
   }).join('');
-  return modBanner('fa-door-open','#16A085','Control de Espacios Físicos','Salones, laboratorios, talleres y áreas comunes',[[aulasData.length,'Espacios'],[disp,'Disponibles']]) +
-    '<table class="data-table" id="aulas-table"><thead><tr><th>Código</th><th>Tipo</th><th>Capacidad</th><th>Equipamiento</th><th>Estado</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  return modBanner('fa-door-open','#16A085','Control de Espacios Físicos','Mismo catálogo que Configuración → Aulas (guardado en la base de datos)',[[aulasCfgData.length,'Espacios']]) +
+    (aulasCfgData.length ? '<table class="data-table" id="aulas-table"><thead><tr><th>Código</th><th>Tipo</th><th>Capacidad</th><th>Acciones</th></tr></thead><tbody>' + rows + '</tbody></table>'
+    : '<div class="empty-state"><i class="fas fa-door-open"></i><p>Aún no hay espacios registrados.</p><small>Agrégalos con el botón "Nuevo espacio"; quedan guardados en la base de datos.</small></div>');
 }
-function openAddAula(){
-  openModal('Nuevo espacio',
-    '<div class="fw-form">' +
-    '<div class="form-group"><label>Código *</label><input id="auf-codigo" type="text" placeholder="Ej: A-105" oninput="this.value=this.value.toUpperCase()" /></div>' +
-    '<div class="form-group"><label>Tipo</label><select id="auf-tipo"><option>Salón</option><option>Laboratorio</option><option>Taller</option><option>Biblioteca</option><option>Gimnasio</option><option>Deportivo</option></select></div>' +
-    '<div class="form-group"><label>Capacidad</label><input id="auf-cap" type="number" value="25" /></div>' +
-    '<div class="form-group"><label>Equipamiento</label><input id="auf-equip" type="text" placeholder="Ej: Proyector, AC" /></div>' +
-    '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveAula()">Guardar espacio</button></div></div>');
-}
-function saveAula(){
-  var c = document.getElementById('auf-codigo').value.trim();
-  if(!c){ showToast('El código es obligatorio','error'); return; }
-  aulasData.push({ codigo:c, tipo:document.getElementById('auf-tipo').value, cap:parseInt(document.getElementById('auf-cap').value)||25, equip:document.getElementById('auf-equip').value||'—', estado:'Disponible' });
-  closeModal(); refreshWindow('aulas'); showToast('Espacio agregado','success');
-}
+function openAddAula(){ openAulaCfg(); }
+function openAulaCfgDesdeModulo(ix){ openAulaCfg(ix); }
+function delAulaCfgDesdeModulo(ix){ delAulaCfg(ix); try{ refreshWindow('aulas'); }catch(e){} }
 
-// ─────────── PERSONAL Y RH ───────────
-var personalData = [
-  { id:1, nombre:'Lic. Patricia Núñez', puesto:'Directora General', area:'Dirección', contrato:'Tiempo completo', estado:'Activo' },
-  { id:2, nombre:'C. Roberto Salinas', puesto:'Coordinador Administrativo', area:'Administración', contrato:'Tiempo completo', estado:'Activo' },
-  { id:3, nombre:'C. María Elena Ortiz', puesto:'Secretaria de Control Escolar', area:'Administración', contrato:'Tiempo completo', estado:'Activo' },
-  { id:4, nombre:'C. Jorge Méndez', puesto:'Prefecto', area:'Prefectura', contrato:'Medio tiempo', estado:'Activo' },
-  { id:5, nombre:'C. Lucía Ramírez', puesto:'Personal de Intendencia', area:'Intendencia', contrato:'Tiempo completo', estado:'Activo' },
-  { id:6, nombre:'C. Antonio Gil', puesto:'Vigilante', area:'Vigilancia', contrato:'Honorarios', estado:'Activo' }
-];
-var nextPersonalId = 7;
+// ─────────── PERSONAL Y RH (tabla real en Supabase) ───────────
+var personalData = [];
 function renderPersonal(){
   var activos = personalData.filter(function(p){return p.estado==='Activo';}).length;
   var rows = personalData.map(function(p){
@@ -4097,13 +4615,20 @@ function openAddPersonal(){
     '<div class="form-group"><label>Tipo de contrato</label><select id="pf-contrato"><option>Tiempo completo</option><option>Medio tiempo</option><option>Por horas</option><option>Honorarios</option></select></div>' +
     '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="savePersonal()">Registrar empleado</button></div></div>');
 }
-function savePersonal(){
+async function savePersonal(){
   var n = document.getElementById('pf-nombre').value.trim(), pu = document.getElementById('pf-puesto').value.trim();
   if(!n||!pu){ showToast('Nombre y puesto son obligatorios','error'); return; }
-  personalData.push({ id:nextPersonalId++, nombre:n, puesto:pu, area:document.getElementById('pf-area').value, contrato:document.getElementById('pf-contrato').value, estado:'Activo' });
+  var r = await _sb.rpc('staff_guardar_personal', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_nombre:n, p_puesto:pu, p_area:document.getElementById('pf-area').value, p_contrato:document.getElementById('pf-contrato').value });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  personalData.push(r.data);
   closeModal(); refreshWindow('personal'); showToast('Empleado registrado','success');
 }
-function delPersonal(id){ personalData = personalData.filter(function(p){return p.id!==id;}); refreshWindow('personal'); showToast('Empleado eliminado','success'); }
+async function delPersonal(id){
+  var r = await _sb.rpc('staff_eliminar_personal', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  personalData = personalData.filter(function(p){return p.id!==id;});
+  refreshWindow('personal'); showToast('Empleado eliminado','success');
+}
 
 // ─────────── KARDEX Y CERTIFICACIÓN ───────────
 function initKardex(){
@@ -4117,32 +4642,45 @@ function initKardex(){
   sel.innerHTML = alumnos.map(function(a){ return '<option value="' + a.id + '">' + a.nombre + '</option>'; }).join('');
   renderKardexDetalle(alumnos[0].id);
 }
-function renderKardexDetalle(id){
+// Trae las calificaciones REALES del alumno desde Supabase (promedio por materia)
+async function kardexCalifsReales(alumnoId){
+  try{
+    var q = await _sb.rpc('staff_calificaciones_alumno', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_alumno_id: alumnoId });
+    var porMateria = {};
+    (q.data||[]).forEach(function(r){
+      if(!porMateria[r.materia]) porMateria[r.materia]={sum:0,n:0};
+      porMateria[r.materia].sum += parseFloat(r.calificacion)||0;
+      porMateria[r.materia].n++;
+    });
+    return Object.keys(porMateria).map(function(m){ return {materia:m, cal:(porMateria[m].sum/porMateria[m].n)}; });
+  }catch(e){ console.warn('kardexCalifs:',e); return []; }
+}
+async function renderKardexDetalle(id){
   var a = alumnos.find(function(x){return x.id==id;});
   var body = document.getElementById('kardex-body');
   if(!a||!body) return;
-  var seed = (parseInt(String(a.id),10)||1);
-  var califs = materiasCalif.map(function(m,i){ return (7 + ((seed*(i+3))%30)/10).toFixed(1); });
-  var prom = (califs.reduce(function(s,v){return s+parseFloat(v);},0)/califs.length).toFixed(1);
-  body.innerHTML = modBanner('fa-award','#9B59B6','Kardex Académico Oficial','Folio: LPI-K-' + String(a.id).padStart(4,'0') + ' · Ciclo 2024-2025',[[prom,'Promedio'],[a.asist||'—','Asistencia']]) +
+  body.innerHTML = '<div style="text-align:center;color:var(--gray);padding:30px;font-size:.85rem">Cargando kardex...</div>';
+  var rows = await kardexCalifsReales(a.id);
+  var prom = rows.length ? (rows.reduce(function(s,r){return s+r.cal;},0)/rows.length).toFixed(1) : '—';
+  var tabla = rows.length
+    ? '<table class="data-table" style="margin-bottom:18px"><thead><tr><th>Materia</th><th>Promedio</th><th>Estado</th></tr></thead><tbody>' +
+      rows.map(function(r){
+        var estado = r.cal>=6 ? '<span class="chip green">Aprobada</span>' : '<span class="chip red">Reprobada</span>';
+        return '<tr><td>' + cfgEsc(r.materia) + '</td><td style="font-weight:700">' + r.cal.toFixed(1) + '</td><td>' + estado + '</td></tr>';
+      }).join('') +
+      '<tr style="background:rgba(155,89,182,.07)"><td style="font-weight:700">Promedio general</td><td style="font-weight:800;color:#9B59B6">' + prom + '</td><td></td></tr></tbody></table>'
+    : '<div style="border:1.5px dashed var(--border);border-radius:10px;padding:22px;text-align:center;color:var(--gray);font-size:.85rem;margin-bottom:18px">Este alumno aún no tiene calificaciones capturadas.<br><small>Captúralas en el módulo Calificaciones; aparecerán aquí automáticamente.</small></div>';
+  body.innerHTML = modBanner('fa-award','#9B59B6','Kardex Académico','Folio: LPI-K-' + String(a.id).padStart(4,'0') + ' · Ciclo ' + cfgEsc(_cicloEscolar),[[prom,'Promedio'],[a.asist||'—','Asistencia']]) +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:18px;border:1.5px solid var(--border);border-radius:10px;padding:14px 18px">' +
-    [['Alumno',a.nombre],['Matrícula','LPI-' + String(a.id).padStart(4,'0')],['Nivel',a.nivel],['Grado',a.grado],['Tutor',a.tutor||'—'],['Estado','Regular']].map(function(r){
+    [['Alumno',cfgEsc(a.nombre)],['Matrícula','LPI-' + String(a.id).padStart(4,'0')],['Nivel',a.nivel],['Grado',a.grado||'—'],['Tutor',cfgEsc(a.tutor||'—')],['Estado','Regular']].map(function(r){
       return '<div><span style="font-size:.7rem;font-weight:700;color:var(--gray);text-transform:uppercase">' + r[0] + '</span><div style="font-weight:600">' + r[1] + '</div></div>';
     }).join('') + '</div>' +
-    '<div style="font-weight:700;color:var(--primary-dark);margin-bottom:8px">📚 Historial académico por materia</div>' +
-    '<table class="data-table" style="margin-bottom:18px"><thead><tr><th>Materia</th><th>Calificación</th><th>Estado</th></tr></thead><tbody>' +
-    materiasCalif.map(function(m,i){
-      var cal = parseFloat(califs[i]);
-      var estado = cal>=6 ? '<span class="chip green">Aprobada</span>' : '<span class="chip red">Reprobada</span>';
-      return '<tr><td>' + m + '</td><td style="font-weight:700">' + califs[i] + '</td><td>' + estado + '</td></tr>';
-    }).join('') +
-    '<tr style="background:rgba(155,89,182,.07)"><td style="font-weight:700">Promedio general</td><td style="font-weight:800;color:#9B59B6">' + prom + '</td><td></td></tr>' +
-    '</tbody></table>' +
+    '<div style="font-weight:700;color:var(--primary-dark);margin-bottom:8px">📚 Historial académico por materia (datos reales)</div>' + tabla +
     '<div style="display:flex;justify-content:space-around;gap:24px;margin-top:34px;padding-top:10px">' +
-    ['Director General','Secretaría de Control Escolar'].map(function(f){
+    ['Dirección General','Control Escolar'].map(function(f){
       return '<div style="text-align:center;flex:1"><div style="border-top:1.5px solid var(--primary-dark);padding-top:6px;font-size:.78rem;color:var(--gray)">' + f + '</div></div>';
     }).join('') + '</div>' +
-    '<div style="text-align:center;font-size:.72rem;color:var(--gray);margin-top:18px"><i class="fas fa-shield-alt" style="color:#9B59B6"></i> Documento validado con folio digital <b>LPI-K-' + String(a.id).padStart(4,'0') + '</b> · Metepec, Estado de México</div>';
+    '<div style="text-align:center;font-size:.72rem;color:var(--gray);margin-top:18px"><i class="fas fa-shield-alt" style="color:#9B59B6"></i> Folio digital <b>LPI-K-' + String(a.id).padStart(4,'0') + '</b> · Metepec, Estado de México</div>';
 }
 
 function kardexAlumnoActual(){
@@ -4156,44 +4694,36 @@ function generarConstancia(){
   if(!a){ showToast('No hay alumnos para generar la constancia','warning'); return; }
   var body = '<h2>Constancia de Estudios</h2>' +
     '<p>La dirección del <b>Learning Project Institute</b> hace constar que el(la) alumno(a) ' +
-    '<b>' + a.nombre + '</b>, con matrícula <b>LPI-' + String(a.id).padStart(4,'0') + '</b>, se encuentra inscrito(a) y es alumno(a) regular del nivel <b>' + (a.nivel||'—') + '</b>, grado <b>' + (a.grado||'—') + '</b>, durante el ciclo escolar <b>2024-2025</b>.</p>' +
+    '<b>' + a.nombre + '</b>, con matrícula <b>LPI-' + String(a.id).padStart(4,'0') + '</b>, se encuentra inscrito(a) y es alumno(a) regular del nivel <b>' + (a.nivel||'—') + '</b>, grado <b>' + (a.grado||'—') + '</b>, durante el ciclo escolar <b>' + _cicloEscolar + '</b>.</p>' +
     '<p>Se extiende la presente para los fines que al interesado convengan, en Metepec, Estado de México.</p>' +
-    '<h4>Datos del tutor</h4><table><tr><th>Tutor</th><td>' + (a.tutor||'—') + '</td></tr><tr><th>Estado de pago</th><td>' + (a.pago||'—') + '</td></tr></table>' +
-    '<div style="margin-top:60px;text-align:center">__________________________________<br><b>Lic. Patricia Núñez</b><br>Directora General</div>';
+    '<h4>Datos del tutor</h4><table><tr><th>Tutor</th><td>' + (a.tutor||'—') + '</td></tr></table>' +
+    '<div style="margin-top:60px;text-align:center">__________________________________<br><b>Dirección General</b><br>Learning Project Institute</div>';
   printHTML('Constancia · ' + a.nombre, body);
   showToast('Constancia generada','success');
 }
 
-function generarCertificado(){
+async function generarCertificado(){
   var a = kardexAlumnoActual();
   if(!a){ showToast('No hay alumnos para generar el certificado','warning'); return; }
-  var seed = (parseInt(String(a.id),10)||1);
-  var califs = materiasCalif.map(function(m,i){ return (7 + ((seed*(i+3))%30)/10).toFixed(1); });
-  var prom = (califs.reduce(function(s,v){return s+parseFloat(v);},0)/califs.length).toFixed(1);
-  var rows = materiasCalif.map(function(m,i){
-    var c = parseFloat(califs[i]);
-    return '<tr><td>' + m + '</td><td class="' + (c>=8?'good':c>=6?'mid':'bad') + '">' + califs[i] + '</td><td>' + (c>=6?'Acreditada':'No acreditada') + '</td></tr>';
+  var reales = await kardexCalifsReales(a.id);
+  if(!reales.length){ showToast('Este alumno no tiene calificaciones capturadas todavía. Captúralas en el módulo Calificaciones.','warning'); return; }
+  var prom = (reales.reduce(function(s,r){return s+r.cal;},0)/reales.length).toFixed(1);
+  var rows = reales.map(function(r){
+    return '<tr><td>' + r.materia + '</td><td class="' + (r.cal>=8?'good':r.cal>=6?'mid':'bad') + '">' + r.cal.toFixed(1) + '</td><td>' + (r.cal>=6?'Acreditada':'No acreditada') + '</td></tr>';
   }).join('');
   var body = '<h2>Certificado de Calificaciones</h2>' +
-    '<p>Alumno(a): <b>' + a.nombre + '</b> &middot; Matrícula: <b>LPI-' + String(a.id).padStart(4,'0') + '</b><br>Nivel: <b>' + (a.nivel||'—') + '</b> &middot; Grado: <b>' + (a.grado||'—') + '</b> &middot; Ciclo: <b>2024-2025</b></p>' +
-    '<table><thead><tr><th>Asignatura</th><th>Calificación</th><th>Situación</th></tr></thead><tbody>' + rows +
+    '<p>Alumno(a): <b>' + a.nombre + '</b> &middot; Matrícula: <b>LPI-' + String(a.id).padStart(4,'0') + '</b><br>Nivel: <b>' + (a.nivel||'—') + '</b> &middot; Grado: <b>' + (a.grado||'—') + '</b> &middot; Ciclo: <b>' + _cicloEscolar + '</b></p>' +
+    '<table><thead><tr><th>Asignatura</th><th>Promedio</th><th>Situación</th></tr></thead><tbody>' + rows +
     '<tr><td><b>Promedio general</b></td><td class="good"><b>' + prom + '</b></td><td></td></tr></tbody></table>' +
     '<p style="font-size:11px;color:#666">Folio digital: LPI-K-' + String(a.id).padStart(4,'0') + ' &middot; Documento con validez interna.</p>' +
     '<div style="display:flex;justify-content:space-around;margin-top:60px;text-align:center">' +
-    '<div>__________________________<br><b>Directora General</b></div><div>__________________________<br><b>Control Escolar</b></div></div>';
+    '<div>__________________________<br><b>Dirección General</b></div><div>__________________________<br><b>Control Escolar</b></div></div>';
   printHTML('Certificado · ' + a.nombre, body);
   showToast('Certificado generado','success');
 }
 
 // ─────────── BIBLIOTECA Y RECURSOS ───────────
-var bibliotecaData = [
-  { id:1, titulo:'El Principito', autor:'A. de Saint-Exupéry', tipo:'Libro', estado:'Disponible' },
-  { id:2, titulo:'Cuentos de la Selva', autor:'Horacio Quiroga', tipo:'Libro', estado:'Prestado' },
-  { id:3, titulo:'Atlas Geográfico Universal', autor:'Varios', tipo:'Referencia', estado:'Disponible' },
-  { id:4, titulo:'Science Encyclopedia', autor:'DK Publishing', tipo:'Libro', estado:'Disponible' },
-  { id:5, titulo:'Matemáticas Recreativas', autor:'Y. Perelman', tipo:'Libro', estado:'Vencido' }
-];
-var nextLibroId = 6;
+var bibliotecaData = []; // tabla real en Supabase
 function bibliEstadoClass(e){ return e==='Disponible'?'green':e==='Prestado'?'blue':'red'; }
 function renderBiblioteca(){
   var disp = bibliotecaData.filter(function(l){return l.estado==='Disponible';}).length;
@@ -4207,10 +4737,13 @@ function renderBiblioteca(){
   return modBanner('fa-book','#C0392B','Biblioteca y Recursos Educativos','Catálogo, préstamos y devoluciones',[[bibliotecaData.length,'Títulos'],[disp,'Disponibles'],[prest,'Prestados']]) +
     '<table class="data-table" id="biblio-table"><thead><tr><th>Título</th><th>Autor</th><th>Tipo</th><th>Código</th><th>Estado</th><th>Acción</th></tr></thead><tbody>' + rows + '</tbody></table>';
 }
-function toggleLibro(id){
+async function toggleLibro(id){
   var l = bibliotecaData.find(function(x){return x.id===id;});
   if(!l) return;
-  l.estado = l.estado==='Disponible' ? 'Prestado' : 'Disponible';
+  var nuevo = l.estado==='Disponible' ? 'Prestado' : 'Disponible';
+  var r = await _sb.rpc('staff_actualizar_estado_libro', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id, p_estado: nuevo });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  l.estado = nuevo;
   refreshWindow('biblioteca'); showToast(l.titulo + ' · ' + l.estado, 'success');
 }
 function openAddLibro(){
@@ -4221,22 +4754,17 @@ function openAddLibro(){
     '<div class="form-group"><label>Tipo</label><select id="lf-tipo"><option>Libro</option><option>Referencia</option><option>Revista</option><option>Recurso digital</option></select></div>' +
     '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveLibro()">Guardar material</button></div></div>');
 }
-function saveLibro(){
+async function saveLibro(){
   var t = document.getElementById('lf-titulo').value.trim();
   if(!t){ showToast('El título es obligatorio','error'); return; }
-  bibliotecaData.push({ id:nextLibroId++, titulo:t, autor:document.getElementById('lf-autor').value||'—', tipo:document.getElementById('lf-tipo').value, estado:'Disponible' });
+  var r = await _sb.rpc('staff_guardar_libro', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_titulo:t, p_autor:document.getElementById('lf-autor').value||'—', p_tipo:document.getElementById('lf-tipo').value });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  bibliotecaData.push(r.data);
   closeModal(); refreshWindow('biblioteca'); showToast('Material agregado','success');
 }
 
 // ─────────── ACTIVIDADES EXTRACURRICULARES ───────────
-var talleresData = [
-  { id:1, nombre:'Robótica LEGO/Arduino', instructor:'Ing. Carlos Vega', cupo:18, inscritos:14, dia:'Martes y Jueves' },
-  { id:2, nombre:'Fútbol', instructor:'Prof. Luis Mora', cupo:25, inscritos:22, dia:'Lunes y Miércoles' },
-  { id:3, nombre:'Música y Coro', instructor:'Mtra. Ana Solís', cupo:20, inscritos:11, dia:'Viernes' },
-  { id:4, nombre:'Inglés Avanzado (Cambridge)', instructor:'Ms. Jane Foster', cupo:15, inscritos:15, dia:'Martes' },
-  { id:5, nombre:'Arte y Pintura', instructor:'Mtra. Rosa Lima', cupo:16, inscritos:9, dia:'Jueves' }
-];
-var nextTallerId = 6;
+var talleresData = []; // tabla real en Supabase
 function renderExtracurriculares(){
   var totalInsc = talleresData.reduce(function(s,t){return s+t.inscritos;},0);
   var rows = talleresData.map(function(t){
@@ -4258,23 +4786,17 @@ function openAddTaller(){
     '<div class="form-group"><label>Cupo máximo</label><input id="tf-cupo" type="number" value="20" /></div>' +
     '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveTaller()">Crear taller</button></div></div>');
 }
-function saveTaller(){
+async function saveTaller(){
   var n = document.getElementById('tf-nombre').value.trim();
   if(!n){ showToast('El nombre es obligatorio','error'); return; }
-  talleresData.push({ id:nextTallerId++, nombre:n, instructor:document.getElementById('tf-inst').value||'—', cupo:parseInt(document.getElementById('tf-cupo').value)||20, inscritos:0, dia:document.getElementById('tf-dia').value||'—' });
+  var r = await _sb.rpc('staff_guardar_taller', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_nombre:n, p_instructor:document.getElementById('tf-inst').value||'—', p_cupo:parseInt(document.getElementById('tf-cupo').value)||20, p_dia:document.getElementById('tf-dia').value||'—' });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  talleresData.push(r.data);
   closeModal(); refreshWindow('extracurriculares'); showToast('Taller creado','success');
 }
 
 // ─────────── INVENTARIO Y RECURSOS ───────────
-var inventarioData = [
-  { id:1, activo:'Proyector Epson PowerLite', area:'Aula 4°A', cant:1, estado:'Bueno' },
-  { id:2, activo:'Computadoras de laboratorio', area:'Laboratorio de cómputo', cant:24, estado:'Bueno' },
-  { id:3, activo:'Kits de Robótica LEGO', area:'Taller de robótica', cant:12, estado:'Regular' },
-  { id:4, activo:'Pizarrón interactivo', area:'Aula 6°A', cant:1, estado:'Mantenimiento' },
-  { id:5, activo:'Mobiliario (pupitres)', area:'General', cant:320, estado:'Bueno' },
-  { id:6, activo:'Instrumentos musicales', area:'Aula de música', cant:18, estado:'Regular' }
-];
-var nextActivoId = 7;
+var inventarioData = []; // tabla real en Supabase
 function invEstadoClass(e){ return e==='Bueno'?'green':e==='Regular'?'blue':e==='Mantenimiento'?'gold':'red'; }
 function renderInventario(){
   var totalUnidades = inventarioData.reduce(function(s,i){return s+i.cant;},0);
@@ -4296,13 +4818,20 @@ function openAddActivo(){
     '<div class="form-group"><label>Estado</label><select id="if-estado"><option>Bueno</option><option>Regular</option><option>Mantenimiento</option><option>Baja</option></select></div>' +
     '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveActivo()">Registrar activo</button></div></div>');
 }
-function saveActivo(){
+async function saveActivo(){
   var n = document.getElementById('if-activo').value.trim();
   if(!n){ showToast('El nombre del activo es obligatorio','error'); return; }
-  inventarioData.push({ id:nextActivoId++, activo:n, area:document.getElementById('if-area').value||'General', cant:parseInt(document.getElementById('if-cant').value)||1, estado:document.getElementById('if-estado').value });
+  var r = await _sb.rpc('staff_guardar_activo', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_activo:n, p_area:document.getElementById('if-area').value||'General', p_cant:parseInt(document.getElementById('if-cant').value)||1, p_estado:document.getElementById('if-estado').value });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  inventarioData.push(r.data);
   closeModal(); refreshWindow('inventario'); showToast('Activo registrado','success');
 }
-function delActivo(id){ inventarioData = inventarioData.filter(function(x){return x.id!==id;}); refreshWindow('inventario'); showToast('Activo eliminado','success'); }
+async function delActivo(id){
+  var r = await _sb.rpc('staff_eliminar_activo', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if(r.error){ showToast('Error: '+r.error.message,'error'); return; }
+  inventarioData = inventarioData.filter(function(x){return x.id!==id;});
+  refreshWindow('inventario'); showToast('Activo eliminado','success');
+}
 
 
 // ════════════════════════════════════════════════
@@ -4312,6 +4841,11 @@ var rolesData = [];
 const SYSTEM_TABS = [
   {key:'estadisticas',label:'Estadísticas',icon:'fa-chart-line'},
   {key:'alumnos',label:'Alumnos',icon:'fa-user-graduate'},
+  {key:'tareas',label:'Tareas',icon:'fa-book-open'},
+  {key:'materias',label:'Materias',icon:'fa-book-bookmark'},
+  {key:'cambridge',label:'Cambridge',icon:'fa-graduation-cap'},
+  {key:'evalcual',label:'Eval. Cualitativas',icon:'fa-child-reaching'},
+  {key:'bitacora',label:'Bitácora / Reporte diario',icon:'fa-baby'},
   {key:'inscripciones',label:'Inscripciones',icon:'fa-file-signature'},
   {key:'kardex',label:'Kardex y Certificación',icon:'fa-award'},
   {key:'academico',label:'Estructura Académica',icon:'fa-sitemap'},
@@ -4337,25 +4871,55 @@ const SYSTEM_TABS = [
   {key:'config',label:'Configuración (admin)',icon:'fa-cog'},
 ];
 function cfgEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-function esAdminUser(u){ return u && u.usuario==='admin'; }
+// "admin" es únicamente la cuenta raíz protegida. La autorización normal se
+// determina por los permisos guardados en Supabase, no por el nombre de usuario.
+function esAdminUser(u){ return !!(u && u.usuario==='admin'); }
+function esAccesoTotal(u){
+  return !!(u && (esAdminUser(u) || (Array.isArray(u.acceso) && u.acceso.indexOf('__all__')>=0)));
+}
 function usuarioPuede(u, key){
   if(!u) return false;
-  if(esAdminUser(u)) return true;
+  if(esAccesoTotal(u)) return true;
   var a=u.acceso||[];
-  return a.indexOf('__all__')>=0 || a.indexOf(key)>=0;
+  return a.indexOf(key)>=0;
 }
 
 async function loadRoles(){
   try{
-    var r = await _sb.from('configuracion').select('valor').eq('clave','roles').maybeSingle();
-    var v = r && r.data ? r.data.valor : null;
+    var r = await _sb.rpc('staff_get_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: 'roles' });
+    if(r.error) throw r.error;
+    var v = r.data;
     rolesData = v ? (typeof v==='string'? JSON.parse(v) : v) : [];
-  }catch(e){ console.warn('loadRoles', e); rolesData = rolesData||[]; }
+    if(!Array.isArray(rolesData)) throw new Error('Supabase devolvió un formato de roles inválido');
+    // Una cuenta puede conservar un rol válido aunque el catálogo `roles` haya
+    // quedado vacío o desactualizado. Nunca ocultamos esos roles existentes.
+    sistemaUsuarios.forEach(function(u){
+      var rol=String(u.rol||'').trim();
+      if(rol && rolesData.indexOf(rol)<0) rolesData.push(rol);
+    });
+  }catch(e){
+    console.error('No se pudieron cargar los roles:', e);
+    throw e;
+  }
   return rolesData;
 }
 async function saveRolesToDB(){
-  try{ await _sb.from('configuracion').upsert({clave:'roles', valor: JSON.stringify(rolesData), updated_at:new Date().toISOString()}, {onConflict:'clave'}); }
-  catch(e){ console.warn('saveRolesToDB', e); }
+  var r = await _sb.rpc('staff_set_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave:'roles', p_valor: JSON.stringify(rolesData) });
+  if(r.error) throw r.error;
+}
+async function loadConfigUsers(){
+  var r = await _sb.rpc('staff_listar_usuarios', { p_usuario: currentUser.usuario, p_pass: currentUser.pass });
+  if(r.error) throw r.error;
+  if(!Array.isArray(r.data)) throw new Error('Supabase devolvió un formato de usuarios inválido');
+  sistemaUsuarios.length=0;
+  sistemaUsuarios.push(...r.data.map(function(x){
+    return Object.assign({}, x, {
+      acceso: Array.isArray(x.acceso) ? x.acceso : [],
+      secciones: Array.isArray(x.secciones) ? x.secciones : [],
+      lastAcceso:x.last_acceso?new Date(x.last_acceso).toLocaleString('es-MX'):null
+    });
+  }));
+  return sistemaUsuarios;
 }
 
 function renderConfigPanel(){
@@ -4365,7 +4929,8 @@ function renderConfigPanel(){
     : '<span style="color:var(--gray);font-size:.82rem">Aún no hay roles. Crea el primero con el botón de arriba.</span>';
   var usersHtml = sistemaUsuarios.length
     ? sistemaUsuarios.map(function(u){
-        var admin=esAdminUser(u);
+        var admin=esAccesoTotal(u);
+        var cuentaRaiz=esAdminUser(u);
         var nTabs = admin ? '<span class="chip green">Todas</span>' : ((u.acceso&&u.acceso.length)||0)+' pestañas';
         var secc = seccionesDe(u);
         var seccTxt = admin || secc.indexOf('__all__')>=0 ? '<span class="chip green">Todas</span>' : (secc.length ? secc.join(', ') : '<span style="color:var(--gray)">—</span>');
@@ -4377,7 +4942,7 @@ function renderConfigPanel(){
           '<td>'+nTabs+'</td>'+
           '<td style="text-align:right;white-space:nowrap">'+
             '<button class="btn-cancel" style="padding:5px 10px" onclick="openUsuarioModal('+u.id+')" title="Editar"><i class="fas fa-pen"></i></button> '+
-            (admin?'':'<button class="btn-cancel" style="padding:5px 10px;color:var(--red)" onclick="delUsuario('+u.id+')" title="Eliminar"><i class="fas fa-trash"></i></button>')+
+            (cuentaRaiz?'':'<button class="btn-cancel" style="padding:5px 10px;color:var(--red)" onclick="delUsuario('+u.id+')" title="Eliminar"><i class="fas fa-trash"></i></button>')+
           '</td></tr>';
       }).join('')
     : '<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:20px">Sin usuarios.</td></tr>';
@@ -4407,15 +4972,26 @@ function openRolModal(){
     '<button class="btn-save" onclick="saveRol()"><i class="fas fa-plus"></i> Crear rol</button></div></div>');
   setTimeout(function(){ var i=document.getElementById('rol-nombre'); if(i) i.focus(); },50);
 }
-function saveRol(){
+async function saveRol(){
   var n=document.getElementById('rol-nombre').value.trim();
   if(!n){ showToast('Escribe un nombre','error'); return; }
   if(rolesData.indexOf(n)<0) rolesData.push(n);
-  saveRolesToDB(); closeModal(); renderConfigPanel(); showToast('Rol creado: '+n,'success');
+  try{
+    await saveRolesToDB(); closeModal(); renderConfigPanel(); showToast('Rol creado: '+n,'success');
+  }catch(e){
+    rolesData = rolesData.filter(function(r){return r!==n;});
+    showToast('No se pudo guardar el rol: '+e.message,'error');
+  }
 }
-function delRol(n){
+async function delRol(n){
+  var anteriores=rolesData.slice();
   rolesData = rolesData.filter(function(r){return r!==n;});
-  saveRolesToDB(); renderConfigPanel(); showToast('Rol eliminado','error');
+  try{
+    await saveRolesToDB(); renderConfigPanel(); showToast('Rol eliminado','success');
+  }catch(e){
+    rolesData=anteriores;
+    showToast('No se pudo eliminar el rol: '+e.message,'error');
+  }
 }
 
 function openUsuarioModal(id){
@@ -4500,17 +5076,10 @@ async function saveUsuario(id){
       p_id: id||null, p_nombre: nombre, p_usuario: usuario, p_email: email, p_rol: rol,
       p_pass: pass||null, p_acceso: acceso, p_secciones: secciones
     });
-    if(rpc.error){
-      // Respaldo temporal (antes de instalar la función segura / bloquear la tabla)
-      var payload={ nombre:nombre, usuario:usuario, email:email, rol:rol, acceso:acceso, secciones:secciones };
-      if(pass) payload.pass=pass;
-      var rLeg = id ? await _sb.from('usuarios_sistema').update(payload).eq('id',id)
-                    : await _sb.from('usuarios_sistema').insert(payload).select().single();
-      if(rLeg.error){ showToast('Error: '+(rpc.error.message||rLeg.error.message),'error'); return; }
-    }
-    // Recargar la lista desde la base (fuente de verdad)
+    if(rpc.error){ showToast('Error: '+rpc.error.message,'error'); return; }
+    // Recargar la lista desde la base (fuente de verdad) vía función segura, solo admin
     try{
-      var uu = await _sb.from('usuarios_sistema').select('*').order('id');
+      var uu = await _sb.rpc('staff_listar_usuarios', { p_usuario: currentUser.usuario, p_pass: currentUser.pass });
       if(uu.data){ sistemaUsuarios.length=0; sistemaUsuarios.push(...uu.data.map(function(x){return Object.assign({}, x, {lastAcceso:x.last_acceso?new Date(x.last_acceso).toLocaleString('es-MX'):null});})); }
     }catch(_){}
     closeModal(); renderConfigPanel(); showToast('Usuario guardado: '+nombre,'success');
@@ -4521,10 +5090,7 @@ async function delUsuario(id){
   if(esAdminUser(u)){ showToast('No puedes eliminar al administrador','error'); return; }
   try{
     var rpc = await _sb.rpc('staff_eliminar_usuario', { p_admin_usuario: currentUser.usuario, p_admin_pass: currentUser.pass, p_id: id });
-    if(rpc.error){
-      var r = await _sb.from('usuarios_sistema').delete().eq('id',id);
-      if(r.error){ showToast('Error: '+(rpc.error.message||r.error.message),'error'); return; }
-    }
+    if(rpc.error){ showToast('Error: '+rpc.error.message,'error'); return; }
   }catch(e){ showToast('Error al eliminar usuario','error'); console.error(e); return; }
   var ix=sistemaUsuarios.findIndex(function(x){return x.id===id;}); if(ix>=0) sistemaUsuarios.splice(ix,1);
   renderConfigPanel(); showToast('Usuario eliminado','error');
@@ -4533,6 +5099,14 @@ async function delUsuario(id){
 function applyPermisos(){
   if(typeof currentUser==='undefined' || !currentUser) return;
   var u=currentUser;
+  try{ renderNivelSelector(); }catch(e){}
+  // Inicializar los grupos activos con un grupo REAL permitido para este usuario
+  try{
+    var pg = primerGrupoPermitido();
+    if(!GRUPOS_DEMO.some(function(g){return g.label===currentGrupoCalif;}))   currentGrupoCalif = pg;
+    if(!GRUPOS_DEMO.some(function(g){return g.label===currentGrupoAsist;}))   currentGrupoAsist = pg;
+    if(!GRUPOS_DEMO.some(function(g){return g.label===currentGrupoHorario;})) currentGrupoHorario = pg;
+  }catch(e){}
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(it){
     var oc=it.getAttribute('onclick')||'';
     var m=oc.match(/openWindow\('([^']+)'/);
@@ -4552,21 +5126,32 @@ function applyPermisos(){
 var nivelesData = [], aulasCfgData = [], franjasCfgData = [];
 async function loadCatalogo(clave){
   try{
-    var r = await _sb.from('configuracion').select('valor').eq('clave',clave).maybeSingle();
-    var v = r && r.data ? r.data.valor : null;
+    var r = await _sb.rpc('staff_get_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: clave });
+    var v = r && r.data ? r.data : null;
     return v ? (typeof v==='string'? JSON.parse(v) : v) : [];
   }catch(e){ console.warn('loadCatalogo',clave,e); return []; }
 }
 async function persistCatalogo(clave, arr){
-  try{ await _sb.from('configuracion').upsert({clave:clave, valor:JSON.stringify(arr), updated_at:new Date().toISOString()}, {onConflict:'clave'}); }
+  try{ await _sb.rpc('staff_set_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave:clave, p_valor: JSON.stringify(arr) }); }
   catch(e){ console.warn('persistCatalogo',clave,e); }
 }
 async function initConfig(){
-  await loadRoles();
-  nivelesData    = await loadCatalogo('niveles');
-  aulasCfgData   = await loadCatalogo('aulas');
-  franjasCfgData = await loadCatalogo('horarios_franjas');
-  cfgTab('usuarios', null);
+  var panel=document.getElementById('config-panel');
+  if(panel) panel.innerHTML='<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando usuarios y roles desde Supabase…</p></div>';
+  try{
+    await Promise.all([
+      loadConfigUsers(),
+      loadRoles(),
+      (async function(){ nivelesData=await loadCatalogo('niveles'); })(),
+      (async function(){ aulasCfgData=await loadCatalogo('aulas'); })(),
+      (async function(){ franjasCfgData=await loadCatalogo('horarios_franjas'); })()
+    ]);
+    cfgTab('usuarios', null);
+  }catch(e){
+    console.error('Configuración no pudo cargar:',e);
+    if(panel) panel.innerHTML='<div class="empty-state" style="color:var(--red)"><i class="fas fa-triangle-exclamation"></i><p>No se pudieron cargar Usuarios y Roles.</p><small>'+cfgEsc(e.message||'Error de Supabase')+'</small><br><button class="fw-btn-action" style="margin-top:14px" onclick="initConfig()"><i class="fas fa-rotate"></i> Reintentar</button></div>';
+    showToast('Error al cargar Configuración: '+(e.message||'Supabase no respondió'),'error');
+  }
 }
 function cfgTab(tab, el){
   document.querySelectorAll('#cfg-tabs2 .cfg-tab').forEach(function(b){ b.classList.remove('active'); });
@@ -4722,14 +5307,14 @@ async function descargarRespaldo(id){
 // ── NÚMEROS DE WHATSAPP (usados en la página web y en los avisos del ERP) ──
 async function loadWhatsappCanales(){
   try{
-    var r = await _sb.from('configuracion').select('valor').eq('clave','whatsapp_canales').maybeSingle();
-    var v = r && r.data ? r.data.valor : null;
+    var r = await _sb.rpc('staff_get_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: 'whatsapp_canales' });
+    var v = r && r.data ? r.data : null;
     var obj = v ? (typeof v==='string'? JSON.parse(v) : v) : null;
     return obj || { maternal:'5217226489373', primaria:'5215669618182' };
   }catch(e){ console.warn('loadWhatsappCanales', e); return { maternal:'5217226489373', primaria:'5215669618182' }; }
 }
 async function persistWhatsappCanales(obj){
-  try{ await _sb.from('configuracion').upsert({clave:'whatsapp_canales', valor: JSON.stringify(obj), updated_at:new Date().toISOString()}, {onConflict:'clave'}); return true; }
+  try{ await _sb.rpc('staff_set_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave:'whatsapp_canales', p_valor: JSON.stringify(obj) }); return true; }
   catch(e){ console.warn('persistWhatsappCanales', e); return false; }
 }
 async function renderWhatsappPanel(){
@@ -4759,33 +5344,21 @@ async function saveWhatsappCanales(){
 }
 
 // ════════════════════════════════════════════════
-//  SESIÓN PERSISTENTE (no cerrar sesión al refrescar)
+//  SESIÓN SEGURA
+//  Las credenciales nunca se persisten en el navegador. Al recargar o cerrar
+//  la pestaña se debe iniciar sesión otra vez.
 // ════════════════════════════════════════════════
-function guardarSesion(u){
-  try{ localStorage.setItem('lpi_session', JSON.stringify({ id:u.id, usuario:u.usuario, pass:u.pass, nombre:u.nombre, rol:u.rol, email:u.email||'', acceso:u.acceso||[], secciones:u.secciones||[] })); }catch(e){}
+function guardarSesion(){ /* Intencionalmente vacío: no persistir contraseñas. */ }
+function borrarSesion(){
+  try{ localStorage.removeItem('lpi_session'); }catch(e){}
+  try{ sessionStorage.removeItem('lpi_session'); }catch(e){}
 }
-function borrarSesion(){ try{ localStorage.removeItem('lpi_session'); }catch(e){} }
 async function restoreLpiSession(){
-  try{
-    var raw = localStorage.getItem('lpi_session');
-    if(!raw) return;
-    var sess = JSON.parse(raw);
-    if(!sess || !sess.usuario) return;
-    currentUser = sess;
-    var av = initials(sess.nombre||'Admin');
-    var g=function(id){ return document.getElementById(id); };
-    if(g('sidebar-avatar')) g('sidebar-avatar').textContent=av;
-    if(g('sidebar-username')) g('sidebar-username').textContent=sess.nombre||'';
-    if(g('sidebar-role')) g('sidebar-role').textContent=sess.rol||'';
-    if(g('topbar-avatar')) g('topbar-avatar').textContent=av;
-    if(g('topbar-username')) g('topbar-username').textContent=(sess.nombre||'').split(' ')[0];
-    var ls=g('loginScreen'); if(ls){ ls.style.display='none'; }
-    if(g('app')) g('app').style.display='flex';
-    try{ await loadAllData(); }catch(e){ console.warn('loadAllData', e); }
-    initDashboard(); applyPermisos();
-  }catch(e){ console.warn('restoreLpiSession', e); }
+  // Limpia sesiones antiguas que sí contenían la contraseña en texto claro.
+  borrarSesion();
 }
 window.addEventListener('DOMContentLoaded', function(){ restoreLpiSession(); });
+// LPI ERP v2 — reestructuración jul 2026
 </script>
 </body>
 </html>

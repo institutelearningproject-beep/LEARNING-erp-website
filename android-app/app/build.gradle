@@ -1,0 +1,46 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'mx.learningproject.padres'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "mx.learningproject.padres"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "2.0.0"
+
+        // ── Configuración de la Trusted Web Activity ──
+        manifestPlaceholders = [
+            hostName            : "institutelearningproject-project.vercel.app",
+            defaultUrl          : "https://institutelearningproject-project.vercel.app/acceso-padres.html",
+            launcherName        : "LPI Padres"
+        ]
+    }
+
+    signingConfigs {
+        release {
+            // Rellena estos valores con tu keystore (ver GUIA_APP_PADRES.md).
+            // storeFile     file("../lpi-padres-upload.jks")
+            // storePassword System.getenv("LPI_STORE_PASS")
+            // keyAlias      "lpi-padres"
+            // keyPassword   System.getenv("LPI_KEY_PASS")
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

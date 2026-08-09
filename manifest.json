@@ -1,18 +1,49 @@
 {
-  "name": "Portal de Padres | Learning Project Institute",
+  "id": "/acceso-padres.html",
+  "name": "LPI Padres — Learning Project Institute",
   "short_name": "LPI Padres",
-  "description": "Consulta calificaciones, asistencia, horario, avisos, calendario y facturación de tu hijo/a en Learning Project Institute.",
+  "description": "Paga colegiaturas, consulta calificaciones y asistencia, y recibe los avisos del colegio. App oficial para padres de familia de Learning Project Institute.",
   "start_url": "/acceso-padres.html",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#f4f7fc",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#1B3D7A",
   "theme_color": "#1B3D7A",
   "lang": "es-MX",
+  "dir": "ltr",
+  "categories": ["education", "productivity", "finance"],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "fotos/oso-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "fotos/oso-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "fotos/oso-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "fotos/oso-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "fotos/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "fotos/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "fotos/app-icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "fotos/app-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pagar colegiatura",
+      "short_name": "Pagos",
+      "url": "/acceso-padres.html?ir=pagos",
+      "icons": [{ "src": "fotos/app-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Calificaciones",
+      "short_name": "Calificaciones",
+      "url": "/acceso-padres.html?ir=escolar",
+      "icons": [{ "src": "fotos/app-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Avisos del colegio",
+      "short_name": "Avisos",
+      "url": "/acceso-padres.html?ir=avisos",
+      "icons": [{ "src": "fotos/app-icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    { "src": "fotos/screen-inicio.png",  "sizes": "540x1170", "type": "image/png", "form_factor": "narrow", "label": "Estado de cuenta y resumen" },
+    { "src": "fotos/screen-pagos.png",   "sizes": "540x1170", "type": "image/png", "form_factor": "narrow", "label": "Pago de colegiaturas" },
+    { "src": "fotos/screen-escolar.png", "sizes": "540x1170", "type": "image/png", "form_factor": "narrow", "label": "Calificaciones" },
+    { "src": "fotos/screen-avisos.png",  "sizes": "540x1170", "type": "image/png", "form_factor": "narrow", "label": "Avisos del colegio" }
   ]
 }

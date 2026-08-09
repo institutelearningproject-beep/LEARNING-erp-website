@@ -179,7 +179,7 @@ async function main() {
     console.log();
 
     // ── Archivos de texto — inline ──
-    for (const filename of ['index.html', 'erp.html', 'erp-nuevo.html', 'inscripciones-secundaria.html', 'acceso-padres.html', 'vercel.json', 'manifest.json', 'sw.js']) {
+    for (const filename of ['index.html', 'erp.html', 'erp-nuevo.html', 'inscripciones-secundaria.html', 'acceso-padres.html', 'vercel.json', 'manifest.json', 'sw.js', 'assetlinks.json']) {
         const filepath = path.join(dir, filename);
         if (!fs.existsSync(filepath)) continue;
         const content = fs.readFileSync(filepath, 'utf8');
@@ -200,7 +200,7 @@ async function main() {
     const fotosDir = path.join(dir, 'fotos');
     if (fs.existsSync(fotosDir)) {
         const imgs = fs.readdirSync(fotosDir)
-            .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f) && !/^(slider-|nivel-|nosotros-|cambridge|programa-|oso-|pagina-principal|instalacion-|maternales|kinder|preescolar|primaria|secundaria)/i.test(f))
+            .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f) && !/^(slider-|nivel-|nosotros-|cambridge|programa-|oso-|app-icon-|screen-|pagina-principal|instalacion-|maternales|kinder|preescolar|primaria|secundaria)/i.test(f))
             .sort()
             .reverse(); // últimas fotos primero
 
@@ -236,7 +236,7 @@ async function main() {
         }
 
         // Ositos (y otros assets) por su propio nombre
-        const extras = fs.readdirSync(fotosDir).filter(f => /^(oso-|pagina-principal|instalacion-|maternales|kinder|preescolar|primaria|secundaria).*\.(png|jpg|jpeg|webp)$/i.test(f));
+        const extras = fs.readdirSync(fotosDir).filter(f => /^(oso-|app-icon-|screen-|pagina-principal|instalacion-|maternales|kinder|preescolar|primaria|secundaria).*\.(png|jpg|jpeg|webp)$/i.test(f));
         for (const nombre of extras) {
             const buffer = fs.readFileSync(path.join(fotosDir, nombre));
             const digest = sha1(buffer);

@@ -1,14 +1,59 @@
-# Archivos sensibles — NUNCA subir a GitHub
+# ─────────────────────────────────────────────────────────────
+#  Learning Project Institute — qué NUNCA sube a GitHub
+# ─────────────────────────────────────────────────────────────
+
+# ── Credenciales y secretos ──
 CLAVES_ERP_LPI.txt
 vercel_token.txt
+*token*.txt
+*.token
+.env
+.env.*
+credenciales*
+secrets*
+
+# ── Llaves de firma de la app Android (¡sin esto no se puede actualizar la app!) ──
+*.jks
+*.keystore
+signing-key-info.txt
+key.properties
+local.properties
+google-services.json
+
+# ── Logs y basura de depuración ──
 debug.txt
 vercel_log.txt
-*.zip
+*.log
+npm-debug.log*
 
-# Respaldos y basura pesada de la etapa de Hostinger
+# ── Respaldos pesados de la etapa de Hostinger ──
+*.zip
 zitGz9GO
 .fuse_hidden*
 erp_anterior_*.html
+_respaldo_*/
+_to_delete/
 
-# Local
+# ── Documentos comerciales (no son código; contienen datos del colegio) ──
+Contrato_ERP_LearningProject*.docx
+Contrato_ERP_LearningProject*.pdf
+
+# ── Build de Android ──
+android-app/.gradle/
+android-app/build/
+android-app/app/build/
+android-app/local.properties
+*.apk
+*.aab
+
+# ── Local / editores ──
 .vercel/
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Mensaje del commit preparado por el script de subida
+mensaje_commit.txt

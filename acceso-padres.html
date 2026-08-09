@@ -2,424 +2,964 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portal de Padres | Learning Project Institute</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <title>LPI Padres | Learning Project Institute</title>
   <meta name="robots" content="noindex" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1B3D7A" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="LPI Padres" />
-  <link rel="apple-touch-icon" href="fotos/oso-icon-192.png" />
+  <link rel="apple-touch-icon" href="fotos/app-icon-192.png" />
+  <link rel="icon" href="fotos/app-icon-192.png" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
-    :root {
-      --primary: #1B3D7A;
-      --primary-dark: #112960;
-      --gold: #E8A020;
-      --white: #ffffff;
-      --off-white: #F8F9FC;
-      --gray: #8899AA;
-      --dark: #1A2035;
-      --text: #3A4560;
-      --transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+    :root{
+      --primary:#1B3D7A; --primary-dark:#112960; --primary-soft:#EAF1FB;
+      --gold:#E8A020; --white:#fff; --off:#F5F7FB; --gray:#8899AA; --dark:#1A2035; --text:#3A4560;
+      --line:#E8EDF5; --ok:#1E9E52; --ok-soft:#E9F9EF; --warn:#C47D10; --warn-soft:#FDF3E3;
+      --bad:#C0392B; --bad-soft:#FDECEC;
+      --nav-h:64px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+      --shadow:0 6px 24px rgba(27,61,122,.08);
+      --tr:all .25s cubic-bezier(.4,0,.2,1);
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family:'Poppins',sans-serif; color:var(--text); background:linear-gradient(160deg,#f4f7fc,#e9f0f9); min-height:100vh; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%}
+    body{font-family:'Poppins',sans-serif;color:var(--text);background:var(--off);overflow-x:hidden}
+    button,input,select,textarea{font-family:inherit}
+    .hide{display:none !important}
 
-    .portal-topbar { background:#fff; padding:16px 5%; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 20px rgba(27,61,122,0.08); }
-    .portal-topbar .brand { display:flex; align-items:center; gap:12px; }
-    .portal-topbar img { height:38px; }
-    .portal-topbar .brand-name { font-family:'Playfair Display',serif; font-weight:700; color:var(--primary-dark); font-size:1.05rem; }
-    .portal-topbar a.back { color:var(--gray); text-decoration:none; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px; }
-    .portal-topbar a.back:hover { color:var(--primary); }
+    /* ───────── LOGIN ───────── */
+    #login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:center;
+      padding:calc(28px + var(--safe-t)) 20px calc(28px + var(--safe-b));
+      background:linear-gradient(165deg,#1B3D7A 0%,#2A55A5 55%,#3C6FC7 100%)}
+    #login .wrap{width:100%;max-width:420px}
+    .brand-block{text-align:center;color:#fff;margin-bottom:22px}
+    .brand-block img{width:112px;height:112px;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.28))}
+    .brand-block h1{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin-top:8px;letter-spacing:.2px}
+    .brand-block p{font-size:.82rem;opacity:.85;margin-top:4px;letter-spacing:2.4px;text-transform:uppercase;font-weight:600}
+    .login-card{background:#fff;border-radius:22px;box-shadow:0 22px 60px rgba(0,0,0,.22);padding:26px 22px 22px}
+    .login-card h2{font-size:1.08rem;color:var(--primary-dark);font-weight:700;margin-bottom:3px}
+    .login-card .sub{font-size:.82rem;color:var(--gray);line-height:1.55;margin-bottom:18px}
+    .field{margin-bottom:13px}
+    .field label{display:block;font-size:.76rem;font-weight:700;color:var(--dark);margin-bottom:6px}
+    .field .box{position:relative}
+    .field .box i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:.9rem}
+    .field input{width:100%;padding:14px 44px 14px 40px;border:1.5px solid var(--line);border-radius:12px;font-size:.95rem;outline:none;transition:var(--tr);background:#fff;color:var(--dark)}
+    .field input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(27,61,122,.12)}
+    .field .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray);padding:10px;cursor:pointer;font-size:.95rem}
+    .remember{display:flex;align-items:flex-start;gap:9px;margin:4px 0 14px;font-size:.78rem;color:var(--text);line-height:1.45;cursor:pointer}
+    .remember input{width:17px;height:17px;accent-color:var(--primary);margin-top:1px;flex-shrink:0}
+    .btn-primary{width:100%;padding:15px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:9px}
+    .btn-primary:active{transform:scale(.985)}
+    .btn-primary:disabled{opacity:.6;cursor:default}
+    .msg{margin-top:14px;font-size:.85rem;padding:12px 14px;border-radius:11px;display:none;line-height:1.5}
+    .msg.err{background:var(--bad-soft);color:var(--bad);display:block}
+    .msg.info{background:var(--primary-soft);color:var(--primary);display:block}
+    .msg.ok{background:var(--ok-soft);color:var(--ok);display:block}
+    .login-note{font-size:.74rem;color:var(--gray);margin-top:15px;text-align:center;line-height:1.6}
+    .chips-title{font-size:.74rem;font-weight:700;color:var(--gray);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+    .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+    .chip{display:inline-flex;align-items:center;gap:7px;background:var(--off);border:1px solid var(--line);border-radius:20px;padding:7px 12px;font-size:.8rem;cursor:pointer;color:var(--dark);transition:var(--tr)}
+    .chip:active{background:var(--primary-soft)}
+    .chip .x{opacity:.45;font-size:.75rem;padding:2px}
 
-    .calif-section { padding:60px 5% 90px; }
-    .levels-header { text-align:center; margin-bottom:40px; max-width:640px; margin-left:auto; margin-right:auto; }
-    .section-tag { display:inline-block; background:rgba(27,61,122,0.08); color:var(--primary); font-size:0.78rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 16px; border-radius:50px; margin-bottom:14px; border:1px solid rgba(27,61,122,0.15); }
-    .section-title { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3.5vw,2.6rem); color:var(--primary-dark); font-weight:700; line-height:1.2; margin-bottom:14px; }
-    .section-title span { color:var(--gold); }
-    .section-text { color:var(--text); font-size:1.02rem; line-height:1.8; }
+    /* ───────── APP SHELL ───────── */
+    #app{min-height:100dvh;display:flex;flex-direction:column;padding-bottom:calc(var(--nav-h) + var(--safe-b))}
+    .appbar{position:sticky;top:0;z-index:40;background:linear-gradient(140deg,#1B3D7A,#2A55A5);color:#fff;
+      padding:calc(12px + var(--safe-t)) 16px 14px;display:flex;align-items:center;gap:12px;
+      border-radius:0 0 20px 20px;box-shadow:0 6px 22px rgba(27,61,122,.22)}
+    .appbar .av{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.3);
+      display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem;flex-shrink:0;overflow:hidden}
+    .appbar .av img{width:100%;height:100%;object-fit:cover}
+    .appbar .who{flex:1;min-width:0}
+    .appbar .who .hi{font-size:.7rem;opacity:.8;letter-spacing:.4px}
+    .appbar .who .nm{font-size:.98rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .appbar .who .mt{font-size:.72rem;opacity:.82}
+    .icon-btn{background:rgba(255,255,255,.14);border:none;color:#fff;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;font-size:.95rem}
+    .icon-btn:active{background:rgba(255,255,255,.28)}
+    .dot{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#3A2600;font-size:.66rem;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #2A55A5}
 
-    .calif-card { max-width:560px; margin:0 auto; background:#fff; border-radius:20px; box-shadow:0 16px 44px rgba(27,61,122,0.12); padding:40px; text-align:center; }
-    .calif-card .lock-ic { width:64px; height:64px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.55rem; margin:0 auto 18px; }
-    .calif-card h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--primary-dark); margin:0 0 8px; }
-    .calif-card .desc { font-size:0.9rem; color:var(--gray); margin-bottom:24px; line-height:1.6; }
-    .calif-field { text-align:left; margin-bottom:16px; }
-    .calif-field label { display:block; font-size:0.8rem; font-weight:600; color:var(--dark); margin-bottom:6px; }
-    .calif-field input { width:100%; padding:13px 16px; border:1.5px solid rgba(27,61,122,0.15); border-radius:10px; font-family:'Poppins',sans-serif; font-size:0.95rem; outline:none; transition:var(--transition); }
-    .calif-field input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,160,32,0.15); }
-    .calif-btn { width:100%; padding:15px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-family:'Poppins',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; transition:var(--transition); display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
-    .calif-btn:hover { background:var(--primary-dark); transform:translateY(-2px); }
-    .calif-note { font-size:0.76rem; color:var(--gray); margin-top:14px; }
-    .calif-msg { margin-top:16px; font-size:0.88rem; padding:12px 14px; border-radius:10px; display:none; line-height:1.5; }
-    .calif-msg.err { background:#FDECEC; color:#C0392B; display:block; }
-    .calif-msg.info { background:#EAF1FB; color:var(--primary); display:block; }
-    .calif-result { max-width:760px; margin:0 auto; background:#fff; border-radius:20px; box-shadow:0 16px 44px rgba(27,61,122,0.12); padding:34px; display:none; }
-    .calif-result.show { display:block; }
-    .calif-student { display:flex; align-items:center; gap:14px; border-bottom:1.5px solid #eef1f6; padding-bottom:18px; margin-bottom:18px; }
-    .calif-student .av { width:50px; height:50px; border-radius:12px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.2rem; flex-shrink:0; }
-    .calif-student h4 { margin:0; font-size:1.15rem; color:var(--primary-dark); }
-    .calif-student span { font-size:0.82rem; color:var(--gray); }
-    .calif-table { width:100%; border-collapse:collapse; }
-    .calif-table th { text-align:left; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--gray); border-bottom:1.5px solid #eef1f6; padding:8px 10px; }
-    .calif-table td { padding:11px 10px; border-bottom:1px solid #eef1f6; font-size:0.92rem; color:var(--dark); }
-    .calif-grade { font-weight:700; }
-    .calif-grade.ok { color:#2ECC71; } .calif-grade.mid { color:#E8A020; } .calif-grade.low { color:#E84040; }
-    .calif-back { margin-top:20px; background:none; border:none; color:var(--primary); font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; font-size:0.9rem; }
-    .calif-back:hover { text-decoration:underline; }
-    .portal-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
-    .portal-tab { background:#f4f7fc; border:1.5px solid transparent; border-radius:10px; padding:10px 16px; font-family:'Poppins',sans-serif; font-size:0.85rem; font-weight:600; color:var(--gray); cursor:pointer; transition:var(--transition); display:flex; align-items:center; gap:7px; }
-    .portal-tab:hover { background:#eaf1fb; color:var(--primary); }
-    .portal-tab.active { background:var(--primary); color:#fff; }
-    .portal-loading { text-align:center; padding:30px; color:var(--gray); }
-    .portal-empty { text-align:center; color:var(--gray); padding:24px; }
-    .portal-empty i { font-size:1.6rem; margin-bottom:8px; display:block; }
-    .portal-attend { text-align:center; margin-bottom:18px; }
-    .portal-attend .pct { font-size:2rem; font-weight:800; color:var(--primary); }
-    .portal-attend .lbl { font-size:0.82rem; color:var(--gray); }
-    .portal-aviso { border-bottom:1px solid #eef1f6; padding:14px 0; }
-    .portal-aviso:last-child { border-bottom:none; }
-    .portal-aviso .head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
-    .portal-aviso h4 { margin:0; font-size:0.98rem; color:var(--primary-dark); }
-    .portal-aviso .date { font-size:0.74rem; color:var(--gray); white-space:nowrap; }
-    .portal-aviso p { margin:6px 0 0; font-size:0.86rem; color:var(--text); }
-    .portal-fact { border:1.5px solid #eef1f6; border-radius:12px; padding:16px 18px; margin-bottom:14px; }
-    .portal-fact .head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
-    .portal-fact h4 { margin:0; font-size:0.96rem; color:var(--primary-dark); }
-    .portal-fact .sub { font-size:0.78rem; color:var(--gray); margin-top:3px; }
-    .portal-fact .monto { font-weight:700; color:var(--primary); font-size:1.05rem; }
-    .portal-fact-badge { font-size:0.72rem; font-weight:700; padding:4px 11px; border-radius:50px; white-space:nowrap; }
-    .portal-fact-badge.pend { background:#FDF3E3; color:#C47D10; }
-    .portal-fact-badge.timb { background:#E9F9EF; color:#1E9E52; }
-    .portal-fact-actions { margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
-    .portal-fact-btn { background:var(--primary); color:#fff; border:none; border-radius:8px; padding:9px 16px; font-family:'Poppins',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; text-decoration:none; }
-    .portal-fact-btn:hover { background:var(--primary-dark); }
-    .portal-fact-btn.dl { background:#16A085; }
-    .portal-fact-form { margin-top:14px; border-top:1px dashed #dbe3ef; padding-top:14px; display:none; }
-    .portal-fact-form.show { display:block; }
-    .portal-fact-form .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-    .portal-fact-form label { display:block; font-size:0.74rem; font-weight:600; color:var(--gray); margin-bottom:4px; }
-    .portal-fact-form input, .portal-fact-form select { width:100%; padding:9px 11px; border:1.5px solid rgba(27,61,122,0.15); border-radius:8px; font-family:'Poppins',sans-serif; font-size:0.85rem; outline:none; }
+    .view{padding:16px 16px 24px;animation:fade .22s ease}
+    @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    .card{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+    .card h3{font-size:.95rem;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:12px}
+    .card h3 i{color:var(--primary)}
+    .card h3 .more{margin-left:auto;font-size:.76rem;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer}
+
+    .balance{background:linear-gradient(140deg,#1B3D7A,#2A55A5);color:#fff;border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 12px 30px rgba(27,61,122,.28)}
+    .balance.ok{background:linear-gradient(140deg,#0F8B4C,#16A85E);box-shadow:0 12px 30px rgba(15,139,76,.26)}
+    .balance .lbl{font-size:.74rem;opacity:.85;text-transform:uppercase;letter-spacing:1.4px;font-weight:600}
+    .balance .amt{font-size:2.05rem;font-weight:800;margin:5px 0 3px;letter-spacing:-.5px}
+    .balance .sub{font-size:.8rem;opacity:.9}
+    .balance button{margin-top:14px;width:100%;background:#fff;color:var(--primary-dark);border:none;border-radius:12px;padding:13px;font-weight:700;font-size:.92rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+    .balance.ok button{color:#0F6B3C}
+
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .stat{background:#fff;border-radius:15px;padding:14px 10px;text-align:center;box-shadow:var(--shadow)}
+    .stat .v{font-size:1.28rem;font-weight:800;color:var(--primary)}
+    .stat .k{font-size:.68rem;color:var(--gray);margin-top:2px;line-height:1.3}
+    .stat.alert .v{color:var(--gold)}
+
+    .row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+    .row:last-child{border-bottom:none}
+    .row .ic{width:38px;height:38px;border-radius:11px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem}
+    .row .bd{flex:1;min-width:0}
+    .row .bd .t{font-size:.9rem;font-weight:600;color:var(--dark)}
+    .row .bd .s{font-size:.74rem;color:var(--gray);margin-top:2px}
+    .row .rt{text-align:right;flex-shrink:0}
+    .row .rt .m{font-size:.95rem;font-weight:700;color:var(--primary-dark)}
+
+    .badge{font-size:.66rem;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;display:inline-block}
+    .badge.pend{background:var(--warn-soft);color:var(--warn)}
+    .badge.venc{background:var(--bad-soft);color:var(--bad)}
+    .badge.ok{background:var(--ok-soft);color:var(--ok)}
+    .badge.rev{background:var(--primary-soft);color:var(--primary)}
+
+    .btn-sm{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:9px 15px;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+    .btn-sm:active{opacity:.85}
+    .btn-sm.ghost{background:var(--primary-soft);color:var(--primary)}
+    .btn-sm.green{background:#16A085}
+    .btn-sm:disabled{background:var(--line);color:var(--gray);cursor:default}
+
+    .subtabs{display:flex;gap:6px;background:#fff;padding:5px;border-radius:14px;margin-bottom:14px;box-shadow:var(--shadow);overflow-x:auto}
+    .subtab{flex:1;min-width:max-content;border:none;background:none;padding:9px 9px;border-radius:10px;font-size:.76rem;font-weight:600;color:var(--gray);cursor:pointer;transition:var(--tr);white-space:nowrap}
+    .subtab.active{background:var(--primary);color:#fff}
+
+    table.tbl{width:100%;border-collapse:collapse}
+    table.tbl th{text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--gray);border-bottom:1.5px solid var(--line);padding:8px 6px;font-weight:700}
+    table.tbl td{padding:11px 6px;border-bottom:1px solid var(--line);font-size:.87rem;color:var(--dark)}
+    table.tbl tr:last-child td{border-bottom:none}
+    .g{font-weight:700}.g.ok{color:var(--ok)}.g.mid{color:var(--gold)}.g.low{color:#E84040}
+
+    .aviso{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:var(--tr);background:#fff}
+    .aviso.unread{border-color:rgba(232,160,32,.5);background:#FFFCF5}
+    .aviso .hd{display:flex;gap:10px;align-items:flex-start}
+    .aviso .hd h4{font-size:.92rem;color:var(--primary-dark);font-weight:700;flex:1;line-height:1.35}
+    .aviso .hd .dt{font-size:.7rem;color:var(--gray);white-space:nowrap;padding-top:2px}
+    .aviso .bd{font-size:.83rem;color:var(--text);line-height:1.6;margin-top:7px;display:none}
+    .aviso.open .bd{display:block}
+    .aviso .nu{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:6px}
+
+    .empty{text-align:center;color:var(--gray);padding:30px 16px;font-size:.85rem;line-height:1.6}
+    .empty i{font-size:1.9rem;display:block;margin-bottom:10px;opacity:.45}
+    .loading{text-align:center;padding:34px;color:var(--gray);font-size:.85rem}
+
+    /* ───────── BOTTOM NAV ───────── */
+    .nav{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:1px solid var(--line);
+      display:flex;padding-bottom:var(--safe-b);box-shadow:0 -4px 20px rgba(27,61,122,.07)}
+    .nav button{flex:1;background:none;border:none;padding:9px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;
+      color:var(--gray);font-size:.65rem;font-weight:600;cursor:pointer;position:relative;height:var(--nav-h)}
+    .nav button i{font-size:1.1rem}
+    .nav button.active{color:var(--primary)}
+    .nav button.active i{transform:translateY(-1px)}
+    .nav .ndot{position:absolute;top:3px;right:50%;margin-right:-26px;min-width:17px;height:17px;border-radius:9px;background:var(--gold);color:#3A2600;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+    .vtitle{display:flex;align-items:center;gap:9px;font-size:1rem;font-weight:700;color:var(--primary-dark);margin:2px 0 12px}
+    .vtitle i{color:var(--primary)}
+    .vtitle .badge{margin-left:auto}
+
+    /* ───────── MODAL ───────── */
+    .sheet-bg{position:fixed;inset:0;background:rgba(15,25,50,.55);z-index:60;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+    .sheet-bg.show{display:flex}
+    .sheet{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + var(--safe-b));
+      max-height:92dvh;overflow-y:auto;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+    @keyframes up{from{transform:translateY(100%)}to{transform:none}}
+    .sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+    .sheet h3{font-size:1.05rem;color:var(--primary-dark);font-weight:700;margin-bottom:4px}
+    .sheet .sub{font-size:.8rem;color:var(--gray);margin-bottom:16px;line-height:1.55}
+    .sheet label{display:block;font-size:.74rem;font-weight:700;color:var(--dark);margin-bottom:6px}
+    .sheet input[type=text],.sheet select,.sheet textarea{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:11px;font-size:.88rem;outline:none;margin-bottom:12px;color:var(--dark);background:#fff}
+    .sheet textarea{min-height:64px;resize:vertical}
+    .bank{background:var(--primary-soft);border-radius:14px;padding:14px;margin-bottom:16px}
+    .bank .l{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;font-size:.83rem}
+    .bank .l span:first-child{color:var(--gray);font-size:.76rem}
+    .bank .l b{color:var(--primary-dark);font-weight:700;text-align:right;word-break:break-all}
+    .bank .cp{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:.7rem;font-weight:700;cursor:pointer;flex-shrink:0}
+    .drop{border:2px dashed var(--line);border-radius:14px;padding:22px 14px;text-align:center;color:var(--gray);font-size:.82rem;cursor:pointer;margin-bottom:14px;transition:var(--tr)}
+    .drop.has{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+    .drop i{font-size:1.5rem;display:block;margin-bottom:8px}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + 16px);background:var(--dark);color:#fff;
+      padding:12px 20px;border-radius:24px;font-size:.83rem;z-index:80;box-shadow:0 8px 26px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center}
+    .toast.show{opacity:1}
+
+    .update-bar{position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + var(--safe-b) + 12px);background:var(--primary-dark);color:#fff;
+      border-radius:14px;padding:12px 14px;display:none;align-items:center;gap:10px;z-index:70;font-size:.82rem;box-shadow:0 10px 26px rgba(0,0,0,.28)}
+    .update-bar.show{display:flex}
+    .update-bar button{margin-left:auto;background:var(--gold);color:#3A2600;border:none;border-radius:9px;padding:7px 13px;font-weight:700;font-size:.78rem;cursor:pointer}
+
+    @media(min-width:700px){
+      .view{max-width:660px;margin:0 auto;width:100%}
+      .appbar{border-radius:0}
+      .nav button{font-size:.7rem}
+    }
   </style>
 </head>
 <body>
 
-  <div class="portal-topbar">
-    <div class="brand">
-      <img src="https://static.wixstatic.com/media/2f20e7_809ae5cf3f514c2ea32cae018caeb600~mv2.png/v1/crop/x_0,y_296,w_1024,h_587/fill/w_240,h_138,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/2f20e7_809ae5cf3f514c2ea32cae018caeb600~mv2.png" alt="Learning Project Institute" onerror="this.style.display='none';" />
-      <span class="brand-name">Learning Project Institute</span>
+<!-- ════════════ LOGIN ════════════ -->
+<section id="login">
+  <div class="wrap">
+    <div class="brand-block">
+      <img src="fotos/oso-icon-512.png" alt="Learning Project Institute"
+           onerror="this.onerror=null;this.src='fotos/app-icon-192.png'" />
+      <h1>Learning Project Institute</h1>
+      <p>Portal de Padres</p>
     </div>
-    <a class="back" href="index.html"><i class="fas fa-arrow-left"></i> Volver al sitio</a>
-  </div>
 
-  <section id="calificaciones" class="calif-section">
-    <div class="levels-header">
-      <div class="section-tag">Acceso Padres</div>
-      <h2 class="section-title">Portal de <span>Padres de Familia</span></h2>
-      <p class="section-text">Ingresa con el usuario y contraseña que la escuela te entregó al inscribir a tu hijo/a.</p>
-    </div>
-    <div class="calif-card" id="calif-card">
-      <div class="lock-ic"><i class="fas fa-lock"></i></div>
-      <h3>Ingresa a tu cuenta</h3>
-      <p class="desc">Cada alumno/a inscrito tiene su propio usuario y contraseña. Si tienes más de un hijo/a en la escuela, cada uno cuenta con un acceso distinto.</p>
-      <div id="hijos-chips" style="display:none;margin-bottom:14px;"></div>
-      <div class="calif-field"><label>Usuario</label><input id="padre-usuario" type="text" placeholder="Ej. juan.perez45" autocomplete="username" /></div>
-      <div class="calif-field"><label>Contraseña</label><input id="padre-pass" type="password" placeholder="Tu contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginPadre()" /></div>
-      <button class="calif-btn" onclick="loginPadre()"><i class="fas fa-sign-in-alt"></i> Ingresar</button>
-      <div class="calif-msg" id="calif-msg"></div>
-      <p class="calif-note"><i class="fas fa-shield-alt"></i> Solo verás la información del alumno/a asociado a tu cuenta.</p>
-    </div>
-    <div class="calif-result" id="calif-result">
-      <div class="calif-student"><div class="av" id="calif-av">A</div><div><h4 id="calif-nombre">Alumno</h4><span id="calif-meta">Nivel · Grado</span></div></div>
-      <div class="portal-tabs">
-        <button class="portal-tab active" data-tab="califs" onclick="portalTab('califs',this)"><i class="fas fa-star-half-alt"></i> Calificaciones</button>
-        <button class="portal-tab" data-tab="asist" onclick="portalTab('asist',this)"><i class="fas fa-clipboard-check"></i> Asistencia</button>
-        <button class="portal-tab" data-tab="horario" onclick="portalTab('horario',this)"><i class="fas fa-calendar-alt"></i> Horario</button>
-        <button class="portal-tab" data-tab="avisos" onclick="portalTab('avisos',this)"><i class="fas fa-bullhorn"></i> Avisos</button>
-        <button class="portal-tab" data-tab="calendario" onclick="portalTab('calendario',this)"><i class="fas fa-calendar-days"></i> Calendario</button>
-        <button class="portal-tab" data-tab="factura" onclick="portalTab('factura',this)"><i class="fas fa-file-invoice"></i> Factura</button>
+    <div class="login-card">
+      <h2>Bienvenido</h2>
+      <p class="sub">Ingresa con el usuario y contraseña que la escuela te entregó al inscribir a tu hijo/a.</p>
+
+      <div id="chips-wrap" class="hide">
+        <div class="chips-title">Cuentas en este dispositivo</div>
+        <div class="chips" id="chips"></div>
       </div>
-      <div id="portal-tabbody"></div>
-      <button class="calif-back" onclick="cerrarCalificaciones()"><i class="fas fa-arrow-left"></i> Cerrar sesión</button>
+
+      <div class="field">
+        <label for="u">Usuario</label>
+        <div class="box">
+          <i class="fas fa-user"></i>
+          <input id="u" type="text" placeholder="Ej. juan.perez45" autocomplete="username" autocapitalize="none" spellcheck="false" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="p">Contraseña</label>
+        <div class="box">
+          <i class="fas fa-lock"></i>
+          <input id="p" type="password" placeholder="Tu contraseña" autocomplete="current-password" />
+          <button class="eye" type="button" onclick="togglePass()" aria-label="Mostrar contraseña"><i id="eye-i" class="fas fa-eye"></i></button>
+        </div>
+      </div>
+
+      <label class="remember">
+        <input type="checkbox" id="recordar" checked />
+        <span>Mantener la sesión iniciada en este dispositivo. No la actives en un teléfono compartido.</span>
+      </label>
+
+      <button class="btn-primary" id="btn-login" onclick="login()"><i class="fas fa-arrow-right-to-bracket"></i> Entrar</button>
+      <div class="msg" id="login-msg"></div>
+      <p class="login-note"><i class="fas fa-shield-halved"></i> Solo verás la información del alumno/a de tu cuenta.<br>¿Olvidaste tus datos? Pídelos en recepción.</p>
     </div>
-  </section>
+  </div>
+</section>
+
+<!-- ════════════ APP ════════════ -->
+<section id="app" class="hide">
+  <header class="appbar">
+    <div class="av" id="av">A</div>
+    <div class="who">
+      <div class="hi">Alumno/a</div>
+      <div class="nm" id="nm">—</div>
+      <div class="mt" id="mt">—</div>
+    </div>
+    <button class="icon-btn" onclick="go('avisos')" aria-label="Avisos">
+      <i class="fas fa-bell"></i><span class="dot hide" id="bell-dot">0</span>
+    </button>
+    <button class="icon-btn" onclick="refrescar()" aria-label="Actualizar"><i class="fas fa-rotate" id="rot-i"></i></button>
+  </header>
+
+  <div class="view" id="view"></div>
+
+  <nav class="nav">
+    <button data-v="inicio"  onclick="go('inicio')"><i class="fas fa-house"></i><span>Inicio</span></button>
+    <button data-v="pagos"   onclick="go('pagos')"><i class="fas fa-credit-card"></i><span>Pagos</span></button>
+    <button data-v="escolar" onclick="go('escolar')"><i class="fas fa-graduation-cap"></i><span>Escolar</span></button>
+    <button data-v="avisos"  onclick="go('avisos')"><i class="fas fa-bullhorn"></i><span>Avisos</span><span class="ndot hide" id="nav-dot">0</span></button>
+    <button data-v="cuenta"  onclick="go('cuenta')"><i class="fas fa-circle-user"></i><span>Cuenta</span></button>
+  </nav>
+</section>
+
+<div class="sheet-bg" id="sheet-bg" onclick="if(event.target===this)cerrarSheet()">
+  <div class="sheet" id="sheet"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="update-bar" id="update-bar">
+  <i class="fas fa-arrow-rotate-right"></i> Hay una versión nueva de la app.
+  <button onclick="location.reload(true)">Actualizar</button>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // Cliente Supabase (publico) para el portal de padres
-  var _sbPub = (window.supabase ? window.supabase.createClient('https://bvmeunsyhrurigtgpedz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2bWV1bnN5aHJ1cmlndGdwZWR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTM4OTIsImV4cCI6MjA5NzkyOTg5Mn0.dw9m8xkDVgOFDAZ-PNVedOM90ylQ56eBC7PgVkptiH0') : null);
+/* ══════════════════════════════════════════════════════════════
+   LPI · App de Padres
+   Seguridad: esta app NUNCA lee tablas directo. Todo pasa por
+   funciones portal_* (SECURITY DEFINER) que revalidan usuario y
+   contraseña en el servidor en cada llamada.
+   ══════════════════════════════════════════════════════════════ */
+var SB_URL = 'https://bvmeunsyhrurigtgpedz.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2bWV1bnN5aHJ1cmlndGdwZWR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTM4OTIsImV4cCI6MjA5NzkyOTg5Mn0.dw9m8xkDVgOFDAZ-PNVedOM90ylQ56eBC7PgVkptiH0';
+var APP_VERSION = '2.0.0';
+var sb = (window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null);
 
-  // ── Portal de Padres (login individual por alumno) ──
-  // Nota de seguridad: todas las lecturas del portal pasan por funciones de Supabase (RPC)
-  // que revalidan usuario+contraseña en cada consulta y solo devuelven lo que el portal necesita.
-  // Esta página ya no lee las tablas directo (alumnos, calificaciones, etc. quedan fuera de alcance de esta app).
-  var _padreAlumno = null;
-  var _padreUsuario = null;
-  var _padrePass = null;
-  var _portalDestino = new URLSearchParams(location.search).get('tab');
+var S = { al:null, u:null, p:null, view:'inicio', resumen:null, cache:{} };
 
-  // ── Selector de hijos (multi-hijo por dispositivo) ──
-  // Guarda solo (usuario, nombre) en este dispositivo para acceso rápido; la contraseña
-  // NUNCA se guarda y siempre debe volver a escribirse por seguridad.
-  var HIJOS_KEY = 'lpi_hijos_dispositivo';
-  function getHijosGuardados(){
-    try{ return JSON.parse(localStorage.getItem(HIJOS_KEY) || '[]'); }catch(e){ return []; }
+var K_HIJOS = 'lpi_hijos_dispositivo';
+var K_SES   = 'lpi_sesion_v2';
+
+/* ── utilidades ─────────────────────────────────────────────── */
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function $(id){ return document.getElementById(id); }
+function money(n){ return '$'+(parseFloat(n)||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fecha(f){ if(!f) return ''; try{ return new Date(String(f).slice(0,10)+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){ return String(f); } }
+function fechaHora(f){ if(!f) return ''; try{ return new Date(f).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+var _tt;
+function toast(txt){ var t=$('toast'); t.textContent=txt; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(function(){ t.classList.remove('show'); },2600); }
+
+async function rpc(fn, args){
+  if(!sb) throw new Error('Sin conexión con el servidor');
+  var q = await sb.rpc(fn, args);
+  if(q.error) throw q.error;
+  return q.data;
+}
+function conCreds(extra){
+  var a = { p_usuario: S.u, p_pass: S.p };
+  if(extra) for(var k in extra) a[k]=extra[k];
+  return a;
+}
+
+/* ── cuentas guardadas en el dispositivo ────────────────────── */
+function hijosGuardados(){ try{ return JSON.parse(localStorage.getItem(K_HIJOS)||'[]'); }catch(e){ return []; } }
+function guardarHijo(usuario,nombre){
+  try{
+    var a = hijosGuardados().filter(function(h){ return h.usuario!==usuario; });
+    a.unshift({usuario:usuario,nombre:nombre}); localStorage.setItem(K_HIJOS, JSON.stringify(a.slice(0,6)));
+  }catch(e){}
+}
+function quitarHijo(usuario,ev){
+  if(ev) ev.stopPropagation();
+  try{
+    localStorage.setItem(K_HIJOS, JSON.stringify(hijosGuardados().filter(function(h){ return h.usuario!==usuario; })));
+    if(sesionGuardada() && sesionGuardada().u===usuario) localStorage.removeItem(K_SES);
+    pintarChips();
+  }catch(e){}
+}
+function elegirHijo(usuario){
+  var s = sesionGuardada();
+  $('u').value = usuario;
+  if(s && s.u===usuario && s.p){ $('p').value=s.p; login(); return; }
+  $('p').value=''; $('p').focus();
+}
+function pintarChips(){
+  var a = hijosGuardados(), w=$('chips-wrap'), c=$('chips');
+  if(!a.length){ w.classList.add('hide'); return; }
+  w.classList.remove('hide');
+  c.innerHTML = a.map(function(h){
+    return '<span class="chip" data-u="'+esc(h.usuario)+'" onclick="elegirHijo(this.dataset.u)">'+
+      '<i class="fas fa-user-graduate" style="color:var(--primary)"></i>'+esc(h.nombre||h.usuario)+
+      '<i class="fas fa-times x" onclick="quitarHijo(this.parentNode.dataset.u,event)"></i></span>';
+  }).join('');
+}
+function sesionGuardada(){ try{ return JSON.parse(localStorage.getItem(K_SES)||'null'); }catch(e){ return null; } }
+
+/* ── login ──────────────────────────────────────────────────── */
+function togglePass(){
+  var i=$('p'), e=$('eye-i');
+  if(i.type==='password'){ i.type='text'; e.className='fas fa-eye-slash'; }
+  else { i.type='password'; e.className='fas fa-eye'; }
+}
+async function login(usuario, pass, silencioso){
+  var u = usuario!=null ? usuario : ($('u').value||'').trim();
+  var p = pass!=null ? pass : ($('p').value||'').trim();
+  var m = $('login-msg'), b=$('btn-login');
+  m.className='msg';
+  if(!u || !p){ m.className='msg err'; m.textContent='Escribe tu usuario y tu contraseña.'; return; }
+  if(!sb){ m.className='msg err'; m.textContent='No hay conexión con el servidor. Intenta más tarde.'; return; }
+  b.disabled=true; b.innerHTML='<i class="fas fa-spinner fa-spin"></i> Verificando…';
+  try{
+    var d = await rpc('portal_login', {p_usuario:u, p_pass:p});
+    var al = (d||[])[0];
+    if(!al){
+      m.className='msg err'; m.textContent='Usuario o contraseña incorrectos. Verifícalos con la escuela.';
+      if(silencioso){ localStorage.removeItem(K_SES); }
+      return;
+    }
+    S.al=al; S.u=u; S.p=p; S.cache={};
+    guardarHijo(u, al.nombre);
+    if($('recordar').checked){ try{ localStorage.setItem(K_SES, JSON.stringify({u:u,p:p,t:Date.now()})); }catch(e){} }
+    else { localStorage.removeItem(K_SES); }
+    abrirApp();
+  }catch(e){
+    console.error('login:', e);
+    m.className='msg err'; m.textContent='No pudimos conectarnos. Revisa tu internet e intenta de nuevo.';
+  }finally{
+    b.disabled=false; b.innerHTML='<i class="fas fa-arrow-right-to-bracket"></i> Entrar';
   }
-  function guardarHijoDispositivo(usuario, nombre){
+}
+function salir(){
+  localStorage.removeItem(K_SES);
+  S={al:null,u:null,p:null,view:'inicio',resumen:null,cache:{}};
+  $('app').classList.add('hide'); $('login').classList.remove('hide');
+  $('p').value=''; $('login-msg').className='msg';
+  pintarChips(); window.scrollTo(0,0);
+}
+async function abrirApp(){
+  $('login').classList.add('hide'); $('app').classList.remove('hide');
+  $('nm').textContent = S.al.nombre || '—';
+  $('mt').textContent = [S.al.nivel, S.al.grado].filter(Boolean).join(' · ') || '—';
+  $('av').textContent = (S.al.nombre||'A').trim().charAt(0).toUpperCase();
+  window.scrollTo(0,0);
+  await cargarResumen();
+  var destino = S.destino || 'inicio'; S.destino = null;
+  go(destino);
+}
+
+/* ── resumen / badges ───────────────────────────────────────── */
+async function cargarResumen(){
+  try{
+    var d = await rpc('portal_resumen', conCreds());
+    S.resumen = (d||[])[0] || null;
+  }catch(e){ console.error('resumen:', e); S.resumen=null; }
+  pintarBadges();
+}
+function pintarBadges(){
+  var n = S.resumen ? (S.resumen.avisos_no_leidos||0) : 0;
+  [['bell-dot',$('bell-dot')],['nav-dot',$('nav-dot')]].forEach(function(pair){
+    var el=pair[1]; if(!el) return;
+    if(n>0){ el.textContent = n>9?'9+':n; el.classList.remove('hide'); } else { el.classList.add('hide'); }
+  });
+}
+async function refrescar(){
+  var i=$('rot-i'); i.classList.add('fa-spin');
+  S.cache={};
+  await cargarResumen();
+  await go(S.view);
+  i.classList.remove('fa-spin');
+  toast('Información actualizada');
+}
+
+/* ── navegación ─────────────────────────────────────────────── */
+async function go(v){
+  S.view = v;
+  document.querySelectorAll('.nav button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); });
+  var box = $('view');
+  box.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>';
+  window.scrollTo(0,0);
+  try{
+    if(v==='inicio')       box.innerHTML = await vistaInicio();
+    else if(v==='pagos')   box.innerHTML = await vistaPagos();
+    else if(v==='escolar') { box.innerHTML = await vistaEscolar(); await subEscolar(S.subEsc||'califs'); }
+    else if(v==='avisos')  box.innerHTML = await vistaAvisos();
+    else if(v==='cuenta')  box.innerHTML = await vistaCuenta();
+  }catch(e){
+    console.error('vista '+v+':', e);
+    box.innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>No pudimos cargar esta sección.<br>Revisa tu conexión e intenta de nuevo.<br><br><button class="btn-sm" onclick="go(\''+v+'\')">Reintentar</button></div>';
+  }
+}
+
+/* ── INICIO ─────────────────────────────────────────────────── */
+async function vistaInicio(){
+  if(!S.resumen) await cargarResumen();
+  var r = S.resumen || {};
+  var deuda = parseFloat(r.adeudo_total||0);
+  var venc  = parseInt(r.cargos_vencidos||0,10);
+  var rev   = parseInt(r.pagos_en_revision||0,10);
+
+  var h = '';
+  if(deuda>0){
+    h += '<div class="balance">'+
+      '<div class="lbl">Saldo pendiente</div>'+
+      '<div class="amt">'+money(deuda)+'</div>'+
+      '<div class="sub">'+(r.cargos_pendientes||0)+' cargo(s) por pagar'+(venc>0?' · <b>'+venc+' vencido(s)</b>':'')+'</div>'+
+      (rev>0?'<div class="sub" style="margin-top:6px"><i class="fas fa-clock"></i> '+rev+' pago(s) en revisión</div>':'')+
+      '<button onclick="go(\'pagos\')"><i class="fas fa-credit-card"></i> Ver y pagar</button>'+
+      '</div>';
+  } else {
+    h += '<div class="balance ok">'+
+      '<div class="lbl">Estado de cuenta</div>'+
+      '<div class="amt">Al corriente</div>'+
+      '<div class="sub">No tienes cargos pendientes. ¡Gracias!</div>'+
+      (rev>0?'<div class="sub" style="margin-top:6px"><i class="fas fa-clock"></i> '+rev+' pago(s) en revisión</div>':'')+
+      '<button onclick="go(\'pagos\')"><i class="fas fa-receipt"></i> Ver historial</button>'+
+      '</div>';
+  }
+
+  h += '<div class="stats">'+
+    '<div class="stat"><div class="v">'+(r.promedio!=null? parseFloat(r.promedio).toFixed(1) : '—')+'</div><div class="k">Promedio</div></div>'+
+    '<div class="stat"><div class="v">'+(r.asistencia_pct!=null? r.asistencia_pct+'%' : '—')+'</div><div class="k">Asistencia</div></div>'+
+    '<div class="stat'+((r.avisos_no_leidos||0)>0?' alert':'')+'"><div class="v">'+(r.avisos_no_leidos||0)+'</div><div class="k">Avisos nuevos</div></div>'+
+    '</div>';
+
+  // próximos cargos
+  var cargos = await getEstadoCuenta();
+  h += '<div class="card"><h3><i class="fas fa-calendar-day"></i> Próximos cargos'+
+       (cargos.length?'<button class="more" onclick="go(\'pagos\')">Ver todo</button>':'')+'</h3>';
+  if(!cargos.length) h += '<div class="empty" style="padding:14px"><i class="fas fa-circle-check"></i>Sin cargos pendientes.</div>';
+  else h += cargos.slice(0,3).map(filaCargo).join('');
+  h += '</div>';
+
+  // últimos avisos
+  var avisos = await getAvisos();
+  h += '<div class="card"><h3><i class="fas fa-bullhorn"></i> Últimos avisos'+
+       (avisos.length?'<button class="more" onclick="go(\'avisos\')">Ver todo</button>':'')+'</h3>';
+  if(!avisos.length) h += '<div class="empty" style="padding:14px"><i class="fas fa-inbox"></i>No hay avisos por ahora.</div>';
+  else h += avisos.slice(0,3).map(function(a){
+    return '<div class="row"><div class="ic" style="'+(a.leido?'':'background:var(--warn-soft);color:var(--warn)')+'"><i class="fas fa-'+(a.leido?'envelope-open':'envelope')+'"></i></div>'+
+      '<div class="bd"><div class="t">'+esc(a.titulo)+'</div><div class="s">'+fecha(a.fecha)+'</div></div></div>';
+  }).join('');
+  h += '</div>';
+  return h;
+}
+
+/* ── PAGOS ──────────────────────────────────────────────────── */
+async function getEstadoCuenta(){
+  if(!S.cache.cuenta) S.cache.cuenta = await rpc('portal_estado_cuenta', conCreds()) || [];
+  return S.cache.cuenta;
+}
+async function getDatosPago(){
+  if(!S.cache.datos){
+    var rows = await rpc('portal_datos_pago', conCreds()) || [];
+    var o={}; rows.forEach(function(r){ o[r.clave]=r.valor; });
+    S.cache.datos = o;
+  }
+  return S.cache.datos;
+}
+function estadoCargo(c){
+  if(c.reporte_estado==='en_revision' || c.reporte_estado==='iniciado') return '<span class="badge rev">En revisión</span>';
+  if(c.reporte_estado==='rechazado') return '<span class="badge venc">Comprobante rechazado</span>';
+  if(c.estado==='Vencido' || c.dias_vencido>0) return '<span class="badge venc">Vencido '+c.dias_vencido+' d</span>';
+  return '<span class="badge pend">Pendiente</span>';
+}
+function filaCargo(c){
+  var puede = !(c.reporte_estado==='en_revision'||c.reporte_estado==='iniciado');
+  return '<div class="row">'+
+    '<div class="ic"><i class="fas fa-file-invoice-dollar"></i></div>'+
+    '<div class="bd"><div class="t">'+esc(c.concepto)+'</div>'+
+    '<div class="s">Vence '+fecha(c.fecha)+' · '+estadoCargo(c)+'</div></div>'+
+    '<div class="rt"><div class="m">'+money(c.monto)+'</div>'+
+    (puede?'<button class="btn-sm" style="margin-top:6px" onclick="abrirPago('+c.pago_id+')">Pagar</button>':'')+
+    '</div></div>';
+}
+
+async function vistaPagos(){
+  var h = '<div class="subtabs">'+
+    '<button class="subtab active" onclick="subPagos(\'cargos\',this)">Por pagar</button>'+
+    '<button class="subtab" onclick="subPagos(\'reportes\',this)">Mis reportes</button>'+
+    '<button class="subtab" onclick="subPagos(\'historial\',this)">Historial</button>'+
+    '</div><div id="pg-body"></div>';
+  setTimeout(function(){ subPagos('cargos'); }, 0);
+  return h;
+}
+async function subPagos(t, btn){
+  document.querySelectorAll('#view .subtab').forEach(function(b){ b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  var b = $('pg-body'); if(!b) return;
+  b.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>';
+  try{
+    if(t==='cargos'){
+      var c = await getEstadoCuenta();
+      var total = c.reduce(function(a,x){ return a+parseFloat(x.monto||0); },0);
+      if(!c.length){ b.innerHTML = '<div class="card"><div class="empty"><i class="fas fa-circle-check" style="color:var(--ok);opacity:1"></i>No tienes cargos pendientes.<br>Estás al corriente.</div></div>'; return; }
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-list-ul"></i> Cargos por pagar</h3>'+c.map(filaCargo).join('')+
+        '<div class="row" style="border-top:2px solid var(--line);margin-top:6px"><div class="bd"><div class="t">Total</div></div>'+
+        '<div class="rt"><div class="m" style="font-size:1.1rem">'+money(total)+'</div></div></div></div>';
+    } else if(t==='reportes'){
+      var r = await rpc('portal_pagos_reportados', conCreds()) || [];
+      if(!r.length){ b.innerHTML = '<div class="card"><div class="empty"><i class="fas fa-receipt"></i>Todavía no has reportado ningún pago desde la app.</div></div>'; return; }
+      var mapa = {en_revision:['rev','En revisión'], iniciado:['rev','Iniciado'], aprobado:['ok','Aprobado'], rechazado:['venc','Rechazado'], cancelado:['pend','Cancelado']};
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-clock-rotate-left"></i> Pagos que reportaste</h3>'+
+        r.map(function(x){
+          var m = mapa[x.estado]||['pend',x.estado];
+          return '<div class="row"><div class="ic"><i class="fas fa-paper-plane"></i></div>'+
+            '<div class="bd"><div class="t">'+esc(x.concepto)+'</div>'+
+            '<div class="s">'+esc(x.referencia)+' · '+fechaHora(x.created_at)+'</div>'+
+            (x.nota_staff?'<div class="s" style="color:var(--bad)">'+esc(x.nota_staff)+'</div>':'')+'</div>'+
+            '<div class="rt"><div class="m">'+money(x.monto)+'</div><span class="badge '+m[0]+'" style="margin-top:5px">'+m[1]+'</span></div></div>';
+        }).join('')+'</div>';
+    } else {
+      var hh = await rpc('portal_historial_pagos', conCreds()) || [];
+      if(!hh.length){ b.innerHTML = '<div class="card"><div class="empty"><i class="fas fa-folder-open"></i>Aún no hay pagos aplicados.</div></div>'; return; }
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-check-double"></i> Pagos aplicados</h3>'+
+        hh.map(function(x){
+          return '<div class="row"><div class="ic" style="background:var(--ok-soft);color:var(--ok)"><i class="fas fa-check"></i></div>'+
+            '<div class="bd"><div class="t">'+esc(x.concepto)+'</div><div class="s">'+fecha(x.fecha)+'</div></div>'+
+            '<div class="rt"><div class="m">'+money(x.monto)+'</div></div></div>';
+        }).join('')+
+        '<p style="font-size:.76rem;color:var(--gray);margin-top:12px;line-height:1.5">¿Necesitas factura de algún pago? Ve a <b>Cuenta → Facturación</b>.</p></div>';
+    }
+  }catch(e){
+    console.error('subPagos:', e);
+    b.innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>No pudimos cargar esta información.</div>';
+  }
+}
+
+/* ── hoja de pago ───────────────────────────────────────────── */
+var _comprobante = null;
+async function abrirPago(pagoId){
+  var cargos = await getEstadoCuenta();
+  var c = cargos.filter(function(x){ return x.pago_id===pagoId; })[0];
+  if(!c){ toast('Cargo no encontrado'); return; }
+  var d = await getDatosPago();
+  var metodos = {}; try{ metodos = JSON.parse(d.pago_metodos||'{}'); }catch(e){}
+  _comprobante = null;
+
+  var clabe = (d.pago_clabe||'').trim();
+  var bancoLista = clabe
+    ? '<div class="bank">'+
+        '<div class="l"><span>Banco</span><b>'+esc(d.pago_banco||'—')+'</b></div>'+
+        '<div class="l"><span>Beneficiario</span><b>'+esc(d.pago_beneficiario||'—')+'</b></div>'+
+        '<div class="l"><span>CLABE</span><b id="clabe-v">'+esc(clabe)+'</b><button class="cp" onclick="copiar(\''+esc(clabe)+'\')">Copiar</button></div>'+
+        '<div class="l"><span>Referencia</span><b>'+esc((S.al.matricula||S.al.nombre||'').toString().slice(0,24))+'</b></div>'+
+      '</div>'
+    : '<div class="bank" style="background:var(--warn-soft)"><div style="font-size:.82rem;color:var(--warn);line-height:1.55">'+
+      '<b>La escuela aún no publica sus datos bancarios en la app.</b><br>Pregunta en recepción cómo hacer tu pago y luego sube aquí el comprobante.</div></div>';
+
+  var extra = '';
+  if(metodos.tarjeta || metodos.oxxo){
+    extra = '<button class="btn-primary" style="margin-bottom:12px;background:var(--gold);color:#3A2600" onclick="toast(\'El pago con tarjeta se activará muy pronto.\')">'+
+            '<i class="fas fa-credit-card"></i> Pagar con tarjeta</button>';
+  }
+
+  abrirSheet(
+    '<h3>Pagar '+esc(c.concepto)+'</h3>'+
+    '<p class="sub">Importe: <b style="color:var(--primary-dark)">'+money(c.monto)+'</b> · Vence '+fecha(c.fecha)+'</p>'+
+    extra + bancoLista +
+    '<p class="sub" style="margin-bottom:14px">'+esc(d.pago_instrucciones||'Realiza tu transferencia o depósito y sube aquí tu comprobante.')+'</p>'+
+    '<label>Cómo pagaste</label>'+
+    '<select id="pg-metodo">'+
+      '<option value="transferencia">Transferencia bancaria / SPEI</option>'+
+      '<option value="deposito">Depósito en ventanilla</option>'+
+      '<option value="otro">Otro</option>'+
+    '</select>'+
+    '<label>Comprobante (imagen o PDF)</label>'+
+    '<div class="drop" id="pg-drop" onclick="document.getElementById(\'pg-file\').click()">'+
+      '<i class="fas fa-cloud-arrow-up"></i><span id="pg-drop-t">Toca para elegir tu comprobante</span></div>'+
+    '<input type="file" id="pg-file" accept="image/*,application/pdf" class="hide" onchange="elegirComprobante(this)" />'+
+    '<label>Nota para la escuela (opcional)</label>'+
+    '<textarea id="pg-nota" placeholder="Ej. Pagué el 3 de agosto desde BBVA a nombre de..."></textarea>'+
+    '<button class="btn-primary" id="pg-send" onclick="enviarPago('+pagoId+')"><i class="fas fa-paper-plane"></i> Enviar comprobante</button>'+
+    '<div class="msg" id="pg-msg"></div>'+
+    '<p style="font-size:.72rem;color:var(--gray);margin-top:12px;text-align:center;line-height:1.5">La escuela revisa tu comprobante y tu pago queda aplicado en cuanto lo apruebe.</p>'
+  );
+}
+function copiar(txt){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); }
+    else { var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+    toast('CLABE copiada');
+  }catch(e){ toast('No se pudo copiar'); }
+}
+function elegirComprobante(input){
+  var f = input.files && input.files[0];
+  if(!f) return;
+  if(f.size > 6*1024*1024){ toast('El archivo pesa más de 6 MB'); input.value=''; return; }
+  var d=$('pg-drop'), t=$('pg-drop-t');
+  t.textContent='Preparando archivo…';
+  var fr = new FileReader();
+  fr.onload = function(){
+    if(f.type.indexOf('image/')===0){
+      comprimirImagen(fr.result, function(dataUrl){
+        _comprobante = {data:dataUrl, nombre:f.name};
+        d.classList.add('has'); t.textContent = f.name+' ✓';
+      });
+    } else {
+      if(fr.result.length > 3400000){ toast('El PDF es muy pesado. Sube una foto del comprobante.'); d.classList.remove('has'); t.textContent='Toca para elegir tu comprobante'; input.value=''; return; }
+      _comprobante = {data:fr.result, nombre:f.name};
+      d.classList.add('has'); t.textContent = f.name+' ✓';
+    }
+  };
+  fr.onerror = function(){ toast('No se pudo leer el archivo'); };
+  fr.readAsDataURL(f);
+}
+function comprimirImagen(dataUrl, cb){
+  var img = new Image();
+  img.onload = function(){
+    var max = 1400, w=img.width, h=img.height;
+    if(w>max || h>max){ var s=Math.min(max/w, max/h); w=Math.round(w*s); h=Math.round(h*s); }
+    var cv = document.createElement('canvas'); cv.width=w; cv.height=h;
+    var cx = cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,w,h); cx.drawImage(img,0,0,w,h);
+    var q=0.82, out=cv.toDataURL('image/jpeg',q);
+    while(out.length>3000000 && q>0.35){ q-=0.12; out=cv.toDataURL('image/jpeg',q); }
+    cb(out);
+  };
+  img.onerror = function(){ cb(dataUrl); };
+  img.src = dataUrl;
+}
+async function enviarPago(pagoId){
+  var msg=$('pg-msg'), btn=$('pg-send');
+  msg.className='msg';
+  if(!_comprobante){ msg.className='msg err'; msg.textContent='Adjunta tu comprobante para poder enviarlo.'; return; }
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Enviando…';
+  try{
+    var ref = await rpc('portal_reportar_pago', conCreds({
+      p_pago_id: pagoId,
+      p_metodo: ($('pg-metodo')||{}).value || 'transferencia',
+      p_comprobante: _comprobante.data,
+      p_comprobante_nombre: _comprobante.nombre,
+      p_nota: ($('pg-nota')||{}).value || ''
+    }));
+    msg.className='msg ok';
+    msg.innerHTML = '¡Listo! Tu comprobante llegó a la escuela.<br>Referencia: <b>'+esc(ref)+'</b>';
+    _comprobante=null; S.cache.cuenta=null;
+    await cargarResumen();
+    setTimeout(function(){ cerrarSheet(); go('pagos'); toast('Comprobante enviado'); }, 1600);
+  }catch(e){
+    console.error('enviarPago:', e);
+    msg.className='msg err';
+    msg.textContent = (e && e.message && e.message.indexOf('Ya hay un pago reportado')>=0)
+      ? 'Ya hay un comprobante en revisión para este cargo.'
+      : 'No se pudo enviar. Revisa tu conexión e intenta de nuevo.';
+  }finally{
+    btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Enviar comprobante';
+  }
+}
+
+/* ── ESCOLAR ────────────────────────────────────────────────── */
+async function vistaEscolar(){
+  return '<div class="subtabs">'+
+    '<button class="subtab" data-s="califs"  onclick="subEscolar(\'califs\',this)">Calificaciones</button>'+
+    '<button class="subtab" data-s="asist"   onclick="subEscolar(\'asist\',this)">Asistencia</button>'+
+    '<button class="subtab" data-s="horario" onclick="subEscolar(\'horario\',this)">Horario</button>'+
+    '<button class="subtab" data-s="calend"  onclick="subEscolar(\'calend\',this)">Calendario</button>'+
+    '</div><div id="es-body"></div>';
+}
+async function subEscolar(t, btn){
+  S.subEsc = t;
+  document.querySelectorAll('#view .subtab').forEach(function(b){ b.classList.toggle('active', b.dataset.s===t); });
+  var b = $('es-body'); if(!b) return;
+  b.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>';
+  try{
+    if(t==='califs'){
+      var r = await rpc('portal_calificaciones', conCreds()) || [];
+      if(!r.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-star-half-stroke"></i>Aún no hay calificaciones publicadas.</div></div>'; return; }
+      var prom = r.reduce(function(a,x){ return a+(parseFloat(x.calificacion)||0); },0)/r.length;
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-star"></i> Calificaciones</h3>'+
+        '<div style="text-align:center;margin-bottom:14px"><div style="font-size:2rem;font-weight:800;color:var(--primary)">'+prom.toFixed(1)+'</div>'+
+        '<div style="font-size:.76rem;color:var(--gray)">Promedio general</div></div>'+
+        '<table class="tbl"><thead><tr><th>Materia</th><th>Calif.</th><th>Periodo</th></tr></thead><tbody>'+
+        r.map(function(c){ var v=parseFloat(c.calificacion); var cl=v>=8?'ok':v>=6?'mid':'low';
+          return '<tr><td>'+esc(c.materia)+'</td><td class="g '+cl+'">'+(isNaN(v)?esc(c.calificacion):v.toFixed(1))+'</td><td style="font-size:.78rem;color:var(--gray)">'+esc(c.periodo)+'</td></tr>'; }).join('')+
+        '</tbody></table></div>';
+    } else if(t==='asist'){
+      var a = await rpc('portal_asistencia', conCreds()) || [];
+      if(!a.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-clipboard-check"></i>Aún no hay registros de asistencia.</div></div>'; return; }
+      var pres = a.filter(function(x){ return x.estado==='A'; }).length;
+      var pct = Math.round(pres/a.length*100);
+      var nom = {A:'Asistió',F:'Faltó',T:'Tarde'};
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Asistencia</h3>'+
+        '<div style="text-align:center;margin-bottom:14px"><div style="font-size:2rem;font-weight:800;color:var(--primary)">'+pct+'%</div>'+
+        '<div style="font-size:.76rem;color:var(--gray)">En los últimos '+a.length+' días registrados</div></div>'+
+        '<table class="tbl"><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+
+        a.map(function(x){ var cl=x.estado==='A'?'ok':x.estado==='T'?'mid':'low';
+          return '<tr><td>'+fecha(x.fecha)+'</td><td class="g '+cl+'">'+(nom[x.estado]||esc(x.estado))+'</td></tr>'; }).join('')+
+        '</tbody></table></div>';
+    } else if(t==='horario'){
+      var hr = await rpc('portal_horario', conCreds()) || [];
+      var grupo = [S.al.grado, S.al.nivel].filter(Boolean).join(' ');
+      if(!hr.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-calendar"></i>Aún no hay horario publicado para '+esc(grupo)+'.</div></div>'; return; }
+      var fr = ['7:00','8:00','9:00','10:30','11:30','12:30'];
+      var dias = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+      var grid = {}; hr.forEach(function(x){ grid[x.dia+'|'+x.franja]=x.materia; });
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-calendar-days"></i> Horario · '+esc(grupo)+'</h3>'+
+        '<div style="overflow-x:auto"><table class="tbl" style="min-width:520px"><thead><tr><th>Hora</th>'+
+        dias.map(function(d){ return '<th>'+d.slice(0,3)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+        fr.map(function(f,i){ return '<tr><td style="font-size:.74rem;color:var(--gray)">'+f+'</td>'+
+          dias.map(function(d){ return '<td style="font-size:.78rem">'+esc(grid[d+'|'+i]||'—')+'</td>'; }).join('')+'</tr>'; }).join('')+
+        '</tbody></table></div></div>';
+    } else {
+      var ev = await rpc('portal_calendario', conCreds()) || [];
+      if(!ev.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-calendar-day"></i>No hay eventos publicados.</div></div>'; return; }
+      var ico = {'Vacaciones':'umbrella-beach','Examen':'file-signature','Junta':'users','Día festivo':'flag','Actividad':'star','Evento':'calendar-day'};
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-calendar-day"></i> Calendario escolar</h3>'+
+        ev.map(function(e){
+          var d1=fecha(e.fecha_inicio), d2=fecha(e.fecha_fin);
+          return '<div class="row"><div class="ic"><i class="fas fa-'+(ico[e.tipo]||'calendar-day')+'"></i></div>'+
+            '<div class="bd"><div class="t">'+esc(e.titulo)+'</div>'+
+            '<div class="s">'+(d2&&d2!==d1? d1+' – '+d2 : d1)+(e.descripcion?' · '+esc(e.descripcion):'')+'</div></div></div>';
+        }).join('')+'</div>';
+    }
+  }catch(e){
+    console.error('subEscolar:', e);
+    b.innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>No pudimos cargar esta información.</div>';
+  }
+}
+
+/* ── AVISOS ─────────────────────────────────────────────────── */
+async function getAvisos(force){
+  if(force || !S.cache.avisos) S.cache.avisos = await rpc('portal_avisos', conCreds()) || [];
+  return S.cache.avisos;
+}
+async function vistaAvisos(){
+  var a = await getAvisos();
+  var nuevos = a.filter(function(x){ return !x.leido; }).length;
+  var h = '<div class="vtitle"><i class="fas fa-bullhorn"></i> Avisos del colegio'+
+    (nuevos?'<span class="badge pend" id="av-contador">'+nuevos+' sin leer</span>':'')+'</div>';
+  if(!a.length){ h += '<div class="card"><div class="empty"><i class="fas fa-inbox"></i>No hay avisos publicados por el momento.</div></div>'; return h; }
+  h += '<p style="font-size:.76rem;color:var(--gray);margin:-4px 0 12px">Toca un aviso para leerlo completo.</p>' + a.map(function(x){
+    return '<div class="aviso'+(x.leido?'':' unread')+'" id="av-'+x.id+'" onclick="abrirAviso('+x.id+')">'+
+      '<div class="hd">'+(x.leido?'':'<div class="nu"></div>')+
+      '<h4>'+esc(x.titulo)+'</h4><span class="dt">'+fecha(x.fecha)+'</span></div>'+
+      '<div class="bd">'+esc(x.preview||'Sin detalle adicional.')+
+      (x.dest?'<div style="margin-top:8px;font-size:.72rem;color:var(--gray)"><i class="fas fa-users"></i> '+esc(x.dest)+'</div>':'')+'</div>'+
+      '</div>';
+  }).join('');
+  return h;
+}
+async function abrirAviso(id){
+  var el = $('av-'+id); if(!el) return;
+  el.classList.toggle('open');
+  var a = (S.cache.avisos||[]).filter(function(x){ return x.id===id; })[0];
+  if(a && !a.leido && el.classList.contains('open')){
+    a.leido = true;
+    el.classList.remove('unread');
+    var nu = el.querySelector('.nu'); if(nu) nu.remove();
     try{
-      var arr = getHijosGuardados().filter(function(h){ return h.usuario !== usuario; });
-      arr.unshift({usuario: usuario, nombre: nombre});
-      arr = arr.slice(0, 5);
-      localStorage.setItem(HIJOS_KEY, JSON.stringify(arr));
-    }catch(e){}
+      await rpc('portal_marcar_aviso_leido', conCreds({p_comunicado_id:id}));
+      if(S.resumen && S.resumen.avisos_no_leidos>0){ S.resumen.avisos_no_leidos--; pintarBadges(); }
+      var cont = $('av-contador');
+      if(cont){
+        var quedan = (S.cache.avisos||[]).filter(function(x){ return !x.leido; }).length;
+        if(quedan>0) cont.textContent = quedan+' sin leer'; else cont.remove();
+      }
+    }catch(e){ console.error('marcar leído:', e); }
   }
-  function quitarHijoDispositivo(usuario, ev){
-    if(ev) ev.stopPropagation();
-    try{
-      var arr = getHijosGuardados().filter(function(h){ return h.usuario !== usuario; });
-      localStorage.setItem(HIJOS_KEY, JSON.stringify(arr));
-      renderHijosChips();
-    }catch(e){}
-  }
-  function seleccionarHijo(usuario){
-    var u=document.getElementById('padre-usuario'), p=document.getElementById('padre-pass');
-    if(u) u.value = usuario;
-    if(p){ p.value=''; p.focus(); }
-  }
-  function renderHijosChips(){
-    var cont = document.getElementById('hijos-chips');
-    if(!cont) return;
-    var arr = getHijosGuardados();
-    if(!arr.length){ cont.style.display='none'; cont.innerHTML=''; return; }
-    cont.style.display='block';
-    cont.innerHTML = '<label style="font-size:.78rem;font-weight:700;color:var(--gray);display:block;margin-bottom:6px;">Hijos guardados en este dispositivo</label>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
-      arr.map(function(h){
-        var u = String(h.usuario||'').replace(/'/g,'');
-        return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--off-white);border:1px solid #e2e5ea;border-radius:20px;padding:6px 12px;font-size:.8rem;cursor:pointer;" onclick="seleccionarHijo(\''+u+'\')">'+
-          '<i class="fas fa-user-graduate" style="color:var(--primary)"></i>'+(h.nombre||h.usuario)+
-          '<i class="fas fa-times" style="opacity:.5;margin-left:2px;" onclick="quitarHijoDispositivo(\''+u+'\',event)"></i></span>';
-      }).join('') + '</div>';
-  }
-  document.addEventListener('DOMContentLoaded', renderHijosChips);
+}
 
-  async function loginPadre(){
-    var usuario=(document.getElementById('padre-usuario').value||'').trim();
-    var pass=(document.getElementById('padre-pass').value||'').trim();
-    var msg=document.getElementById('calif-msg'); msg.className='calif-msg';
-    if(!usuario || !pass){ msg.className='calif-msg err'; msg.textContent='Ingresa tu usuario y contraseña.'; return; }
-    if(!_sbPub){ msg.className='calif-msg err'; msg.textContent='No se pudo conectar con el servidor. Intenta más tarde.'; return; }
-    msg.className='calif-msg info'; msg.textContent='Verificando acceso...';
-    try{
-      var q=await _sbPub.rpc('portal_login', {p_usuario: usuario, p_pass: pass});
-      if(q.error) throw q.error;
-      var al=(q.data||[])[0];
-      if(!al){ msg.className='calif-msg err'; msg.textContent='Usuario o contraseña incorrectos. Verifícalos con la escuela.'; return; }
-      guardarHijoDispositivo(usuario, al.nombre);
-      _padreAlumno=al;
-      _padreUsuario=usuario;
-      _padrePass=pass;
-      abrirPortalPadre(al);
-    }catch(e){ console.error('loginPadre:',e); msg.className='calif-msg err'; msg.textContent='Ocurrió un error al ingresar. Intenta de nuevo en un momento.'; }
-  }
-
-  function abrirPortalPadre(al){
-    document.getElementById('calif-card').style.display='none';
-    document.getElementById('calif-msg').className='calif-msg';
-    document.getElementById('calif-nombre').textContent=al.nombre;
-    document.getElementById('calif-meta').textContent=(al.nivel||'')+' · '+(al.grado||'');
-    document.getElementById('calif-av').textContent=(al.nombre||'A').trim().charAt(0).toUpperCase();
-    document.getElementById('calif-result').classList.add('show');
-    portalTab(_portalDestino||'califs');
-    _portalDestino=null;
-  }
-
-  function cerrarCalificaciones(){
-    document.getElementById('calif-result').classList.remove('show');
-    document.getElementById('calif-card').style.display='block';
-    document.getElementById('calif-msg').className='calif-msg';
-    document.getElementById('padre-usuario').value='';
-    document.getElementById('padre-pass').value='';
-    renderHijosChips();
-    _padreAlumno=null;
-    _portalDestino=null;
-    _padreUsuario=null;
-    _padrePass=null;
-  }
-
-  async function portalTab(tab, btn){
-    document.querySelectorAll('.portal-tab').forEach(function(b){ b.classList.remove('active'); });
-    if(btn){ btn.classList.add('active'); } else { var b=document.querySelector('.portal-tab[data-tab="'+tab+'"]'); if(b) b.classList.add('active'); }
-    var body=document.getElementById('portal-tabbody');
-    if(!_padreAlumno) return;
-    body.innerHTML='<div class="portal-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
-    try{
-      var html='';
-      if(tab==='califs') html=await renderPortalCalifs(_padreAlumno);
-      else if(tab==='asist') html=await renderPortalAsist(_padreAlumno);
-      else if(tab==='horario') html=await renderPortalHorario(_padreAlumno);
-      else if(tab==='avisos') html=await renderPortalAvisos(_padreAlumno);
-      else if(tab==='calendario') html=await renderPortalCalendario(_padreAlumno);
-      else if(tab==='factura') html=await renderPortalFactura(_padreAlumno);
-      body.innerHTML=html;
-    }catch(e){ console.error('portalTab:',e); body.innerHTML='<div class="portal-empty"><i class="fas fa-exclamation-triangle"></i>Ocurrió un error al cargar la información. Intenta de nuevo.</div>'; }
-  }
-
-  async function renderPortalCalifs(al){
-    var q=await _sbPub.rpc('portal_calificaciones', {p_usuario: _padreUsuario, p_pass: _padrePass});
-    if(q.error) throw q.error;
-    var rows=(q.data||[]);
-    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-star-half-alt"></i>Aún no hay calificaciones publicadas.</div>';
-    var trs=rows.map(function(c){ var v=parseFloat(c.calificacion); var cls=v>=8?'ok':v>=6?'mid':'low'; return '<tr><td>'+c.materia+'</td><td class="calif-grade '+cls+'">'+c.calificacion+'</td><td>'+c.periodo+'</td></tr>'; }).join('');
-    return '<table class="calif-table"><thead><tr><th>Materia</th><th>Calificación</th><th>Periodo</th></tr></thead><tbody>'+trs+'</tbody></table>';
-  }
-
-  async function renderPortalAsist(al){
-    var q=await _sbPub.rpc('portal_asistencia', {p_usuario: _padreUsuario, p_pass: _padrePass});
-    if(q.error) throw q.error;
-    var rows=(q.data||[]);
-    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-clipboard-check"></i>Aún no hay registros de asistencia.</div>';
-    var presentes=rows.filter(function(r){ return r.estado==='A'; }).length;
-    var pct=Math.round(presentes/rows.length*100);
-    var nombres={A:'Asistió',F:'Faltó',T:'Tarde'};
-    var trs=rows.map(function(r){
-      var d=new Date(r.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
-      var cls=r.estado==='A'?'ok':r.estado==='T'?'mid':'low';
-      return '<tr><td>'+d+'</td><td class="calif-grade '+cls+'">'+(nombres[r.estado]||r.estado)+'</td></tr>';
-    }).join('');
-    return '<div class="portal-attend"><div class="pct">'+pct+'%</div><div class="lbl">Asistencia en los últimos '+rows.length+' días registrados</div></div>'+
-      '<table class="calif-table"><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+trs+'</tbody></table>';
-  }
-
-  async function renderPortalHorario(al){
-    var grupo=((al.grado||'')+' '+(al.nivel||'')).trim();
-    var q=await _sbPub.rpc('portal_horario', {p_usuario: _padreUsuario, p_pass: _padrePass});
-    if(q.error) throw q.error;
-    var rows=(q.data||[]);
-    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-calendar-alt"></i>Aún no hay horario publicado para el grupo '+grupo+'.</div>';
-    var franjas=['7:00–8:00','8:00–9:00','9:00–10:00','10:30–11:30','11:30–12:30','12:30–13:30'];
-    var dias=['Lunes','Martes','Miércoles','Jueves','Viernes'];
-    var grid={};
-    rows.forEach(function(r){ grid[r.dia+'|'+r.franja]=r.materia; });
-    var thead='<th>Hora</th>'+dias.map(function(d){ return '<th>'+d+'</th>'; }).join('');
-    var trs=franjas.map(function(f,idx){
-      return '<tr><td style="font-size:.78rem;color:var(--gray)">'+f+'</td>'+dias.map(function(d){ return '<td>'+(grid[d+'|'+idx]||'—')+'</td>'; }).join('')+'</tr>';
-    }).join('');
-    return '<div style="font-size:.8rem;color:var(--gray);margin-bottom:10px">Grupo: <b style="color:var(--primary)">'+grupo+'</b></div><table class="calif-table"><thead><tr>'+thead+'</tr></thead><tbody>'+trs+'</tbody></table>';
-  }
-
-  async function renderPortalAvisos(al){
-    var q=await _sbPub.rpc('portal_avisos', {p_usuario: _padreUsuario, p_pass: _padrePass});
-    if(q.error) throw q.error;
-    var rows=(q.data||[]);
-    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-bullhorn"></i>No hay avisos publicados por el momento.</div>';
-    return rows.map(function(c){
-      var d=c.fecha?new Date(c.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
-      return '<div class="portal-aviso"><div class="head"><h4>'+c.titulo+'</h4><span class="date">'+d+'</span></div><p>'+(c.preview||'')+'</p></div>';
-    }).join('');
-  }
-
-  async function renderPortalCalendario(al){
-    var q=await _sbPub.rpc('portal_calendario', {p_usuario: _padreUsuario, p_pass: _padrePass});
-    if(q.error) throw q.error;
-    var rows=(q.data||[]);
-    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-calendar-days"></i>No hay eventos publicados en el calendario por el momento.</div>';
-    var iconos={'Vacaciones':'fa-umbrella-beach','Examen':'fa-file-signature','Junta':'fa-users','Día festivo':'fa-flag','Actividad':'fa-star','Evento':'fa-calendar-day'};
-    return rows.map(function(e){
-      var d1=e.fecha_inicio?new Date(e.fecha_inicio+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
-      var d2=e.fecha_fin?new Date(e.fecha_fin+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
-      var rango=d2&&d2!==d1? (d1+' – '+d2) : d1;
-      return '<div class="portal-aviso"><div class="head"><h4><i class="fas '+(iconos[e.tipo]||'fa-calendar-day')+'" style="margin-right:8px;color:var(--primary)"></i>'+e.titulo+'</h4><span class="date">'+rango+'</span></div>'+(e.descripcion?'<p>'+e.descripcion+'</p>':'')+'</div>';
-    }).join('');
-  }
-
-  function fmtMoneyMX(n){ return '$'+(parseFloat(n)||0).toLocaleString('es-MX',{minimumFractionDigits:2})+' MXN'; }
-
-  // ── Factura online (pagos ya realizados → solicitud de CFDI) ──
-  async function renderPortalFactura(al){
-    var q=await _sbPub.rpc('portal_facturas', {p_usuario: _padreUsuario, p_pass: _padrePass});
-    if(q.error) throw q.error;
-    var rows=(q.data||[]);
-    if(!rows.length) return '<div class="portal-empty"><i class="fas fa-file-invoice"></i>Aún no hay pagos registrados para generar factura.</div>';
-    return rows.map(function(p){
-      var fechaStr=p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}):'';
-      var badge='', actions='', form='';
+/* ── CUENTA ─────────────────────────────────────────────────── */
+async function vistaCuenta(){
+  var h = '<div class="card"><h3><i class="fas fa-circle-user"></i> Datos del alumno/a</h3>'+
+    '<div class="row"><div class="ic"><i class="fas fa-user-graduate"></i></div><div class="bd"><div class="t">'+esc(S.al.nombre)+'</div><div class="s">'+esc([S.al.nivel,S.al.grado].filter(Boolean).join(' · '))+'</div></div></div>'+
+    (S.al.email?'<div class="row"><div class="ic"><i class="fas fa-envelope"></i></div><div class="bd"><div class="t">'+esc(S.al.email)+'</div><div class="s">Correo registrado</div></div></div>':'')+
+    '<div class="row"><div class="ic"><i class="fas fa-id-badge"></i></div><div class="bd"><div class="t">'+esc(S.u)+'</div><div class="s">Tu usuario</div></div></div>'+
+    (S.resumen&&S.resumen.ciclo?'<div class="row"><div class="ic"><i class="fas fa-calendar"></i></div><div class="bd"><div class="t">'+esc(S.resumen.ciclo)+'</div><div class="s">Ciclo escolar</div></div></div>':'')+
+    '</div>'+
+    '<div class="card"><h3><i class="fas fa-file-invoice"></i> Facturación</h3><div id="fc-body"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div></div></div>'+
+    '<div class="card"><h3><i class="fas fa-users"></i> Otros hijos en este dispositivo</h3>'+
+      (hijosGuardados().length>1
+        ? hijosGuardados().filter(function(x){ return x.usuario!==S.u; }).map(function(x){
+            return '<div class="row"><div class="ic"><i class="fas fa-child"></i></div><div class="bd"><div class="t">'+esc(x.nombre||x.usuario)+'</div><div class="s">'+esc(x.usuario)+'</div></div>'+
+              '<div class="rt"><button class="btn-sm ghost" data-u="'+esc(x.usuario)+'" onclick="cambiarHijo(this.dataset.u)">Entrar</button></div></div>'; }).join('')
+        : '<div class="empty" style="padding:14px"><i class="fas fa-user-plus"></i>Cuando ingreses con la cuenta de otro hijo/a, aparecerá aquí para cambiar rápido.</div>')+
+    '</div>'+
+    '<div class="card"><h3><i class="fas fa-circle-info"></i> Ayuda</h3>'+
+      '<div class="row"><div class="ic"><i class="fas fa-phone"></i></div><div class="bd"><div class="t">Recepción del colegio</div><div class="s">Para dudas de accesos, pagos o facturas</div></div></div>'+
+      '<div class="row"><div class="ic"><i class="fas fa-code-branch"></i></div><div class="bd"><div class="t">Versión '+APP_VERSION+'</div><div class="s">Learning Project Institute</div></div></div>'+
+    '</div>'+
+    '<button class="btn-primary" style="background:var(--bad-soft);color:var(--bad)" onclick="salir()"><i class="fas fa-right-from-bracket"></i> Cerrar sesión</button>'+
+    '<div style="height:18px"></div>';
+  setTimeout(cargarFacturas, 0);
+  return h;
+}
+function cambiarHijo(usuario){
+  var s = sesionGuardada();
+  salir();
+  $('u').value = usuario;
+  if(s && s.u===usuario && s.p){ $('p').value=s.p; login(); } else { $('p').focus(); }
+}
+async function cargarFacturas(){
+  var b = $('fc-body'); if(!b) return;
+  try{
+    var r = await rpc('portal_facturas', conCreds()) || [];
+    if(!r.length){ b.innerHTML = '<div class="empty" style="padding:14px"><i class="fas fa-file-invoice"></i>Aún no hay pagos aplicados para facturar.</div>'; return; }
+    b.innerHTML = r.map(function(p){
+      var acciones='', form='';
       if(!p.factura_id){
-        actions='<div class="portal-fact-actions"><button class="portal-fact-btn" onclick="toggleFacturaForm('+p.pago_id+')"><i class="fas fa-file-invoice"></i> Solicitar factura</button></div>';
-        form='<div class="portal-fact-form" id="fact-form-'+p.pago_id+'">'+
-          '<div class="row"><div><label>RFC</label><input id="ff-rfc-'+p.pago_id+'" maxlength="13" placeholder="XAXX010101000"></div>'+
-          '<div><label>Nombre / Razón social</label><input id="ff-razon-'+p.pago_id+'" placeholder="Nombre completo o razón social"></div></div>'+
-          '<div class="row"><div><label>CP fiscal</label><input id="ff-cp-'+p.pago_id+'" maxlength="5" placeholder="52140"></div>'+
-          '<div><label>Uso de CFDI</label><select id="ff-uso-'+p.pago_id+'"><option value="D10" selected>D10 – Pagos por servicios educativos</option><option value="G03">G03 – Gastos en general</option></select></div></div>'+
-          '<div class="row"><div><label>Correo para envío</label><input id="ff-correo-'+p.pago_id+'" value="'+(al.email||'')+'" placeholder="correo@ejemplo.com"></div>'+
-          '<div style="display:flex;align-items:flex-end;"><button class="portal-fact-btn" style="width:100%;justify-content:center;" onclick="solicitarFactura('+p.pago_id+')"><i class="fas fa-paper-plane"></i> Enviar solicitud</button></div></div>'+
+        acciones = '<button class="btn-sm" onclick="toggleFactForm('+p.pago_id+')"><i class="fas fa-file-invoice"></i> Solicitar factura</button>';
+        form = '<div class="hide" id="ff-'+p.pago_id+'" style="margin-top:12px;border-top:1px dashed var(--line);padding-top:12px">'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">RFC</label>'+
+          '<input type="text" id="ff-rfc-'+p.pago_id+'" maxlength="13" placeholder="XAXX010101000" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem">'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Nombre o razón social</label>'+
+          '<input type="text" id="ff-razon-'+p.pago_id+'" placeholder="Nombre completo" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem">'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Código postal fiscal</label>'+
+          '<input type="text" id="ff-cp-'+p.pago_id+'" maxlength="5" placeholder="52140" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem">'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Correo para envío</label>'+
+          '<input type="text" id="ff-correo-'+p.pago_id+'" value="'+esc(S.al.email||'')+'" placeholder="correo@ejemplo.com" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:11px;font-size:.85rem">'+
+          '<button class="btn-sm" style="width:100%;justify-content:center" onclick="solicitarFactura('+p.pago_id+')"><i class="fas fa-paper-plane"></i> Enviar solicitud</button>'+
           '</div>';
       } else if(p.factura_estado==='Timbrada'){
-        badge='<span class="portal-fact-badge timb">Timbrada</span>';
-        actions='<div class="portal-fact-actions">'+
-          (p.tiene_xml?'<button class="portal-fact-btn dl" onclick="descargarFacturaArchivo(\''+p.factura_id+'\',\'xml\')"><i class="fas fa-file-code"></i> XML</button>':'')+
-          (p.tiene_pdf?'<button class="portal-fact-btn dl" onclick="descargarFacturaArchivo(\''+p.factura_id+'\',\'pdf\')"><i class="fas fa-file-pdf"></i> PDF</button>':'')+
-          '</div>';
+        acciones = (p.tiene_xml?'<button class="btn-sm green" onclick="bajarFactura(\''+esc(p.factura_id)+'\',\'xml\')"><i class="fas fa-file-code"></i> XML</button> ':'')+
+                   (p.tiene_pdf?'<button class="btn-sm green" onclick="bajarFactura(\''+esc(p.factura_id)+'\',\'pdf\')"><i class="fas fa-file-pdf"></i> PDF</button>':'');
       } else {
-        badge='<span class="portal-fact-badge pend">Pendiente de timbrado</span>';
-        actions='<div style="font-size:0.78rem;color:var(--gray);margin-top:8px;">Tu solicitud ya fue enviada a la escuela. Te avisaremos por correo cuando esté lista.</div>';
+        acciones = '<span class="badge rev">Solicitud enviada</span>';
       }
-      return '<div class="portal-fact"><div class="head"><div><h4>'+(p.concepto||'Colegiatura')+'</h4><div class="sub">'+fechaStr+'</div></div>'+
-        '<div style="text-align:right;"><div class="monto">'+fmtMoneyMX(p.monto)+'</div>'+badge+'</div></div>'+actions+form+'</div>';
+      return '<div style="border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px">'+
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
+        '<div><div style="font-size:.9rem;font-weight:600;color:var(--dark)">'+esc(p.concepto||'Colegiatura')+'</div>'+
+        '<div style="font-size:.74rem;color:var(--gray);margin-top:2px">'+fecha(p.fecha)+'</div></div>'+
+        '<div style="font-weight:700;color:var(--primary-dark)">'+money(p.monto)+'</div></div>'+
+        '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+acciones+'</div>'+form+'</div>';
     }).join('');
+  }catch(e){
+    console.error('facturas:', e);
+    b.innerHTML = '<div class="empty" style="padding:14px"><i class="fas fa-triangle-exclamation"></i>No pudimos cargar tus facturas.</div>';
   }
+}
+function toggleFactForm(id){ var e=$('ff-'+id); if(e) e.classList.toggle('hide'); }
+async function solicitarFactura(pagoId){
+  var rfc = ($('ff-rfc-'+pagoId).value||'').trim().toUpperCase();
+  var razon = ($('ff-razon-'+pagoId).value||'').trim();
+  var cp = ($('ff-cp-'+pagoId).value||'').trim();
+  var correo = ($('ff-correo-'+pagoId).value||'').trim();
+  if(rfc.length<12){ toast('Escribe un RFC válido'); return; }
+  if(!razon){ toast('Escribe el nombre o razón social'); return; }
+  if(cp.length!==5){ toast('El CP fiscal son 5 dígitos'); return; }
+  if(!correo){ toast('Escribe un correo'); return; }
+  try{
+    await rpc('portal_solicitar_factura', conCreds({
+      p_pago_id:pagoId, p_rfc:rfc, p_razon:razon, p_cp:cp, p_uso_cfdi:'D10', p_correo:correo
+    }));
+    toast('Solicitud enviada');
+    cargarFacturas();
+  }catch(e){ console.error('solicitarFactura:', e); toast('No se pudo enviar la solicitud'); }
+}
+async function bajarFactura(id, tipo){
+  try{
+    var c = await rpc('portal_descargar_factura', conCreds({p_factura_id:id, p_tipo:tipo}));
+    if(!c){ toast('El archivo aún no está disponible'); return; }
+    var blob, nombre;
+    if(tipo==='xml'){ blob = new Blob([c],{type:'application/xml'}); nombre = id+'.xml'; }
+    else {
+      var b64 = String(c).split(',').pop(), bc = atob(b64), by = new Uint8Array(bc.length);
+      for(var i=0;i<bc.length;i++) by[i]=bc.charCodeAt(i);
+      blob = new Blob([by],{type:'application/pdf'}); nombre = id+'.pdf';
+    }
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href=url; a.download=nombre; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }catch(e){ console.error('bajarFactura:', e); toast('No se pudo descargar'); }
+}
 
-  function toggleFacturaForm(pagoId){
-    var el=document.getElementById('fact-form-'+pagoId);
-    if(el) el.classList.toggle('show');
+/* ── sheet ──────────────────────────────────────────────────── */
+function abrirSheet(html){ $('sheet').innerHTML = '<div class="grab"></div>'+html; $('sheet-bg').classList.add('show'); document.body.style.overflow='hidden'; }
+function cerrarSheet(){ $('sheet-bg').classList.remove('show'); document.body.style.overflow=''; }
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') cerrarSheet(); });
+
+/* ── arranque ───────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function(){
+  pintarChips();
+  try{
+    var ir = new URLSearchParams(location.search).get('ir') || new URLSearchParams(location.search).get('tab');
+    if(['inicio','pagos','escolar','avisos','cuenta'].indexOf(ir)>=0) S.destino = ir;
+    else if(ir==='califs' || ir==='horario' || ir==='asist') { S.destino='escolar'; S.subEsc = ir==='asist'?'asist':(ir==='horario'?'horario':'califs'); }
+    else if(ir==='factura') S.destino='cuenta';
+  }catch(e){}
+  $('p').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
+  var s = sesionGuardada();
+  if(s && s.u && s.p){
+    var msg = $('login-msg'); msg.className='msg info'; msg.textContent='Entrando…';
+    login(s.u, s.p, true);
   }
+});
 
-  async function solicitarFactura(pagoId){
-    if(!_padreAlumno) return;
-    var rfc=(document.getElementById('ff-rfc-'+pagoId).value||'').trim().toUpperCase();
-    var razon=(document.getElementById('ff-razon-'+pagoId).value||'').trim();
-    var cp=(document.getElementById('ff-cp-'+pagoId).value||'').trim();
-    var uso=document.getElementById('ff-uso-'+pagoId).value;
-    var correo=(document.getElementById('ff-correo-'+pagoId).value||'').trim();
-    if(!rfc||rfc.length<12){ alert('Ingresa un RFC válido (mínimo 12 caracteres).'); return; }
-    if(!razon){ alert('Ingresa el nombre o razón social.'); return; }
-    if(!cp||cp.length!==5){ alert('Ingresa el código postal fiscal (5 dígitos).'); return; }
-    if(!correo){ alert('Ingresa un correo para recibir la factura.'); return; }
-    try{
-      var ins=await _sbPub.rpc('portal_solicitar_factura', {
-        p_usuario: _padreUsuario, p_pass: _padrePass, p_pago_id: pagoId,
-        p_rfc: rfc, p_razon: razon, p_cp: cp, p_uso_cfdi: uso, p_correo: correo
+/* ── PWA ────────────────────────────────────────────────────── */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      reg.addEventListener('updatefound', function(){
+        var nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener('statechange', function(){
+          if(nw.state==='installed' && navigator.serviceWorker.controller){
+            $('update-bar').classList.add('show');
+          }
+        });
       });
-      if(ins.error) throw ins.error;
-      portalTab('factura');
-    }catch(e){ console.error('solicitarFactura:',e); alert('No se pudo enviar la solicitud. Intenta de nuevo en un momento.'); }
-  }
-
-  async function descargarFacturaArchivo(facturaId, tipo){
-    try{
-      var q=await _sbPub.rpc('portal_descargar_factura', {p_usuario: _padreUsuario, p_pass: _padrePass, p_factura_id: facturaId, p_tipo: tipo});
-      if(q.error) throw q.error;
-      var contenido=q.data; if(!contenido){ alert('Este archivo aún no está disponible.'); return; }
-      var blob, filename;
-      if(tipo==='xml'){ blob=new Blob([contenido],{type:'application/xml'}); filename=facturaId+'.xml'; }
-      else { var byteChars=atob((contenido||'').split(',').pop()); var bytes=new Uint8Array(byteChars.length);
-        for(var i=0;i<byteChars.length;i++) bytes[i]=byteChars.charCodeAt(i);
-        blob=new Blob([bytes],{type:'application/pdf'}); filename=facturaId+'.pdf'; }
-      var url=URL.createObjectURL(blob);
-      var a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
-      document.body.removeChild(a); URL.revokeObjectURL(url);
-    }catch(e){ console.error('descargarFacturaArchivo:',e); alert('No se pudo descargar el archivo.'); }
-  }
-
-  // ── PWA: registro del service worker (app instalable, cascarón offline) ──
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', function(){
-      navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW register failed:', e); });
-    });
-  }
+    }).catch(function(e){ console.warn('SW:', e); });
+  });
+}
 </script>
 </body>
 </html>

@@ -4886,14 +4886,39 @@ function usuarioPuede(u, key){
 async function loadRoles(){
   try{
     var r = await _sb.rpc('staff_get_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: 'roles' });
-    var v = r && r.data ? r.data : null;
+    if(r.error) throw r.error;
+    var v = r.data;
     rolesData = v ? (typeof v==='string'? JSON.parse(v) : v) : [];
-  }catch(e){ console.warn('loadRoles', e); rolesData = rolesData||[]; }
+    if(!Array.isArray(rolesData)) throw new Error('Supabase devolvió un formato de roles inválido');
+    // Una cuenta puede conservar un rol válido aunque el catálogo `roles` haya
+    // quedado vacío o desactualizado. Nunca ocultamos esos roles existentes.
+    sistemaUsuarios.forEach(function(u){
+      var rol=String(u.rol||'').trim();
+      if(rol && rolesData.indexOf(rol)<0) rolesData.push(rol);
+    });
+  }catch(e){
+    console.error('No se pudieron cargar los roles:', e);
+    throw e;
+  }
   return rolesData;
 }
 async function saveRolesToDB(){
-  try{ await _sb.rpc('staff_set_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave:'roles', p_valor: JSON.stringify(rolesData) }); }
-  catch(e){ console.warn('saveRolesToDB', e); }
+  var r = await _sb.rpc('staff_set_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave:'roles', p_valor: JSON.stringify(rolesData) });
+  if(r.error) throw r.error;
+}
+async function loadConfigUsers(){
+  var r = await _sb.rpc('staff_listar_usuarios', { p_usuario: currentUser.usuario, p_pass: currentUser.pass });
+  if(r.error) throw r.error;
+  if(!Array.isArray(r.data)) throw new Error('Supabase devolvió un formato de usuarios inválido');
+  sistemaUsuarios.length=0;
+  sistemaUsuarios.push(...r.data.map(function(x){
+    return Object.assign({}, x, {
+      acceso: Array.isArray(x.acceso) ? x.acceso : [],
+      secciones: Array.isArray(x.secciones) ? x.secciones : [],
+      lastAcceso:x.last_acceso?new Date(x.last_acceso).toLocaleString('es-MX'):null
+    });
+  }));
+  return sistemaUsuarios;
 }
 
 function renderConfigPanel(){
@@ -4946,15 +4971,26 @@ function openRolModal(){
     '<button class="btn-save" onclick="saveRol()"><i class="fas fa-plus"></i> Crear rol</button></div></div>');
   setTimeout(function(){ var i=document.getElementById('rol-nombre'); if(i) i.focus(); },50);
 }
-function saveRol(){
+async function saveRol(){
   var n=document.getElementById('rol-nombre').value.trim();
   if(!n){ showToast('Escribe un nombre','error'); return; }
   if(rolesData.indexOf(n)<0) rolesData.push(n);
-  saveRolesToDB(); closeModal(); renderConfigPanel(); showToast('Rol creado: '+n,'success');
+  try{
+    await saveRolesToDB(); closeModal(); renderConfigPanel(); showToast('Rol creado: '+n,'success');
+  }catch(e){
+    rolesData = rolesData.filter(function(r){return r!==n;});
+    showToast('No se pudo guardar el rol: '+e.message,'error');
+  }
 }
-function delRol(n){
+async function delRol(n){
+  var anteriores=rolesData.slice();
   rolesData = rolesData.filter(function(r){return r!==n;});
-  saveRolesToDB(); renderConfigPanel(); showToast('Rol eliminado','error');
+  try{
+    await saveRolesToDB(); renderConfigPanel(); showToast('Rol eliminado','success');
+  }catch(e){
+    rolesData=anteriores;
+    showToast('No se pudo eliminar el rol: '+e.message,'error');
+  }
 }
 
 function openUsuarioModal(id){
@@ -5099,11 +5135,22 @@ async function persistCatalogo(clave, arr){
   catch(e){ console.warn('persistCatalogo',clave,e); }
 }
 async function initConfig(){
-  await loadRoles();
-  nivelesData    = await loadCatalogo('niveles');
-  aulasCfgData   = await loadCatalogo('aulas');
-  franjasCfgData = await loadCatalogo('horarios_franjas');
-  cfgTab('usuarios', null);
+  var panel=document.getElementById('config-panel');
+  if(panel) panel.innerHTML='<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando usuarios y roles desde Supabase…</p></div>';
+  try{
+    await Promise.all([
+      loadConfigUsers(),
+      loadRoles(),
+      (async function(){ nivelesData=await loadCatalogo('niveles'); })(),
+      (async function(){ aulasCfgData=await loadCatalogo('aulas'); })(),
+      (async function(){ franjasCfgData=await loadCatalogo('horarios_franjas'); })()
+    ]);
+    cfgTab('usuarios', null);
+  }catch(e){
+    console.error('Configuración no pudo cargar:',e);
+    if(panel) panel.innerHTML='<div class="empty-state" style="color:var(--red)"><i class="fas fa-triangle-exclamation"></i><p>No se pudieron cargar Usuarios y Roles.</p><small>'+cfgEsc(e.message||'Error de Supabase')+'</small><br><button class="fw-btn-action" style="margin-top:14px" onclick="initConfig()"><i class="fas fa-rotate"></i> Reintentar</button></div>';
+    showToast('Error al cargar Configuración: '+(e.message||'Supabase no respondió'),'error');
+  }
 }
 function cfgTab(tab, el){
   document.querySelectorAll('#cfg-tabs2 .cfg-tab').forEach(function(b){ b.classList.remove('active'); });
