@@ -352,7 +352,7 @@
     .lvl-row { display:grid; grid-template-columns:280px 1fr; gap:34px; align-items:center; max-width:1150px; margin:0 auto; }
     .lvl-row .gal-bear { grid-row:auto; min-height:300px; }
     .coverflow { position:relative; }
-    .cf-stage { position:relative; height:300px; perspective:1100px; }
+    .cf-stage { position:relative; height:300px; perspective:1100px; overflow:hidden; }
     .cf-slide { position:absolute; left:50%; top:50%; width:300px; height:226px; margin:-113px 0 0 -150px; border-radius:16px; background:linear-gradient(135deg,#e9ecf2,#dde2ea); display:flex; align-items:center; justify-content:center; color:#b6bdca; font-size:2rem; box-shadow:0 16px 34px rgba(27,61,122,0.16); transform-style:preserve-3d; transition:transform .55s cubic-bezier(.25,.8,.3,1), opacity .55s; cursor:pointer; }
     .cf-slide.is-active { color:var(--primary-light); }
     .cf-arrow { position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%; border:none; background:#fff; color:var(--primary); box-shadow:0 6px 16px rgba(27,61,122,0.22); cursor:pointer; font-size:1rem; z-index:60; transition:all .2s; }
@@ -1081,6 +1081,7 @@
       .footer-grid { grid-template-columns: 1fr; gap: 30px; }
       .form-row { grid-template-columns: 1fr; }
       .hero-content { padding: 0 6% 0; }
+      .hero-stats { flex-wrap: wrap; gap: 18px 28px; }
       .slider-arrow { display: none; }
     }
   </style>
@@ -1102,7 +1103,6 @@
     <li><a href="#programs">Programas</a></li>
     <li><a href="#instalaciones">Instalaciones</a></li>
     <li><a href="#contact">Contacto</a></li>
-    <li><a href="acceso-padres.html?tab=factura" target="_blank" rel="noopener" class="nav-cta" style="background:var(--primary);"><i class="fas fa-file-invoice"></i> Facturación Online</a></li>
     <li><a href="acceso-padres.html" target="_blank" rel="noopener" class="nav-cta" style="background:var(--gold);"><i class="fas fa-user-graduate"></i> Acceso Padres</a></li>
   </ul>
   <div class="hamburger" id="hamburger" onclick="toggleMenu()">
@@ -1606,7 +1606,7 @@
     <h2 class="section-title">Nuestras <span>Instalaciones</span></h2>
     <p class="section-text">Espacios seguros, modernos y pensados para el aprendizaje. Desliza y haz clic en cualquier imagen para verla en grande.</p>
   </div>
-  <div class="coverflow" data-active="2" style="max-width:1000px; margin:46px auto 0;">
+  <div class="coverflow" data-active="2" data-autoplay="4200" style="max-width:1000px; margin:46px auto 0;">
     <div class="cf-stage">
         <div class="cf-slide"><img class="cf-photo" src="fotos/instalacion-1.jpg" alt="Instalaciones LPI 1" /></div>
         <div class="cf-slide"><img class="cf-photo" src="fotos/instalacion-2.jpg" alt="Instalaciones LPI 2" /></div>
@@ -1970,7 +1970,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // ── Lightbox ──
-  function openLightbox(src) {
+  var lightboxCf = null; // carrusel que abrió la imagen en grande (si el carrusel avanza, el lightbox lo sigue)
+  function openLightbox(src, cf) {
+    lightboxCf = cf || null;
     document.getElementById('lightbox-img').src = src;
     document.getElementById('lightbox').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1978,6 +1980,7 @@
   function closeLightbox() {
     document.getElementById('lightbox').classList.remove('open');
     document.body.style.overflow = '';
+    lightboxCf = null;
   }
   document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
 
@@ -2001,27 +2004,43 @@
       sl.classList.toggle('is-active', off===0);
     });
     cf.querySelectorAll('.cf-dot').forEach(function(d,i){ d.classList.toggle('active', i===active); });
+    // Si la imagen de este carrusel está abierta en grande, que el lightbox avance junto con él
+    if(lightboxCf===cf && document.getElementById('lightbox').classList.contains('open')){
+      var activo = slides[active] && slides[active].querySelector('img');
+      if(activo) document.getElementById('lightbox-img').src = activo.src;
+    }
   }
   function cfMove(cf,dir){
     var n = cf.querySelectorAll('.cf-slide').length;
     var a = (parseInt(cf.dataset.active||'0',10)+dir+n)%n;
     cf.dataset.active = a; cfLayout(cf);
   }
+  function cfStartAutoplay(cf){
+    var ms = parseInt(cf.dataset.autoplay||'0',10);
+    if(!ms) return;
+    clearInterval(cf._cfTimer);
+    cf._cfTimer = setInterval(function(){ cfMove(cf,1); }, ms);
+  }
   function initCoverflows(){
     document.querySelectorAll('.coverflow').forEach(function(cf){
       var slides = cf.querySelectorAll('.cf-slide');
       var dots = cf.querySelector('.cf-dots');
       if(dots && !dots.children.length){
-        slides.forEach(function(_,i){ var d=document.createElement('button'); d.className='cf-dot'; d.addEventListener('click',function(){ cf.dataset.active=i; cfLayout(cf); }); dots.appendChild(d); });
+        slides.forEach(function(_,i){ var d=document.createElement('button'); d.className='cf-dot'; d.addEventListener('click',function(){ cf.dataset.active=i; cfLayout(cf); cfStartAutoplay(cf); }); dots.appendChild(d); });
       }
-      cf.querySelector('.cf-prev').addEventListener('click',function(){ cfMove(cf,-1); });
-      cf.querySelector('.cf-next').addEventListener('click',function(){ cfMove(cf,1); });
+      cf.querySelector('.cf-prev').addEventListener('click',function(){ cfMove(cf,-1); cfStartAutoplay(cf); });
+      cf.querySelector('.cf-next').addEventListener('click',function(){ cfMove(cf,1); cfStartAutoplay(cf); });
       slides.forEach(function(sl,i){ sl.addEventListener('click',function(){
-        if(parseInt(cf.dataset.active||'0',10)===i){ var im=sl.querySelector('img'); if(im && typeof openLightbox==='function'){ openLightbox(im.src); return; } }
-        cf.dataset.active=i; cfLayout(cf);
+        if(parseInt(cf.dataset.active||'0',10)===i){ var im=sl.querySelector('img'); if(im && typeof openLightbox==='function'){ openLightbox(im.src, cf); return; } }
+        cf.dataset.active=i; cfLayout(cf); cfStartAutoplay(cf);
       }); });
       if(cf.dataset.active==null) cf.dataset.active='0';
       cfLayout(cf);
+      // El autoplay (si aplica) solo se pausa al pasar el mouse sobre el carrusel chico;
+      // abrir la imagen en grande (lightbox) NO lo detiene — sigue avanzando y el lightbox lo refleja.
+      cf.addEventListener('mouseenter', function(){ clearInterval(cf._cfTimer); });
+      cf.addEventListener('mouseleave', function(){ cfStartAutoplay(cf); });
+      cfStartAutoplay(cf);
     });
   }
   initCoverflows();

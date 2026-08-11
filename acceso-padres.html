@@ -298,6 +298,23 @@ var S = { al:null, u:null, p:null, view:'inicio', resumen:null, cache:{} };
 
 var K_HIJOS = 'lpi_hijos_dispositivo';
 var K_SES   = 'lpi_sesion_v2';
+var PERIODOS_LPI = ['1er Trimestre','2do Trimestre','3er Trimestre'];
+function pivotBoleta(filas){
+  var porMateria = {}, orden = [];
+  (filas||[]).forEach(function(x){
+    if(!porMateria[x.materia]){ porMateria[x.materia] = {}; orden.push(x.materia); }
+    porMateria[x.materia][x.periodo] = (x.calificacion==null) ? null : parseFloat(x.calificacion);
+  });
+  var renglones = orden.map(function(m){
+    var valores = PERIODOS_LPI.map(function(p){ return (porMateria[m][p]!=null) ? porMateria[m][p] : null; });
+    var conDatos = valores.filter(function(v){ return v!=null; });
+    var promedio = conDatos.length ? (conDatos.reduce(function(a,b){return a+b;},0)/conDatos.length) : null;
+    return { materia:m, valores:valores, promedio:promedio };
+  });
+  var finales = renglones.map(function(r){ return r.promedio; }).filter(function(v){ return v!=null; });
+  var promedioFinalGrado = finales.length ? (finales.reduce(function(a,b){return a+b;},0)/finales.length) : null;
+  return { renglones:renglones, promedioFinalGrado:promedioFinalGrado };
+}
 
 /* ── utilidades ─────────────────────────────────────────────── */
 function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){
@@ -384,7 +401,12 @@ async function login(usuario, pass, silencioso){
     abrirApp();
   }catch(e){
     console.error('login:', e);
-    m.className='msg err'; m.textContent='No pudimos conectarnos. Revisa tu internet e intenta de nuevo.';
+    var msg = (e && e.message) || '';
+    if(msg.indexOf('LOCKED:')===0){
+      m.className='msg err'; m.textContent = msg.slice(7);
+    } else {
+      m.className='msg err'; m.textContent='No pudimos conectarnos. Revisa tu internet e intenta de nuevo.';
+    }
   }finally{
     b.disabled=false; b.innerHTML='<i class="fas fa-arrow-right-to-bracket"></i> Entrar';
   }
@@ -711,7 +733,8 @@ async function enviarPago(pagoId){
 async function vistaEscolar(){
   return '<div class="subtabs">'+
     '<button class="subtab" data-s="califs"  onclick="subEscolar(\'califs\',this)">Calificaciones</button>'+
-    '<button class="subtab" data-s="asist"   onclick="subEscolar(\'asist\',this)">Asistencia</button>'+
+    '<button class="subtab" data-s="asist"   onclick="subEscolar(\'asist\',this)">Inasistencias</button>'+
+    '<button class="subtab" data-s="incid"   onclick="subEscolar(\'incid\',this)">Incidencias</button>'+
     '<button class="subtab" data-s="horario" onclick="subEscolar(\'horario\',this)">Horario</button>'+
     '<button class="subtab" data-s="calend"  onclick="subEscolar(\'calend\',this)">Calendario</button>'+
     '</div><div id="es-body"></div>';
@@ -725,27 +748,51 @@ async function subEscolar(t, btn){
     if(t==='califs'){
       var r = await rpc('portal_calificaciones', conCreds()) || [];
       if(!r.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-star-half-stroke"></i>Aún no hay calificaciones publicadas.</div></div>'; return; }
-      var prom = r.reduce(function(a,x){ return a+(parseFloat(x.calificacion)||0); },0)/r.length;
-      b.innerHTML = '<div class="card"><h3><i class="fas fa-star"></i> Calificaciones</h3>'+
-        '<div style="text-align:center;margin-bottom:14px"><div style="font-size:2rem;font-weight:800;color:var(--primary)">'+prom.toFixed(1)+'</div>'+
-        '<div style="font-size:.76rem;color:var(--gray)">Promedio general</div></div>'+
-        '<table class="tbl"><thead><tr><th>Materia</th><th>Calif.</th><th>Periodo</th></tr></thead><tbody>'+
-        r.map(function(c){ var v=parseFloat(c.calificacion); var cl=v>=8?'ok':v>=6?'mid':'low';
-          return '<tr><td>'+esc(c.materia)+'</td><td class="g '+cl+'">'+(isNaN(v)?esc(c.calificacion):v.toFixed(1))+'</td><td style="font-size:.78rem;color:var(--gray)">'+esc(c.periodo)+'</td></tr>'; }).join('')+
-        '</tbody></table></div>';
+      S.cache.boletaFilas = r;
+      var grid = pivotBoleta(r);
+      var ultimaPub = r.reduce(function(max,x){ return (x.publicado_at && (!max || x.publicado_at>max)) ? x.publicado_at : max; }, null);
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-star"></i> Boleta de evaluación interna</h3>'+
+        '<div style="text-align:center;margin-bottom:14px"><div style="font-size:2rem;font-weight:800;color:var(--primary)">'+(grid.promedioFinalGrado!=null?grid.promedioFinalGrado.toFixed(1):'—')+'</div>'+
+        '<div style="font-size:.76rem;color:var(--gray)">Promedio final de grado</div></div>'+
+        '<table class="tbl"><thead><tr><th>Materia</th>'+PERIODOS_LPI.map(function(p,i){return '<th>'+(i+1)+'°</th>';}).join('')+'<th>Prom.</th></tr></thead><tbody>'+
+        grid.renglones.map(function(rg){
+          var cl = rg.promedio==null?'':(rg.promedio>=8?'ok':rg.promedio>=6?'mid':'low');
+          return '<tr><td>'+esc(rg.materia)+'</td>'+
+            rg.valores.map(function(v){ return '<td class="g '+(v==null?'':(v>=8?'ok':v>=6?'mid':'low'))+'">'+(v==null?'—':v.toFixed(1))+'</td>'; }).join('')+
+            '<td class="g '+cl+'" style="font-weight:800">'+(rg.promedio==null?'—':rg.promedio.toFixed(1))+'</td></tr>';
+        }).join('')+
+        '</tbody></table>'+
+        '<div style="font-size:.72rem;color:var(--gray);margin-top:10px"><i class="fas fa-circle-check" style="color:var(--green)"></i> Última actualización'+(ultimaPub?(' el '+fecha(ultimaPub)):'')+'</div>'+
+        '<button class="btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="verBoletaOficial()"><i class="fas fa-file-invoice"></i> Ver / imprimir boleta oficial</button>'+
+        '</div>';
     } else if(t==='asist'){
       var a = await rpc('portal_asistencia', conCreds()) || [];
-      if(!a.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-clipboard-check"></i>Aún no hay registros de asistencia.</div></div>'; return; }
-      var pres = a.filter(function(x){ return x.estado==='A'; }).length;
-      var pct = Math.round(pres/a.length*100);
-      var nom = {A:'Asistió',F:'Faltó',T:'Tarde'};
-      b.innerHTML = '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Asistencia</h3>'+
-        '<div style="text-align:center;margin-bottom:14px"><div style="font-size:2rem;font-weight:800;color:var(--primary)">'+pct+'%</div>'+
-        '<div style="font-size:.76rem;color:var(--gray)">En los últimos '+a.length+' días registrados</div></div>'+
+      if(!a.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-clipboard-check"></i>No hay inasistencias registradas. ¡Buena asistencia!</div></div>'; return; }
+      var faltas = a.filter(function(x){ return x.estado==='F'; }).length;
+      var tardes = a.filter(function(x){ return x.estado==='T'; }).length;
+      var nom = {F:'Faltó',T:'Tarde'};
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Inasistencias</h3>'+
+        '<div style="display:flex;gap:14px;justify-content:center;margin-bottom:14px">'+
+        '<div style="text-align:center"><div style="font-size:1.7rem;font-weight:800;color:var(--red,#C0392B)">'+faltas+'</div><div style="font-size:.72rem;color:var(--gray)">Faltas</div></div>'+
+        '<div style="text-align:center"><div style="font-size:1.7rem;font-weight:800;color:var(--gold,#E8A020)">'+tardes+'</div><div style="font-size:.72rem;color:var(--gray)">Tardes</div></div>'+
+        '</div>'+
         '<table class="tbl"><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+
-        a.map(function(x){ var cl=x.estado==='A'?'ok':x.estado==='T'?'mid':'low';
+        a.map(function(x){ var cl=x.estado==='T'?'mid':'low';
           return '<tr><td>'+fecha(x.fecha)+'</td><td class="g '+cl+'">'+(nom[x.estado]||esc(x.estado))+'</td></tr>'; }).join('')+
         '</tbody></table></div>';
+    } else if(t==='incid'){
+      var inc = await rpc('portal_incidencias', conCreds()) || [];
+      if(!inc.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-clipboard-list"></i>No hay incidencias registradas.</div></div>'; return; }
+      var clTipo = {Positiva:'ok', Negativa:'low', Administrativa:'mid'};
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-clipboard-list"></i> Incidencias</h3>'+
+        inc.map(function(x){
+          return '<div class="row"><div class="bd" style="width:100%">'+
+            '<div class="t" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+
+            '<span><span class="g '+(clTipo[x.tipo]||'mid')+'" style="padding:2px 8px;border-radius:6px;font-size:.72rem;margin-right:6px">'+esc(x.tipo)+'</span>'+
+            '<span style="font-size:.72rem;color:var(--gray)">'+(x.categoria==='Académica'?'Académica':'Conductual')+'</span></span>'+
+            '<span class="s" style="font-size:.72rem;color:var(--gray)">'+fecha(x.fecha)+'</span></div>'+
+            '<div class="s" style="margin-top:4px">'+esc(x.descripcion||'')+'</div></div></div>';
+        }).join('')+'</div>';
     } else if(t==='horario'){
       var hr = await rpc('portal_horario', conCreds()) || [];
       var grupo = [S.al.grado, S.al.nivel].filter(Boolean).join(' ');
@@ -775,6 +822,84 @@ async function subEscolar(t, btn){
     console.error('subEscolar:', e);
     b.innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>No pudimos cargar esta información.</div>';
   }
+}
+// Boleta oficial (formato de la escuela): documento con logo, materias x periodo, listo para imprimir/guardar como PDF.
+async function verBoletaOficial(){
+  var filas = S.cache.boletaFilas || [];
+  if(!filas.length){ toast('No se pudo abrir la boleta'); return; }
+  var grid = pivotBoleta(filas);
+  var datosEscuela = {};
+  try{ datosEscuela = await rpc('portal_datos_escuela', {}) || {}; if(Array.isArray(datosEscuela)) datosEscuela = datosEscuela[0]||{}; }catch(e){}
+  var nombreInstituto = datosEscuela.nombre_instituto || 'Learning Project Institute';
+  var cct = datosEscuela.cct || '—';
+  var turno = datosEscuela.turno_escolar || '—';
+  var ciclo = (S.resumen && S.resumen.ciclo) || '';
+  var LOGO = 'https://static.wixstatic.com/media/2f20e7_809ae5cf3f514c2ea32cae018caeb600~mv2.png/v1/crop/x_0,y_296,w_1024,h_587/fill/w_240,h_138,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/2f20e7_809ae5cf3f514c2ea32cae018caeb600~mv2.png';
+  function claseNota(v){ return v==null?'#8a93a6':v>=9?'#2E7D32':v>=7?'#E8A020':'#C0392B'; }
+  function fmtNota(v){ return v==null?'—':v.toFixed(1); }
+  var fi = S.al.ficha || {};
+  var primerAp = fi.primer_apellido || '', segundoAp = fi.segundo_apellido || '';
+  var nombres = fi.nombres || ((!fi.primer_apellido && !fi.segundo_apellido) ? (S.al.nombre||'') : '');
+  var filasMaterias = grid.renglones.map(function(rg){
+    return '<tr><td>'+esc(rg.materia)+'</td>'+
+      rg.valores.map(function(v){ return '<td style="text-align:center;font-weight:700;color:'+claseNota(v)+'">'+fmtNota(v)+'</td>'; }).join('')+
+      '<td style="text-align:center;font-weight:800;color:'+claseNota(rg.promedio)+'">'+fmtNota(rg.promedio)+'</td></tr>';
+  }).join('');
+  var firmaPeriodos = PERIODOS_LPI.map(function(p){ return '<div>'+esc(p)+'</div>'; }).join('');
+  var html = '<!doctype html><html><head><meta charset="utf-8"><title>Boleta - '+esc(S.al.nombre)+'</title><style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:"Segoe UI",Arial,sans-serif;color:#2b2f38;background:#fff}'+
+    '.page{max-width:820px;margin:0 auto;padding:24px 28px}'+
+    '.band{background:linear-gradient(135deg,#1B3D7A,#2C5FA8);border-radius:16px;padding:16px 22px;display:flex;align-items:center;gap:16px;color:#fff}'+
+    '.band img{height:70px;background:#fff;border-radius:12px;padding:6px}'+
+    '.band h1{font-size:19px;letter-spacing:.3px}'+
+    '.band .sub{font-size:12px;opacity:.92;letter-spacing:2px;margin-top:3px}'+
+    '.band .r{margin-left:auto;text-align:right;font-size:12px}'+
+    '.band .r b{font-size:13px;display:block}'+
+    '.stu{display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:0 16px;margin:16px 0 4px;padding:14px 16px;border:1.5px solid #e3e7ef;border-radius:14px;background:#f8f9fc;align-items:end}'+
+    '.stu .f .l{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#8a93a6;font-weight:700}'+
+    '.stu .f .v{font-size:13.5px;color:#222;font-weight:700;border-bottom:1.5px solid #d5dbe6;padding-bottom:3px;min-height:18px}'+
+    '.inst{display:flex;gap:22px;margin:10px 0 4px;padding:10px 16px;background:#eaf0fb;border-radius:10px;font-size:11.5px;color:#1B3D7A;font-weight:700;flex-wrap:wrap}'+
+    '.sec{display:flex;align-items:center;gap:8px;margin:18px 0 9px}'+
+    '.sec .bar{width:6px;height:18px;border-radius:3px;display:inline-block}'+
+    '.sec .t{font-weight:800;font-size:13px;letter-spacing:.3px}'+
+    'table{width:100%;border-collapse:collapse}'+
+    'th{background:#1B3D7A;color:#fff;padding:8px 10px;text-align:center;font-size:10.5px}'+
+    'th.materia-h{text-align:left}'+
+    'td{padding:8px 10px;border-bottom:1px solid #e3e7ef;font-size:13px}'+
+    'tr:nth-child(even) td{background:#f8f9fc}'+
+    '.prom{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0;background:#f8f9fc;border:1.5px solid #e3e7ef;border-radius:14px;padding:14px}'+
+    '.prom .n{font-size:2.2rem;font-weight:800}'+
+    '.prom .l{font-size:10.5px;color:#8a93a6;text-transform:uppercase;letter-spacing:.6px;font-weight:700}'+
+    '.sign{display:flex;justify-content:space-between;margin-top:34px;gap:20px;flex-wrap:wrap}'+
+    '.sign div{flex:1;min-width:140px;text-align:center;font-size:11px;color:#555;border-top:1.5px solid #333;padding-top:6px}'+
+    '.sign2{display:flex;justify-content:space-between;margin-top:44px;gap:20px}'+
+    '.sign2 div{flex:1;text-align:center;font-size:11.5px;color:#555;border-top:1.5px solid #333;padding-top:7px}'+
+    '.note{margin-top:18px;font-size:10.5px;color:#9aa1b1;text-align:center;line-height:1.5}'+
+    '@media print{.page{padding:8px 12px}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'+
+    '</style></head><body><div class="page">'+
+    '<div class="band"><img src="'+LOGO+'"><div><h1>'+esc(nombreInstituto)+'</h1><div class="sub">BOLETA DE EVALUACIÓN INTERNA</div></div>'+
+    '<div class="r">'+esc(S.al.nivel||'')+(S.al.grado?(' &middot; Grado '+esc(S.al.grado)):'')+(ciclo?('<b>CICLO ESCOLAR '+esc(ciclo)+'</b>'):'')+'</div></div>'+
+    '<div class="stu">'+
+    '<div class="f"><div class="l">Primer apellido</div><div class="v">'+esc(primerAp||'—')+'</div></div>'+
+    '<div class="f"><div class="l">Segundo apellido</div><div class="v">'+esc(segundoAp||'—')+'</div></div>'+
+    '<div class="f"><div class="l">Nombre(s)</div><div class="v">'+esc(nombres||'—')+'</div></div>'+
+    '<div class="f"><div class="l">Grupo</div><div class="v">'+esc(S.al.grado||'—')+'</div></div>'+
+    '<div class="f"><div class="l">CURP</div><div class="v">'+esc(S.al.curp||'—')+'</div></div>'+
+    '</div>'+
+    '<div class="inst"><span>'+esc(nombreInstituto)+'</span><span>Turno: '+esc(turno)+'</span><span>CCT: '+esc(cct)+'</span></div>'+
+    '<div class="sec"><span class="bar" style="background:#1B3D7A"></span><span class="t" style="color:#1B3D7A">Campos formativos y materias</span></div>'+
+    '<table><thead><tr><th class="materia-h">Materia</th>'+PERIODOS_LPI.map(function(p,i){return '<th>'+(i+1)+'° periodo</th>';}).join('')+'<th>Promedio final</th></tr></thead><tbody>'+filasMaterias+'</tbody></table>'+
+    '<div class="prom"><div class="n" style="color:'+claseNota(grid.promedioFinalGrado)+'">'+fmtNota(grid.promedioFinalGrado)+'</div><div><div class="l">Promedio final de grado</div></div></div>'+
+    '<div class="sec"><span class="bar" style="background:#2E7D32"></span><span class="t" style="color:#2E7D32">Firma de la madre, padre de familia o tutor</span></div>'+
+    '<div class="sign">'+firmaPeriodos+'</div>'+
+    '<div class="sign2"><div>Nombre y firma docente español</div><div>Nombre y firma docente inglés</div></div>'+
+    '<div class="sign2" style="margin-top:34px"><div style="flex:1"></div><div>Nombre y firma de la directora</div><div style="flex:1"></div></div>'+
+    '<div class="note">Nota importante: este documento no tiene validez oficial.<br>'+esc(nombreInstituto)+' &middot; Metepec, Estado de México</div>'+
+    '</div><scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},250);}<\/scr'+'ipt></body></html>';
+  var w = window.open('', '_blank');
+  if(!w){ toast('Permite ventanas emergentes para ver la boleta'); return; }
+  w.document.write(html); w.document.close();
 }
 
 /* ── AVISOS ─────────────────────────────────────────────────── */
