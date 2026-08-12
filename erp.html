@@ -408,6 +408,7 @@
         <div class="nav-item" onclick="openWindow('archivo',this)"><i class="fas fa-folder-open"></i> Archivo de documentos</div>
         <div class="nav-item" onclick="openWindow('incidencias_conductuales',this)"><i class="fas fa-user-shield"></i> Incidencias conductuales</div>
         <div class="nav-item" onclick="openWindow('incidencias_academicas',this)"><i class="fas fa-book-open-reader"></i> Incidencias académicas</div>
+        <div class="nav-item" onclick="openWindow('enfermeria',this)"><i class="fas fa-briefcase-medical"></i> Enfermería</div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-section-label">Académico</div>
@@ -693,6 +694,8 @@ async function loadAllData() {
       talleresData.length=0; talleresData.push(...(tal.data||[]));
       inventarioData.length=0; inventarioData.push(...(inv.data||[]));
     } catch(eOp){ console.warn('módulos operativos:', eOp); }
+    // Enfermería (silencioso si la cuenta no tiene el módulo)
+    try { await loadEnfermeria(); } catch(eEnf){ console.warn('enfermería:', eEnf); }
     // Ciclo escolar vigente (configuración)
     try {
       const cic = await _sb.rpc('staff_get_config', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_clave: 'ciclo_escolar' });
@@ -763,6 +766,13 @@ let evalCualData = [];
 let bitacoraData = [];
 let cambridgeData = [];
 let lecturasComunicados = [];
+// ── Enfermería (ago 2026) ──
+let enfermeriaVisitas   = [];
+let enfermeriaFichas    = [];
+let enfermeriaAvisos    = [];
+let enfermeriaUrgencias = {};
+let enfermeriaPuedeEditar = false;   // lo dicta el servidor, no el navegador
+let enfVista = 'visitas';
 
 // ══════════════════════════════
 //  LOGIN
@@ -1283,6 +1293,7 @@ const MODULES = [
   { key:'comunicados',      name:'Comunicados',            desc:'Avisos a la comunidad',             icon:'fa-bullhorn',            color:'#D35400' },
   { key:'incidencias_conductuales', name:'Incidencias conductuales', desc:'Bitácora de conducta',        icon:'fa-user-shield',         color:'#C0392B' },
   { key:'incidencias_academicas',   name:'Incidencias académicas',   desc:'Bitácora de desempeño académico', icon:'fa-book-open-reader', color:'#A04000' },
+  { key:'enfermeria',       name:'Enfermería',             desc:'Visitas, fichas médicas y avisos',  icon:'fa-briefcase-medical',   color:'#D6336C' },
   { key:'eventoscal',       name:'Calendario Escolar',     desc:'Eventos y fechas importantes',      icon:'fa-calendar-days',       color:'#2C5FA8' },
   { key:'bajas',            name:'Bajas',                  desc:'Alumnos dados de baja',              icon:'fa-user-minus',          color:'#7B241C' },
   { key:'archivo',          name:'Archivo de documentos',  desc:'Documentos oficiales del alumno',    icon:'fa-folder-open',         color:'#6E5A3E' },
@@ -2329,6 +2340,346 @@ async function saveComunicado() {
 // ══════════════════════════════
 //  INCIDENCIAS CRUD
 // ══════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+//  MÓDULO DE ENFERMERÍA
+//  Escritura reservada a la cuenta de enfermería. El servidor lo
+//  vuelve a comprobar en cada llamada: ocultar botones aquí es
+//  comodidad visual, NO es la medida de seguridad.
+// ══════════════════════════════════════════════════════════════
+function enfEsc(v){
+  return String(v==null?'':v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function enfAlumnoNombre(id){
+  var a = alumnos.find(function(x){ return x.id === id; });
+  return a ? a.nombre : ('Alumno #' + id);
+}
+function enfColorUrg(u){
+  var c = enfermeriaUrgencias && enfermeriaUrgencias[u];
+  return (c && c.color) || '#7F8C8D';
+}
+function enfTabBtn(vista, label, icon){
+  var on = (enfVista === vista);
+  return '<button class="fw-btn-action" style="background:' + (on ? '#D6336C' : 'transparent') +
+    ';color:' + (on ? '#fff' : 'var(--text-muted,#666)') +
+    ';border:1px solid ' + (on ? '#D6336C' : 'var(--border,#ddd)') +
+    ';" onclick="enfCambiarVista(\'' + vista + '\')"><i class="fas ' + icon + '"></i> ' + label + '</button>';
+}
+function enfCambiarVista(v){ enfVista = v; refreshWindow('enfermeria'); }
+function enfFiltrar(q){
+  var id = enfVista === 'fichas' ? 'enf-fichas-table' : (enfVista === 'avisos' ? 'enf-avisos-table' : 'enf-visitas-table');
+  if (typeof filterTable === 'function') filterTable(id, q);
+}
+function enfBannerSoloLectura(){
+  if (enfermeriaPuedeEditar) return '';
+  return '<div style="background:#FFF4E5;border:1px solid #F0C36D;border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:.85rem;color:#7A5C13;">' +
+    '<i class="fas fa-lock" style="margin-right:6px;"></i>' +
+    'Vista de <b>solo lectura</b>. Únicamente la cuenta de enfermería puede registrar o modificar información médica.</div>';
+}
+
+async function loadEnfermeria(){
+  var _pAuth = { p_usuario: currentUser && currentUser.usuario, p_pass: currentUser && currentUser.pass };
+  var r = await Promise.all([
+    _sb.rpc('staff_listar_enfermeria_visitas', _pAuth),
+    _sb.rpc('staff_listar_enfermeria_fichas',  _pAuth),
+    _sb.rpc('staff_listar_enfermeria_avisos',  _pAuth),
+    _sb.rpc('staff_enfermeria_config',         _pAuth)
+  ]);
+  enfermeriaVisitas.length = 0; enfermeriaVisitas.push.apply(enfermeriaVisitas, (r[0].data || []));
+  enfermeriaFichas.length  = 0; enfermeriaFichas.push.apply(enfermeriaFichas,  (r[1].data || []));
+  enfermeriaAvisos.length  = 0; enfermeriaAvisos.push.apply(enfermeriaAvisos,  (r[2].data || []));
+  if (r[3] && r[3].data) {
+    enfermeriaPuedeEditar = !!r[3].data.puede_editar;
+    enfermeriaUrgencias   = r[3].data.urgencias || {};
+  }
+}
+
+// ── Vista: VISITAS ──
+function enfRenderVisitas(){
+  var head = enfBannerSoloLectura();
+  if (!enfermeriaVisitas.length)
+    return head + '<div class="empty-state"><i class="fas fa-notes-medical"></i><p>No hay visitas registradas.</p>' +
+      (enfermeriaPuedeEditar ? '<small>Registra la primera con el botón "Nueva visita".</small>' : '<small>La enfermera aún no ha registrado visitas.</small>') + '</div>';
+  return head + '<table class="data-table" id="enf-visitas-table"><thead><tr>' +
+    '<th>Alumno</th><th>Fecha</th><th>Motivo</th><th>Urgencia</th><th>Atención</th><th>Padres</th><th>Registró</th>' +
+    (enfermeriaPuedeEditar ? '<th>Acciones</th>' : '') + '</tr></thead><tbody>' +
+    enfermeriaVisitas.map(function(v){
+      var salidas = [];
+      if (v.enviado_casa) salidas.push('enviado a casa');
+      if (v.traslado_hospital) salidas.push('traslado');
+      return '<tr data-id="' + v.id + '">' +
+        '<td>' + enfEsc(enfAlumnoNombre(v.alumno_id)) + '</td>' +
+        '<td>' + enfEsc(v.fecha || '') + (v.hora ? ' ' + enfEsc(String(v.hora).slice(0,5)) : '') + '</td>' +
+        '<td style="max-width:220px;font-size:.83rem;">' + enfEsc(v.motivo || '') +
+          (salidas.length ? '<br><small style="color:#B3261E;">' + enfEsc(salidas.join(' · ')) + '</small>' : '') + '</td>' +
+        '<td><span class="chip" style="background:' + enfColorUrg(v.urgencia) + ';color:#fff;">' + enfEsc(v.urgencia) + '</span></td>' +
+        '<td style="max-width:200px;font-size:.83rem;">' + enfEsc(v.atencion || '—') +
+          (v.temperatura ? '<br><small>T ' + enfEsc(v.temperatura) + '°C</small>' : '') + '</td>' +
+        '<td>' + (v.padres_notificados
+            ? '<span class="chip green">avisados</span>'
+            : '<span class="chip">sin aviso</span>') + '</td>' +
+        '<td style="font-size:.8rem;">' + enfEsc(v.registrado_por || '—') + '</td>' +
+        (enfermeriaPuedeEditar
+          ? '<td><div class="action-icons">' +
+            '<button class="action-icon" onclick="enfEditarVisita(' + v.id + ')" title="Editar"><i class="fas fa-pen"></i></button>' +
+            '<button class="action-icon del" onclick="enfEliminarVisita(' + v.id + ')" title="Eliminar"><i class="fas fa-trash"></i></button>' +
+            '</div></td>'
+          : '') +
+        '</tr>';
+    }).join('') + '</tbody></table>';
+}
+
+// ── Vista: FICHAS MÉDICAS ──
+function enfRenderFichas(){
+  var head = enfBannerSoloLectura();
+  if (!enfermeriaFichas.length)
+    return head + '<div class="empty-state"><i class="fas fa-file-medical"></i><p>No hay fichas médicas capturadas.</p>' +
+      (enfermeriaPuedeEditar ? '<small>Captura la primera con el botón "Ficha médica".</small>' : '') + '</div>';
+  return head + '<table class="data-table" id="enf-fichas-table"><thead><tr>' +
+    '<th>Alumno</th><th>Sangre</th><th>Alergias</th><th>Padecimientos</th><th>Medicamentos</th><th>Emergencia</th><th>Traslado</th>' +
+    (enfermeriaPuedeEditar ? '<th>Acciones</th>' : '') + '</tr></thead><tbody>' +
+    enfermeriaFichas.map(function(f){
+      var alerta = (f.alergias && f.alergias.trim()) ? ' style="background:#FFF4F4;"' : '';
+      return '<tr data-id="' + f.id + '"' + alerta + '>' +
+        '<td>' + enfEsc(enfAlumnoNombre(f.alumno_id)) + '</td>' +
+        '<td>' + enfEsc(f.tipo_sangre || '—') + '</td>' +
+        '<td style="max-width:180px;font-size:.83rem;">' +
+          (f.alergias ? '<b style="color:#B3261E;">' + enfEsc(f.alergias) + '</b>' : '—') + '</td>' +
+        '<td style="max-width:170px;font-size:.83rem;">' + enfEsc(f.enfermedades_cronicas || '—') + '</td>' +
+        '<td style="max-width:170px;font-size:.83rem;">' + enfEsc(f.medicamentos_permanentes || '—') + '</td>' +
+        '<td style="font-size:.8rem;">' + enfEsc(f.emergencia_nombre || '—') +
+          (f.emergencia_tel ? '<br>' + enfEsc(f.emergencia_tel) : '') + '</td>' +
+        '<td>' + (f.autoriza_traslado ? '<span class="chip green">sí</span>' : '<span class="chip red">no</span>') + '</td>' +
+        (enfermeriaPuedeEditar
+          ? '<td><div class="action-icons"><button class="action-icon" onclick="enfEditarFicha(' + f.alumno_id + ')" title="Editar"><i class="fas fa-pen"></i></button></div></td>'
+          : '') +
+        '</tr>';
+    }).join('') + '</tbody></table>';
+}
+
+// ── Vista: AVISOS ──
+function enfRenderAvisos(){
+  var head = enfBannerSoloLectura();
+  if (!enfermeriaAvisos.length)
+    return head + '<div class="empty-state"><i class="fas fa-bell"></i><p>No se ha generado ningún aviso.</p><small>Los avisos se crean solos según el nivel de urgencia de cada visita.</small></div>';
+  var chip = { enviado:'green', pendiente:'blue', error:'red', no_configurado:'' };
+  return head + '<table class="data-table" id="enf-avisos-table"><thead><tr>' +
+    '<th>Alumno</th><th>Urgencia</th><th>Canal</th><th>Destinatario</th><th>Estado</th><th>Cuándo</th>' +
+    (enfermeriaPuedeEditar ? '<th>Acciones</th>' : '') + '</tr></thead><tbody>' +
+    enfermeriaAvisos.map(function(a){
+      var puedeWa = enfermeriaPuedeEditar && a.canal === 'whatsapp' && a.estado === 'pendiente';
+      return '<tr data-id="' + a.id + '">' +
+        '<td>' + enfEsc(enfAlumnoNombre(a.alumno_id)) + '</td>' +
+        '<td><span class="chip" style="background:' + enfColorUrg(a.urgencia) + ';color:#fff;">' + enfEsc(a.urgencia) + '</span></td>' +
+        '<td>' + enfEsc(a.canal) + '</td>' +
+        '<td style="font-size:.8rem;max-width:190px;">' + enfEsc(a.destinatario || '—') + '</td>' +
+        '<td><span class="chip ' + (chip[a.estado] || '') + '">' + enfEsc(a.estado.replace('_',' ')) + '</span>' +
+          (a.detalle ? '<br><small style="color:#8a6d3b;">' + enfEsc(a.detalle) + '</small>' : '') + '</td>' +
+        '<td style="font-size:.78rem;">' + enfEsc(a.creado_at ? new Date(a.creado_at).toLocaleString('es-MX') : '') + '</td>' +
+        (enfermeriaPuedeEditar
+          ? '<td><div class="action-icons">' +
+            (puedeWa ? '<button class="action-icon" onclick="enfEnviarWhatsApp(' + a.id + ')" title="Enviar por WhatsApp"><i class="fab fa-whatsapp"></i></button>' : '') +
+            (a.estado === 'pendiente' ? '<button class="action-icon" onclick="enfMarcarAviso(' + a.id + ',\'enviado\')" title="Marcar como enviado"><i class="fas fa-check"></i></button>' : '') +
+            '</div></td>'
+          : '') +
+        '</tr>';
+    }).join('') + '</tbody></table>';
+}
+
+// ── Alta / edición ──
+function enfNuevo(){
+  if (enfVista === 'fichas') return enfEditarFicha(null);
+  return enfEditarVisita(null);
+}
+
+function enfEditarVisita(id){
+  if (!enfermeriaPuedeEditar) { showToast('Solo la cuenta de enfermería puede registrar visitas', 'warning'); return; }
+  var v = id ? enfermeriaVisitas.find(function(x){ return x.id === id; }) : null;
+  var opciones = alumnos.map(function(a){
+    return '<option value="' + a.id + '"' + (v && v.alumno_id === a.id ? ' selected' : '') + '>' + enfEsc(a.nombre) + '</option>';
+  }).join('');
+  var urgs = Object.keys(enfermeriaUrgencias).sort(function(a,b){
+    return (enfermeriaUrgencias[a].orden||0) - (enfermeriaUrgencias[b].orden||0);
+  });
+  var optUrg = urgs.map(function(u){
+    return '<option value="' + u + '"' + (v && v.urgencia === u ? ' selected' : '') + '>' + enfEsc(u) + '</option>';
+  }).join('');
+  var ayuda = urgs.map(function(u){
+    var c = enfermeriaUrgencias[u];
+    return '<div style="font-size:.76rem;margin-bottom:5px;line-height:1.4;"><span class="chip" style="background:' + c.color + ';color:#fff;">' + enfEsc(u) + '</span> ' + enfEsc(c.descripcion || '') + '</div>';
+  }).join('');
+
+  openModal((id ? 'Editar' : 'Nueva') + ' visita a enfermería', '' +
+    '<div class="fw-form single">' +
+      '<input type="hidden" id="ev-id" value="' + (id || '') + '" />' +
+      '<div class="form-group"><label>Alumno *</label><select id="ev-alumno">' + opciones + '</select></div>' +
+      '<div class="form-group"><label>Fecha</label><input id="ev-fecha" type="date" value="' + enfEsc(v ? v.fecha : new Date().toISOString().split('T')[0]) + '" /></div>' +
+      '<div class="form-group"><label>Hora</label><input id="ev-hora" type="time" value="' + enfEsc(v && v.hora ? String(v.hora).slice(0,5) : new Date().toTimeString().slice(0,5)) + '" /></div>' +
+      '<div class="form-group"><label>Motivo *</label><input id="ev-motivo" type="text" placeholder="Por qué llegó a enfermería" value="' + enfEsc(v ? v.motivo : '') + '" /></div>' +
+      '<div class="form-group"><label>Síntomas</label><textarea id="ev-sintomas" style="min-height:60px;">' + enfEsc(v ? v.sintomas : '') + '</textarea></div>' +
+      '<div class="form-group"><label>Temperatura (°C)</label><input id="ev-temp" type="number" step="0.1" min="30" max="45" value="' + enfEsc(v && v.temperatura != null ? v.temperatura : '') + '" /></div>' +
+      '<div class="form-group"><label>Atención brindada</label><textarea id="ev-atencion" style="min-height:60px;">' + enfEsc(v ? v.atencion : '') + '</textarea></div>' +
+      '<div class="form-group"><label>Medicamento administrado</label><input id="ev-medicamento" type="text" value="' + enfEsc(v ? v.medicamento : '') + '" /></div>' +
+      '<div class="form-group"><label>Dosis</label><input id="ev-dosis" type="text" value="' + enfEsc(v ? v.dosis : '') + '" /></div>' +
+      '<div class="form-group"><label>Autorizado por (tutor)</label><input id="ev-autorizado" type="text" value="' + enfEsc(v ? v.autorizado_por : '') + '" /></div>' +
+      '<div class="form-group"><label>Nivel de urgencia *</label><select id="ev-urgencia">' + optUrg + '</select></div>' +
+      '<div class="form-group full" style="background:var(--bg,#f7f7f5);border-radius:8px;padding:10px 12px;">' +
+        '<label style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Qué significa cada nivel</label>' + ayuda +
+        '<div style="font-size:.75rem;color:#666;margin-top:6px;">Al guardar, el sistema genera solo los avisos que corresponden al nivel elegido.</div>' +
+      '</div>' +
+      '<div class="form-group"><label><input id="ev-casa" type="checkbox"' + (v && v.enviado_casa ? ' checked' : '') + ' /> Se envió a casa</label></div>' +
+      '<div class="form-group"><label><input id="ev-traslado" type="checkbox"' + (v && v.traslado_hospital ? ' checked' : '') + ' /> Traslado a hospital</label></div>' +
+      '<div class="form-group"><label><input id="ev-seg" type="checkbox"' + (v && v.requiere_seguimiento ? ' checked' : '') + ' /> Requiere seguimiento</label></div>' +
+      '<div class="form-group"><label>Notas de seguimiento</label><textarea id="ev-segtxt" style="min-height:50px;">' + enfEsc(v ? v.seguimiento : '') + '</textarea></div>' +
+      '<div class="form-actions">' +
+        '<button class="btn-cancel" onclick="closeModal()">Cancelar</button>' +
+        '<button class="btn-save" style="background:#D6336C;" onclick="enfGuardarVisita()"><i class="fas fa-save"></i> ' + (id ? 'Guardar cambios' : 'Registrar visita') + '</button>' +
+      '</div>' +
+    '</div>');
+}
+
+async function enfGuardarVisita(){
+  var g = function(x){ var e = document.getElementById(x); return e ? e.value : null; };
+  var c = function(x){ var e = document.getElementById(x); return !!(e && e.checked); };
+  var idv = g('ev-id');
+  var motivo = (g('ev-motivo') || '').trim();
+  var alumno_id = parseInt(g('ev-alumno'), 10);
+  if (!alumno_id || !motivo) { showToast('Alumno y motivo son obligatorios', 'error'); return; }
+  var temp = g('ev-temp');
+  var r = await _sb.rpc('staff_guardar_enfermeria_visita', {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+    p_id: idv ? parseInt(idv, 10) : null,
+    p_alumno_id: alumno_id,
+    p_fecha: g('ev-fecha') || null,
+    p_hora: g('ev-hora') || null,
+    p_motivo: motivo,
+    p_sintomas: g('ev-sintomas') || null,
+    p_temperatura: temp ? parseFloat(temp) : null,
+    p_atencion: g('ev-atencion') || null,
+    p_medicamento: g('ev-medicamento') || null,
+    p_dosis: g('ev-dosis') || null,
+    p_autorizado_por: g('ev-autorizado') || null,
+    p_urgencia: g('ev-urgencia') || 'Leve',
+    p_enviado_casa: c('ev-casa'),
+    p_traslado_hospital: c('ev-traslado'),
+    p_requiere_seguimiento: c('ev-seg'),
+    p_seguimiento: g('ev-segtxt') || null
+  });
+  if (r.error) { showToast('No se pudo guardar: ' + r.error.message, 'error'); return; }
+  await loadEnfermeria();
+  closeModal();
+  showToast(idv ? 'Visita actualizada' : 'Visita registrada y avisos generados', 'success');
+  refreshWindow('enfermeria');
+}
+
+function enfEliminarVisita(id){
+  if (!enfermeriaPuedeEditar) return;
+  openModal('Eliminar visita', '' +
+    '<p style="margin-bottom:18px;">¿Eliminar este registro de enfermería? Se borran también sus avisos. Esta acción no se puede deshacer.</p>' +
+    '<div class="form-actions">' +
+      '<button class="btn-cancel" onclick="closeModal()">Cancelar</button>' +
+      '<button class="btn-save" style="background:var(--red);" onclick="enfConfirmarEliminar(' + id + ')"><i class="fas fa-trash"></i> Eliminar</button>' +
+    '</div>');
+}
+async function enfConfirmarEliminar(id){
+  var r = await _sb.rpc('staff_eliminar_enfermeria_visita', { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id });
+  if (r.error) { showToast('No se pudo eliminar: ' + r.error.message, 'error'); return; }
+  await loadEnfermeria();
+  closeModal(); showToast('Visita eliminada', 'success');
+  refreshWindow('enfermeria');
+}
+
+function enfEditarFicha(alumnoId){
+  if (!enfermeriaPuedeEditar) { showToast('Solo la cuenta de enfermería puede editar fichas médicas', 'warning'); return; }
+  var f = alumnoId ? enfermeriaFichas.find(function(x){ return x.alumno_id === alumnoId; }) : null;
+  var opciones = alumnos.map(function(a){
+    return '<option value="' + a.id + '"' + (alumnoId === a.id ? ' selected' : '') + '>' + enfEsc(a.nombre) + '</option>';
+  }).join('');
+  var sangres = ['','O+','O-','A+','A-','B+','B-','AB+','AB-'];
+  var optS = sangres.map(function(x){
+    return '<option value="' + x + '"' + (f && f.tipo_sangre === x ? ' selected' : '') + '>' + (x || '— sin dato —') + '</option>';
+  }).join('');
+  openModal('Ficha médica del alumno', '' +
+    '<div class="fw-form single">' +
+      '<div class="form-group"><label>Alumno *</label><select id="ef-alumno"' + (alumnoId ? ' disabled' : '') + '>' + opciones + '</select>' +
+        (alumnoId ? '<input type="hidden" id="ef-alumno-fijo" value="' + alumnoId + '" />' : '') + '</div>' +
+      '<div class="form-group"><label>Tipo de sangre</label><select id="ef-sangre">' + optS + '</select></div>' +
+      '<div class="form-group"><label>Alergias</label><textarea id="ef-alergias" placeholder="Medicamentos, alimentos, picaduras..." style="min-height:60px;">' + enfEsc(f ? f.alergias : '') + '</textarea></div>' +
+      '<div class="form-group"><label>Enfermedades crónicas</label><textarea id="ef-cronicas" style="min-height:60px;">' + enfEsc(f ? f.enfermedades_cronicas : '') + '</textarea></div>' +
+      '<div class="form-group"><label>Medicamentos permanentes</label><textarea id="ef-medicamentos" style="min-height:50px;">' + enfEsc(f ? f.medicamentos_permanentes : '') + '</textarea></div>' +
+      '<div class="form-group"><label>Restricciones (alimentos / actividad física)</label><textarea id="ef-restricciones" style="min-height:50px;">' + enfEsc(f ? f.restricciones : '') + '</textarea></div>' +
+      '<div class="form-group"><label>Discapacidad o necesidad especial</label><input id="ef-discapacidad" type="text" value="' + enfEsc(f ? f.discapacidad : '') + '" /></div>' +
+      '<div class="form-group"><label>Seguro médico</label><input id="ef-seguro" type="text" value="' + enfEsc(f ? f.seguro_medico : '') + '" /></div>' +
+      '<div class="form-group"><label>Número de póliza</label><input id="ef-poliza" type="text" value="' + enfEsc(f ? f.numero_poliza : '') + '" /></div>' +
+      '<div class="form-group"><label>Hospital preferido</label><input id="ef-hospital" type="text" value="' + enfEsc(f ? f.hospital_preferido : '') + '" /></div>' +
+      '<div class="form-group"><label>Médico de cabecera</label><input id="ef-medico" type="text" value="' + enfEsc(f ? f.medico_nombre : '') + '" /></div>' +
+      '<div class="form-group"><label>Teléfono del médico</label><input id="ef-medicotel" type="text" value="' + enfEsc(f ? f.medico_tel : '') + '" /></div>' +
+      '<div class="form-group"><label>Contacto de emergencia</label><input id="ef-emernombre" type="text" value="' + enfEsc(f ? f.emergencia_nombre : '') + '" /></div>' +
+      '<div class="form-group"><label>Parentesco</label><input id="ef-emerparent" type="text" value="' + enfEsc(f ? f.emergencia_parentesco : '') + '" /></div>' +
+      '<div class="form-group"><label>Teléfono de emergencia</label><input id="ef-emertel" type="text" value="' + enfEsc(f ? f.emergencia_tel : '') + '" /></div>' +
+      '<div class="form-group"><label><input id="ef-traslado" type="checkbox"' + (f && f.autoriza_traslado ? ' checked' : '') + ' /> Los tutores autorizan traslado a hospital</label></div>' +
+      '<div class="form-group"><label>Observaciones</label><textarea id="ef-obs" style="min-height:50px;">' + enfEsc(f ? f.observaciones : '') + '</textarea></div>' +
+      '<div class="form-actions">' +
+        '<button class="btn-cancel" onclick="closeModal()">Cancelar</button>' +
+        '<button class="btn-save" style="background:#D6336C;" onclick="enfGuardarFicha()"><i class="fas fa-save"></i> Guardar ficha</button>' +
+      '</div>' +
+    '</div>');
+}
+
+async function enfGuardarFicha(){
+  var g = function(x){ var e = document.getElementById(x); return e ? e.value : null; };
+  var fijo = document.getElementById('ef-alumno-fijo');
+  var alumno_id = parseInt(fijo ? fijo.value : g('ef-alumno'), 10);
+  if (!alumno_id) { showToast('Selecciona un alumno', 'error'); return; }
+  var r = await _sb.rpc('staff_guardar_enfermeria_ficha', {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+    p_alumno_id: alumno_id,
+    p_tipo_sangre: g('ef-sangre') || null,
+    p_alergias: g('ef-alergias') || null,
+    p_enfermedades_cronicas: g('ef-cronicas') || null,
+    p_medicamentos_permanentes: g('ef-medicamentos') || null,
+    p_restricciones: g('ef-restricciones') || null,
+    p_discapacidad: g('ef-discapacidad') || null,
+    p_seguro_medico: g('ef-seguro') || null,
+    p_numero_poliza: g('ef-poliza') || null,
+    p_hospital_preferido: g('ef-hospital') || null,
+    p_medico_nombre: g('ef-medico') || null,
+    p_medico_tel: g('ef-medicotel') || null,
+    p_emergencia_nombre: g('ef-emernombre') || null,
+    p_emergencia_parentesco: g('ef-emerparent') || null,
+    p_emergencia_tel: g('ef-emertel') || null,
+    p_autoriza_traslado: !!(document.getElementById('ef-traslado') || {}).checked,
+    p_observaciones: g('ef-obs') || null
+  });
+  if (r.error) { showToast('No se pudo guardar: ' + r.error.message, 'error'); return; }
+  await loadEnfermeria();
+  closeModal(); showToast('Ficha médica guardada', 'success');
+  refreshWindow('enfermeria');
+}
+
+// ── Avisos ──
+function enfEnviarWhatsApp(id){
+  var a = enfermeriaAvisos.find(function(x){ return x.id === id; });
+  if (!a) return;
+  var m = String(a.destinatario || '').match(/<([^>]+)>/);
+  var tel = m ? m[1] : String(a.destinatario || '');
+  var digits = String(tel).replace(/\D/g, '');
+  if (!digits) { showToast('Ese aviso no tiene teléfono', 'warning'); return; }
+  if (digits.length === 10) digits = '52' + digits;
+  window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(a.mensaje || ''), '_blank');
+  enfMarcarAviso(id, 'enviado');
+}
+async function enfMarcarAviso(id, estado){
+  var r = await _sb.rpc('staff_marcar_aviso_enfermeria', {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id, p_estado: estado, p_detalle: null
+  });
+  if (r.error) { showToast('No se pudo actualizar: ' + r.error.message, 'error'); return; }
+  await loadEnfermeria();
+  refreshWindow('enfermeria');
+}
+
 function openAddIncidencia(alumnoIdPreset, categoriaPreset) {
   const cat = categoriaPreset === 'Académica' ? 'Académica' : 'Conductual';
   const opciones = alumnos.map(a => `<option value="${a.id}" ${alumnoIdPreset==a.id?'selected':''}>${a.nombre}</option>`).join('');
@@ -4635,6 +4986,29 @@ const windowConfigs = {
     }
   },
 
+
+  enfermeria: {
+    title:'Enfermería', icon:'<i class="fas fa-briefcase-medical"></i>', color:'#D6336C', w:960, h:600,
+    toolbar: function(){
+      var t = '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar alumno..." oninput="enfFiltrar(this.value)" /></div>' +
+        '<div style="display:flex;gap:6px;margin-left:8px;">' +
+          enfTabBtn('visitas','Visitas','fa-notes-medical') +
+          enfTabBtn('fichas','Fichas médicas','fa-file-medical') +
+          enfTabBtn('avisos','Avisos a padres','fa-bell') +
+        '</div>';
+      if (enfermeriaPuedeEditar) {
+        t += '<button class="fw-btn-action" style="background:#D6336C;" onclick="enfNuevo()"><i class="fas fa-plus"></i> ' +
+             (enfVista==='fichas' ? 'Ficha médica' : 'Nueva visita') + '</button>';
+      }
+      return t;
+    },
+    content: function() {
+      if (enfVista === 'fichas') return enfRenderFichas();
+      if (enfVista === 'avisos') return enfRenderAvisos();
+      return enfRenderVisitas();
+    }
+  },
+
   eventoscal: {
     title:'Calendario Escolar', icon:'<i class="fas fa-calendar-days"></i>', color:'var(--primary)', w:800, h:540,
     toolbar: '<button class="fw-btn-action" onclick="openAddEvento()"><i class="fas fa-plus"></i> Nuevo evento</button>',
@@ -5349,6 +5723,8 @@ const SYSTEM_TABS = [
   {key:'comunicados',label:'Comunicados y Avisos',icon:'fa-bullhorn'},
   {key:'incidencias_conductuales',label:'Incidencias conductuales',icon:'fa-user-shield'},
   {key:'incidencias_academicas',label:'Incidencias académicas',icon:'fa-book-open-reader'},
+  {key:'enfermeria',label:'Enfermería (solo ver)',icon:'fa-briefcase-medical'},
+  {key:'enfermeria_editar',label:'Enfermería — registrar y editar',icon:'fa-pen-to-square'},
   {key:'eventoscal',label:'Calendario Escolar',icon:'fa-calendar-days'},
   {key:'bajas',label:'Bajas',icon:'fa-user-minus'},
   {key:'archivo',label:'Archivo de documentos',icon:'fa-folder-open'},
