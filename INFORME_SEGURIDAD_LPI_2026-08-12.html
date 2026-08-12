@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informe de seguridad — ERP y sitio web LPI</title>
+<style>
+  :root{
+    --bg:#f7f7f5; --card:#fff; --ink:#1a1a18; --muted:#6b6b66; --line:#e3e3de;
+    --crit:#b3261e; --crit-bg:#fdecea; --alto:#c2410c; --alto-bg:#fff1e8;
+    --medio:#a16207; --medio-bg:#fdf4e3; --ok:#166534; --ok-bg:#eaf5ec;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#17171a;--card:#1f1f23;--ink:#ececea;--muted:#a0a09a;--line:#33333a;
+      --crit-bg:#3a1614;--alto-bg:#3a2314;--medio-bg:#332a12;--ok-bg:#142b1a;
+      --crit:#f2837b;--alto:#f0a172;--medio:#e3c06a;--ok:#7fc98d;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:36px 18px 72px;}
+  .wrap{max-width:900px;margin:0 auto}
+  header{margin-bottom:30px;border-bottom:2px solid var(--line);padding-bottom:22px}
+  h1{font-size:1.85rem;margin:0 0 8px;letter-spacing:-.02em;line-height:1.22}
+  .sub{color:var(--muted);font-size:.94rem;margin:0}
+  h2{font-size:1.22rem;margin:44px 0 16px;letter-spacing:-.01em;
+     border-left:3px solid var(--ink);padding-left:11px}
+  .scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:11px;margin:26px 0 8px}
+  .score{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 12px;text-align:center}
+  .score .n{font-size:1.75rem;font-weight:650;line-height:1.1;display:block}
+  .score .l{font-size:.73rem;color:var(--muted);text-transform:uppercase;letter-spacing:.055em;margin-top:5px;display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        padding:20px 22px;margin-bottom:15px}
+  .card.crit{border-left:4px solid var(--crit)} .card.alto{border-left:4px solid var(--alto)}
+  .card.medio{border-left:4px solid var(--medio)} .card.ok{border-left:4px solid var(--ok)}
+  .tag{display:inline-block;font-size:.685rem;font-weight:680;letter-spacing:.07em;
+       text-transform:uppercase;padding:3px 9px;border-radius:5px;margin-bottom:10px}
+  .t-crit{background:var(--crit-bg);color:var(--crit)} .t-alto{background:var(--alto-bg);color:var(--alto)}
+  .t-medio{background:var(--medio-bg);color:var(--medio)} .t-ok{background:var(--ok-bg);color:var(--ok)}
+  .card h3{margin:0 0 9px;font-size:1.06rem;letter-spacing:-.01em}
+  .card p{margin:0 0 11px} .card p:last-child{margin-bottom:0}
+  .lbl{font-size:.73rem;text-transform:uppercase;letter-spacing:.055em;color:var(--muted);
+       font-weight:660;margin-top:14px;margin-bottom:4px}
+  code{background:var(--bg);border:1px solid var(--line);border-radius:4px;
+       padding:1.5px 5px;font-size:.855em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+      overflow-x:auto;font-size:.8rem;line-height:1.55;margin:9px 0 0;
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  ul{margin:8px 0 0;padding-left:20px} li{margin-bottom:6px}
+  .okgrid{display:grid;gap:9px}
+  .okrow{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--ok);
+         border-radius:8px;padding:11px 15px;font-size:.925rem}
+  .okrow b{color:var(--ok)}
+  .plan{counter-reset:s;list-style:none;padding:0;margin:14px 0 0}
+  .plan li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:15px 18px 15px 54px;position:relative;margin-bottom:10px}
+  .plan li::before{counter-increment:s;content:counter(s);position:absolute;left:16px;top:15px;
+    width:25px;height:25px;border-radius:50%;background:var(--ink);color:var(--bg);
+    display:grid;place-items:center;font-size:.8rem;font-weight:700}
+  .plan b{display:block;margin-bottom:3px}
+  .when{font-size:.775rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:640}
+  footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.855rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Chequeo de seguridad — ERP y sitio web</h1>
+  <p class="sub">Learning Project Institute · 12 de agosto de 2026 · Supabase <code>bvmeunsyhrurigtgpedz</code> · repo <code>LEARNING-erp-website</code></p>
+</header>
+
+<p><strong>Resumen en una frase:</strong> la base de datos está bien cerrada —verifiqué que nadie puede leer ni una sola fila de ninguna tabla desde fuera— pero el candado que impide adivinar contraseñas a la fuerza <em>no funciona</em>, por dos caminos distintos que confirmé explotando el sistema. Ningún dato está saliendo hoy; el riesgo real es que alguien entre adivinando una contraseña.</p>
+
+<div class="scores">
+  <div class="score"><span class="n" style="color:var(--crit)">2</span><span class="l">Críticos</span></div>
+  <div class="score"><span class="n" style="color:var(--alto)">2</span><span class="l">Altos</span></div>
+  <div class="score"><span class="n" style="color:var(--medio)">4</span><span class="l">Medios</span></div>
+  <div class="score"><span class="n" style="color:var(--ok)">0</span><span class="l">Fugas de datos</span></div>
+</div>
+<p class="sub" style="margin-top:10px">Alcance revisado: 41 tablas, 139 funciones RPC, historial completo de Git (4 commits, 181 objetos), sitio en producción, cabeceras HTTP y los 3 archivos HTML del frontend.</p>
+
+<h2>Lo que sí está bien</h2>
+<div class="okgrid">
+  <div class="okrow"><b>No hay fuga de datos.</b> Probé leer las 41 tablas con la clave pública <code>anon</code>: cero filas en todas. RLS está activo en todas y no existe ni una sola política permisiva, ni vistas que se salten RLS.</div>
+  <div class="okrow"><b>No hay claves secretas en GitHub.</b> Revisé los 4 commits y los 181 objetos del historial: no aparece la <code>service_role</code>, ni el token de Vercel, ni <code>CLAVES_ERP_LPI.txt</code>. Lo único publicado es la clave <code>anon</code>, que por diseño es pública.</div>
+  <div class="okrow"><b>El <code>.gitignore</code> está bien hecho.</b> Cubre credenciales, tokens, llaves de firma de Android, respaldos y contratos.</div>
+  <div class="okrow"><b>Producción no sirve archivos sensibles.</b> <code>/CLAVES_ERP_LPI.txt</code> y <code>/supabase_schema.sql</code> devuelven 404.</div>
+  <div class="okrow"><b>Contraseñas cifradas y cabeceras correctas.</b> Todo con bcrypt, nada en texto plano. <code>vercel.json</code> aplica HSTS, <code>X-Frame-Options: DENY</code> y <code>nosniff</code>.</div>
+</div>
+
+<h2>Hallazgos</h2>
+
+<div class="card crit">
+  <span class="tag t-crit">Crítico · 01</span>
+  <h3>129 de 139 funciones aceptan contraseñas sin contar los intentos fallidos</h3>
+  <p>El bloqueo por intentos fallidos existe únicamente en <code>staff_login</code> y <code>portal_login</code>. Pero las otras 129 funciones (<code>portal_resumen</code>, <code>staff_listar_alumnos</code>, <code>portal_calificaciones</code>…) también reciben usuario y contraseña, y también las revalidan — solo que sin contar nada. Es como poner un candado en la puerta principal y dejar 129 ventanas que abren con la misma llave.</p>
+  <p class="lbl">Verificado en vivo</p>
+  <p>Lancé 25 intentos seguidos contra <code>portal_resumen</code> con credenciales falsas. Los 25 se ejecutaron y la tabla <code>auth_intentos</code> quedó en <strong>cero registros</strong>. Un atacante puede probar contraseñas de forma indefinida.</p>
+  <p class="lbl">Agravante</p>
+  <p>El repositorio es público, así que los nombres y las firmas exactas de las 139 funciones están a la vista de cualquiera. Es literalmente el mapa que usé para encontrar esto.</p>
+</div>
+
+<div class="card crit">
+  <span class="tag t-crit">Crítico · 02</span>
+  <h3>El bloqueo antifuerza bruta se puede borrar desde el navegador</h3>
+  <p>La función interna <code>_auth_registrar_resultado(contexto, id, exito)</code> quedó expuesta a <code>anon</code>. Si se le pasa <code>exito = true</code>, <strong>borra el contador de intentos fallidos</strong> de esa cuenta. No pide ninguna credencial para hacerlo.</p>
+  <p>Es decir: aun arreglando el hallazgo 01, un atacante alternaría "probar contraseña" y "borrar mi bloqueo" indefinidamente.</p>
+  <p class="lbl">Verificado en vivo</p>
+  <pre>bloqueo tras 7 intentos fallidos ......... 15 minutos
+tras una llamada anon con exito=true ....  0 minutos</pre>
+</div>
+
+<div class="card alto">
+  <span class="tag t-alto">Alto · 03</span>
+  <h3>Las contraseñas usan bcrypt de coste 6 (el mínimo por defecto)</h3>
+  <p>Las 27 cuentas —13 de personal y 14 de padres— están cifradas con coste 6, que es el valor por defecto de pgcrypto. La recomendación actual es 12. La diferencia es de unas <strong>64 veces</strong> en velocidad: cada contraseña que un atacante prueba le cuesta 64 veces menos tiempo.</p>
+  <p>Por sí solo sería aceptable si hubiera límite de intentos. Combinado con los hallazgos 01 y 02, es lo que convierte "adivinar la contraseña del director" en algo realista en vez de teórico.</p>
+</div>
+
+<div class="card alto">
+  <span class="tag t-alto">Alto · 04</span>
+  <h3>Cualquiera puede disparar el respaldo completo y los correos a padres</h3>
+  <p>Dos funciones pensadas para <code>pg_cron</code> quedaron abiertas a <code>anon</code>:</p>
+  <ul>
+    <li><code>respaldo_diario()</code> — vuelca <strong>la base entera</strong> (alumnos, pagos, nómina, calificaciones, hashes de contraseñas, accesos de padres) en la tabla <code>respaldos_bd</code>. No se puede leer el resultado desde fuera, pero se puede invocar sin límite: crecimiento descontrolado de almacenamiento y de la factura.</li>
+    <li><code>enviar_recordatorios_pago()</code> — envía correos reales a los padres, hasta 15 por llamada. Cualquiera puede spamear a las familias del colegio y agotar la cuota de EmailJS.</li>
+  </ul>
+  <p class="lbl">Nota aparte</p>
+  <p>El <code>accessToken</code> privado de EmailJS está escrito dentro del cuerpo de <code>enviar_recordatorios_pago()</code>. Confirmé que <strong>no</strong> aparece en GitHub (allí solo está la clave pública), así que no está filtrado — pero conviene moverlo a Vault en vez de dejarlo en el código de la función.</p>
+</div>
+
+<div class="card medio">
+  <span class="tag t-medio">Medio · 05</span>
+  <h3>El repositorio de GitHub es público</h3>
+  <p><code>github.com/institutelearningproject-beep/LEARNING-erp-website</code> está en modo público. No contiene secretos, pero sí el esquema completo de la base y las 139 firmas de funciones. Para un ERP escolar con datos de menores no hay ninguna razón para que sea público.</p>
+</div>
+
+<div class="card medio">
+  <span class="tag t-medio">Medio · 06</span>
+  <h3>Los contratos siguen descargables desde el historial de Git</h3>
+  <p><code>Contrato_ERP_LearningProject.docx</code> y <code>Contrato_ERP_LearningProject_v2.pdf</code> se borraron de la versión actual y se añadieron al <code>.gitignore</code> — pero siguen dentro de commits antiguos. En un repo público, cualquiera puede recuperarlos. Borrarlos del repo hoy no los quita del historial.</p>
+</div>
+
+<div class="card medio">
+  <span class="tag t-medio">Medio · 07</span>
+  <h3>Sin Content-Security-Policy y uso extenso de innerHTML</h3>
+  <p>No hay cabecera CSP en <code>vercel.json</code> ni en los HTML. A la vez hay 66 usos de <code>innerHTML</code> en <code>erp.html</code>, 37 en <code>acceso-padres.html</code> y 6 en <code>index.html</code>.</p>
+  <p>Importa más de lo normal aquí: como la contraseña del usuario vive en memoria del navegador durante toda la sesión (el diseño la reenvía en cada llamada), un XSS no robaría solo una sesión — robaría la contraseña en claro.</p>
+</div>
+
+<div class="card medio">
+  <span class="tag t-medio">Medio · 08</span>
+  <h3>El diseño reenvía la contraseña en claro en cada operación</h3>
+  <p>Cada una de las 139 funciones recibe <code>p_usuario</code> y <code>p_pass</code> y revalida contra bcrypt. Funciona y evita sesiones falsificadas, pero tiene tres costes: la contraseña viaja en cada petición, queda en memoria del navegador toda la sesión, y obliga a calcular bcrypt en cada clic. Es también la razón de fondo del hallazgo 01.</p>
+  <p>No es urgente, pero a mediano plazo conviene migrar a tokens de sesión de corta duración (o directamente a Supabase Auth).</p>
+</div>
+
+<h2>Plan de acción</h2>
+<ol class="plan">
+  <li>
+    <span class="when">Hoy · 2 minutos · sin riesgo</span>
+    <b>Correr la FASE 1 del script SQL</b>
+    Cierra los hallazgos 02 y 04. Son solo <code>REVOKE</code> sobre funciones que el navegador nunca llama, así que no puede romper nada del ERP.
+  </li>
+  <li>
+    <span class="when">Hoy · 1 minuto</span>
+    <b>Poner el repositorio en privado</b>
+    En GitHub → Settings → General → Danger Zone → Change visibility. Resuelve el 05 y deja de exponer el mapa del sistema. El despliegue en Vercel sigue funcionando igual.
+  </li>
+  <li>
+    <span class="when">Esta semana · fuera de horario</span>
+    <b>Correr las FASES 2 y 3</b>
+    Cierran los hallazgos 01 y 03. La fase 3 toca los dos validadores que usan 118 funciones, así que hay que probar el ERP y el portal después. El script incluye la lista de pruebas y el bloque de reversión.
+  </li>
+  <li>
+    <span class="when">Esta semana</span>
+    <b>Rotar las 27 contraseñas con el hash nuevo</b>
+    Aprovechando que hay que re-hashear a coste 12, conviene cambiarlas: el repositorio estuvo público varios meses. El procedimiento está al final del script.
+  </li>
+  <li>
+    <span class="when">Este mes</span>
+    <b>Limpiar el historial de Git y añadir CSP</b>
+    Para el 06, reescribir el historial con <code>git filter-repo</code> (o, más simple y más seguro: crear un repositorio nuevo desde el estado actual y archivar el viejo). Para el 07, agregar una cabecera CSP en <code>vercel.json</code>.
+  </li>
+</ol>
+
+<h2>Cómo se hicieron las pruebas</h2>
+<p>Todas las comprobaciones de la base se hicieron impersonando el rol <code>anon</code> dentro de Postgres (<code>SET LOCAL ROLE anon</code>), que es exactamente el permiso que tiene cualquier persona con la clave pública del sitio. Las pruebas de fuerza bruta se hicieron contra identificadores ficticios (<code>__PRUEBA_AUDITORIA__</code>, <code>__usuario_inexistente__</code>) y los registros de prueba se borraron al terminar; ninguna cuenta real fue tocada ni bloqueada. No se ejecutaron <code>respaldo_diario()</code> ni <code>enviar_recordatorios_pago()</code> para no generar respaldos ni enviar correos reales a las familias: para esas dos se verificó el permiso, no el efecto.</p>
+
+<footer>
+  Auditoría realizada el 12 de agosto de 2026 sobre el estado del repositorio y del proyecto Supabase en esa fecha.
+  Acompaña a este informe el archivo <code>FIX_seguridad_2026-08-12.sql</code> con las correcciones listas para ejecutar.
+</footer>
+
+</div>
+</body>
+</html>
