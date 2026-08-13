@@ -788,20 +788,20 @@ const ROLES = ['Director General','Director','Coordinador','Supervisor','Maestro
 const ROLE_COLORS = {'Director General':'blue','Director':'blue','Coordinador':'green','Supervisor':'teal','Maestro':''};
 
 // ── SECCIONES DE LA ESCUELA (para filtrar datos por área) ──
-const SECCIONES = ['Maternal','Preescolar','Primaria','Secundaria'];
+const SECCIONES = ['Maternal','Kinder','Primaria','Secundaria'];
 
 // ── PLANTILLAS DE ROL (matriz RBAC oficial LPI — jul 2026) ──
 // Cada plantilla precarga módulos + secciones al crear un usuario; queda editable después.
 const ROLE_TEMPLATES = [
   { nombre:'Director General', secciones:['__all__'], acceso:['__all__'] },
-  { nombre:'Directora Maternal y Preescolar', secciones:['Maternal','Preescolar'], acceso:['comunicados','alumnos','eventoscal','evalcual','bitacora','horarios','asistencia','incidencias_conductuales','incidencias_academicas','maestros','reportes'] },
+  { nombre:'Directora Maternal y Kínder', secciones:['Maternal','Kinder'], acceso:['comunicados','alumnos','eventoscal','evalcual','bitacora','horarios','asistencia','incidencias_conductuales','incidencias_academicas','maestros','reportes'] },
   { nombre:'Coordinadora de Maternal', secciones:['Maternal'], acceso:['comunicados'] },
-  { nombre:'Miss de Maternal', secciones:['Maternal'], acceso:['bitacora','alumnos','eventoscal','horarios','comunicados'] },
-  { nombre:'Miss de Preescolar', secciones:['Preescolar'], acceso:['eventoscal','comunicados','alumnos','evalcual'] },
+  { nombre:'Miss de Maternal', secciones:['Maternal'], acceso:['bitacora','alumnos','eventoscal','horarios','comunicados','maestros_perfil'] },
+  { nombre:'Miss de Kínder', secciones:['Kinder'], acceso:['eventoscal','comunicados','alumnos','evalcual','maestros_perfil'] },
   { nombre:'Directora Primaria y Secundaria', secciones:['Primaria','Secundaria'], acceso:['comunicados','calificaciones','eventoscal','tareas','horarios','cambridge','alumnos','materias','asistencia','incidencias_conductuales','incidencias_academicas','maestros','reportes'] },
   { nombre:'Coordinadora de Primaria', secciones:['Primaria'], acceso:['comunicados','calificaciones','eventoscal','tareas','horarios','cambridge'] },
-  { nombre:'Miss de Primaria', secciones:['Primaria'], acceso:['comunicados','calificaciones','eventoscal','tareas','horarios','cambridge'] },
-  { nombre:'Miss de Secundaria', secciones:['Secundaria'], acceso:['horarios','calificaciones','tareas','eventoscal','comunicados','cambridge','alumnos','materias'] },
+  { nombre:'Miss de Primaria', secciones:['Primaria'], acceso:['comunicados','calificaciones','eventoscal','tareas','horarios','cambridge','maestros_perfil'] },
+  { nombre:'Miss de Secundaria', secciones:['Secundaria'], acceso:['horarios','calificaciones','tareas','eventoscal','comunicados','cambridge','alumnos','materias','maestros_perfil'] },
   { nombre:'Administración — Facturación y Nómina', secciones:['__all__'], acceso:['facturacion','pagos','nomina'] },
   { nombre:'Administración — Inscripciones', secciones:['__all__'], acceso:['alumnos','inscripciones','bajas','archivo'] },
   { nombre:'Administración — Comunicación', secciones:['__all__'], acceso:['comunicados','eventoscal'] },
@@ -810,7 +810,7 @@ const ROLE_TEMPLATES = [
 // ── IDENTIDAD POR NIVEL (colores + ositos, coherente con el sitio web) ──
 const NIVEL_META = {
   'Maternal':   { color:'#E4707E', bg:'rgba(228,112,126,.12)', oso:'fotos/oso-maternal.png',   emoji:'🐻' },
-  'Preescolar': { color:'#E8A020', bg:'rgba(232,160,32,.12)',  oso:'fotos/oso-preescolar.png', emoji:'🐻' },
+  'Kinder':     { color:'#E8A020', bg:'rgba(232,160,32,.12)',  oso:'fotos/oso-preescolar.png', emoji:'🐻' },
   'Primaria':   { color:'#2C5FA8', bg:'rgba(44,95,168,.12)',   oso:'fotos/oso-primaria.png',   emoji:'🐻' },
   'Secundaria': { color:'#16A085', bg:'rgba(22,160,133,.12)',  oso:'fotos/oso-secundaria.png', emoji:'🐻' },
 };
@@ -824,7 +824,7 @@ let nivelActivo = null;
 // ── Catálogo de grados por nivel (respaldo si Configuración → Niveles aún no los define) ──
 const GRADOS_POR_NIVEL = {
   'Maternal': ['Maternal 1','Maternal 2','Maternal 3'],
-  'Preescolar': ['1er grado','2do grado','3er grado'],
+  'Kinder': ['Kinder 1','Kinder 2','Kinder 3'],
   'Primaria': ['1er grado','2do grado','3er grado','4to grado','5to grado','6to grado'],
   'Secundaria': ['1er grado','2do grado','3er grado'],
 };
@@ -884,7 +884,7 @@ function rebuildGrupos(){
     out.push(g);
   });
   GRUPOS_DEMO.length=0;
-  var ordenNivel={'Maternal':0,'Preescolar':1,'Primaria':2,'Secundaria':3};
+  var ordenNivel={'Maternal':0,'Kinder':1,'Primaria':2,'Secundaria':3};
   // OJO: no usar "ordenNivel[nivel]||9" — Maternal vale 0 y 0 es falsy en JS, así que
   // "||9" lo trataría como "sin definir" y lo mandaría al final. Hay que usar "in".
   function ordenDe(niv){ return (niv in ordenNivel) ? ordenNivel[niv] : 9; }
@@ -916,6 +916,56 @@ function opcionesGrupo(){
 function nivelesPermitidos(){
   if(tieneTodasLasSecciones(currentUser)) return SECCIONES.slice();
   return SECCIONES.filter(function(s){ return puedeVerNivel(currentUser, s); });
+}
+
+// ── Filtro por grado en el módulo Alumnos (ej. Primaria 1°-6°, Secundaria 1°-3°) ──
+// Pensado sobre todo para directoras, coordinadoras y maestras de Primaria/Secundaria,
+// que ven varios grados a la vez y necesitan acotar la lista rápido.
+function opcionesNivelFiltroAlumnos(){
+  var nivs = nivelesPermitidos();
+  return '<option value="">Todos los niveles</option>' + nivs.map(function(n){ return '<option>'+cfgEsc(n)+'</option>'; }).join('');
+}
+function opcionesGradoFiltroAlumnos(nivelSel){
+  var nivs = nivelSel ? [nivelSel] : nivelesPermitidos();
+  var ambiguo = nivs.length > 1; // si hay más de un nivel, hace falta aclarar a cuál pertenece cada grado
+  var vistos = {}, out = [];
+  nivs.forEach(function(n){
+    gradosDeNivel(n).forEach(function(g){
+      var key = g + '|' + n;
+      if (vistos[key]) return; vistos[key] = 1;
+      out.push({ grado: g, nivel: n, label: ambiguo ? (g + ' — ' + n) : g });
+    });
+  });
+  if (!out.length) return '<option value="">— sin grados —</option>';
+  return '<option value="">Todos los grados</option>' +
+    out.map(function(o){ return '<option value="'+cfgEsc(o.grado)+'|'+cfgEsc(o.nivel)+'">'+cfgEsc(o.label)+'</option>'; }).join('');
+}
+// Al cambiar el nivel del toolbar, refresca las opciones de grado disponibles para ese nivel.
+function onFiltroNivelAlumnosChange(){
+  var selNivel = document.getElementById('alumnos-filtro-nivel');
+  var selGrado = document.getElementById('alumnos-filtro-grado');
+  if (selGrado) { selGrado.innerHTML = opcionesGradoFiltroAlumnos(selNivel ? selNivel.value : ''); selGrado.value = ''; }
+  filtrarAlumnosTabla();
+}
+// Filtro combinado (texto + nivel + grado) sobre las filas ya renderizadas de #alumnos-table.
+// No usa filterTable/filterByColumn porque esas funciones se pisan entre sí (cada una decide
+// sola si ocultar la fila); aquí se evalúan las tres condiciones juntas por fila.
+function filtrarAlumnosTabla(){
+  var elTexto = document.getElementById('alumnos-search-input');
+  var elNivel = document.getElementById('alumnos-filtro-nivel');
+  var elGrado = document.getElementById('alumnos-filtro-grado');
+  var texto = elTexto ? elTexto.value.toLowerCase() : '';
+  var nivelSel = elNivel ? elNivel.value : '';
+  var gradoRaw = elGrado ? elGrado.value : '';
+  var gradoVal = '', gradoNivel = '';
+  if (gradoRaw) { var partes = gradoRaw.split('|'); gradoVal = partes[0]; gradoNivel = partes[1] || ''; }
+  document.querySelectorAll('#alumnos-table tbody tr').forEach(function(r){
+    if (!r.dataset || !('nivel' in r.dataset)) return; // fila de "sin alumnos", no filtrar
+    var okTexto = !texto || r.textContent.toLowerCase().indexOf(texto) >= 0;
+    var okNivel = !nivelSel || r.dataset.nivel === nivelSel;
+    var okGrado = !gradoVal || (r.dataset.grado === gradoVal && (!gradoNivel || r.dataset.nivel === gradoNivel));
+    r.classList.toggle('hidden', !(okTexto && okNivel && okGrado));
+  });
 }
 function renderNivelSelector(){
   var host = document.getElementById('nivel-selector-host');
@@ -1086,7 +1136,11 @@ function renderDashDocente(){
   }
 
   // Panel docente/coordinación: su día, sus grupos, accesos rápidos a SUS módulos
-  var accesos=(currentUser.acceso||[]).filter(function(k){ return MODULES.some(function(m){return m.key===k;}); }).slice(0,8);
+  // 'maestros_perfil' (autoservicio de las Miss) no es una llave de MODULES — se
+  // muestra con el mismo tile que 'maestros' (el módulo real que abre).
+  var accesos=(currentUser.acceso||[]).map(function(k){ return k==='maestros_perfil' ? 'maestros' : k; })
+    .filter(function(k,i,arr){ return arr.indexOf(k)===i; })
+    .filter(function(k){ return MODULES.some(function(m){return m.key===k;}); }).slice(0,8);
   var nivs=nivelesPermitidos();
   host.innerHTML='<div class="dash-card" style="margin-bottom:16px;padding:20px">'+
     '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">'+
@@ -1358,8 +1412,12 @@ let posIdx = 0;
 // (el Asistente IA ya filtra sus propias respuestas por permiso/nivel; "config" solo
 // muestra la pestaña de perfil si el usuario no tiene permiso de administración).
 const WINDOWS_SIEMPRE_PERMITIDAS = ['asistente','config'];
+// El módulo Maestros se abre con el acceso completo 'maestros' (Direcciones/Coordinación,
+// ven y editan a todas las maestras) O con 'maestros_perfil' (cualquier Miss, autoservicio
+// de su propio expediente). windowConfigs.maestros.content() decide cuál vista mostrar.
+function puedeAbrirMaestros(u){ return usuarioPuede(u,'maestros') || usuarioPuede(u,'maestros_perfil'); }
 function openWindow(type, navEl) {
-  if (currentUser && WINDOWS_SIEMPRE_PERMITIDAS.indexOf(type)<0 && !usuarioPuede(currentUser, type)) {
+  if (currentUser && WINDOWS_SIEMPRE_PERMITIDAS.indexOf(type)<0 && !(type==='maestros' ? puedeAbrirMaestros(currentUser) : usuarioPuede(currentUser, type))) {
     showToast('No tienes permiso para abrir este módulo', 'error');
     return;
   }
@@ -1608,7 +1666,7 @@ function renderAlumnosTable() {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray);font-size:0.88rem;">No hay alumnos registrados. Haz clic en <b>Nuevo alumno</b> para comenzar.</td></tr>`;
   } else {
     tbody.innerHTML = lista.map(a => `
-      <tr data-id="${a.id}">
+      <tr data-id="${a.id}" data-nivel="${cfgEsc(a.nivel||'')}" data-grado="${cfgEsc(a.grado||'')}">
         <td><div style="display:flex;align-items:center;gap:8px;">${a.foto?`<img src="${a.foto}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:`<span class="td-avatar">${initials(a.nombre)}</span>`}<div><div style="font-weight:600">${a.nombre}</div>${a.matricula?`<div style="font-size:.7rem;color:var(--gray);font-weight:600">${a.matricula}</div>`:''}</div></div></td>
         <td>${a.nivel}</td><td>${a.grado}</td><td>${a.tutor}</td>
         <td><span class="chip ${pagoClass(a.pago)}">${a.pago}</span></td>
@@ -1624,6 +1682,9 @@ function renderAlumnosTable() {
   const badge = document.getElementById('badge-alumnos'); if (badge) badge.textContent = alumnos.length;
   renderDashAlumnos();
   initDashboard();
+  // Reaplica los filtros de nivel/grado/búsqueda activos en el toolbar (si el módulo
+  // Alumnos ya está abierto) para que no se pierdan al recargar/guardar datos.
+  if (typeof filtrarAlumnosTabla === 'function') filtrarAlumnosTabla();
 }
 
 function verAlumno(id) {
@@ -1662,7 +1723,7 @@ function openAddAlumno() {
   setupAlumnoForm(null);
 }
 
-function nivelPrefix(n){ var m={'Maternal':'MAT','Preescolar':'PRE','Primaria':'PRI','Secundaria':'SEC'}; return m[n]||(n?String(n).slice(0,3).toUpperCase():'GEN'); }
+function nivelPrefix(n){ var m={'Maternal':'MAT','Kinder':'PRE','Primaria':'PRI','Secundaria':'SEC'}; return m[n]||(n?String(n).slice(0,3).toUpperCase():'GEN'); }
 function genMatricula(nivel){
   var yr=String(new Date().getFullYear()).slice(-2);
   var count=(typeof alumnos!=='undefined'?alumnos.filter(function(x){return x.nivel===nivel;}).length:0)+1;
@@ -1903,7 +1964,7 @@ function formAlumnoHTML(a) {
   const isEdit = !!a;
   const baseNivel = a?.nivel || ((typeof nivelesData!=='undefined'&&nivelesData[0])?nivelesData[0].nombre:'Maternal');
   const matriculaVal = a?.matricula || genMatricula(baseNivel);
-  const niveles = (typeof nivelesData!=='undefined' && nivelesData.length) ? nivelesData.map(n=>n.nombre) : ['Maternal','Preescolar','Primaria','Secundaria'];
+  const niveles = (typeof nivelesData!=='undefined' && nivelesData.length) ? nivelesData.map(n=>n.nombre) : ['Maternal','Kinder','Primaria','Secundaria'];
   const h = a?.historial || {};
   const fi = a?.ficha || {};
   // Si el alumno aún no tiene el nombre dividido (registros anteriores a esta ficha), precargamos su nombre completo en "Nombre(s)".
@@ -2192,7 +2253,7 @@ function renderMaestrosTable() {
   } else {
     tbody.innerHTML = lista.map(m => `
       <tr data-id="${m.id}">
-        <td><span class="td-avatar" style="background:linear-gradient(135deg,var(--gold),var(--gold-light))">${initials(m.nombre)}</span>${m.nombre}</td>
+        <td><span class="td-avatar" style="background:linear-gradient(135deg,var(--gold),var(--gold-light))">${initials(m.nombre)}</span><div style="display:inline-block;vertical-align:middle"><div>${m.nombre}</div>${m.curp?`<div style="font-size:.7rem;color:var(--gray);font-weight:600">${m.curp}</div>`:`<div style="font-size:.7rem;color:var(--orange)">Sin datos personales aún</div>`}</div></td>
         <td>${m.materia}</td><td>${m.nivel}</td><td>${m.tel}</td><td>${m.correo}</td>
         <td><span class="chip green">${m.estado}</span></td>
         <td><div class="action-icons">
@@ -2219,6 +2280,14 @@ function formMaestroHTML(m) {
       <div class="form-group"><label>Nivel</label><input id="fm-nivel" type="text" value="${m?.nivel||''}" placeholder="Ej: Primaria" /></div>
       <div class="form-group"><label>Teléfono</label><input id="fm-tel" type="tel" value="${m?.tel||''}" placeholder="722-000-0000" /></div>
       <div class="form-group"><label>Correo institucional</label><input id="fm-correo" type="email" value="${m?.correo||''}" placeholder="nombre@lpi.edu" /></div>
+      <div class="form-group full" style="border-top:1.5px solid var(--border);padding-top:10px;margin-top:4px;"><label style="font-weight:700;color:var(--primary-dark)"><i class="fas fa-id-card" style="margin-right:6px;color:var(--gold)"></i>Datos personales y fiscales</label></div>
+      <div class="form-group"><label>CURP</label><input id="fm-curp" type="text" value="${m?.curp||''}" placeholder="18 caracteres" maxlength="18" style="text-transform:uppercase" /></div>
+      <div class="form-group"><label>RFC</label><input id="fm-rfc" type="text" value="${m?.rfc||''}" placeholder="13 caracteres" maxlength="13" style="text-transform:uppercase" /></div>
+      <div class="form-group full"><label>Domicilio fiscal</label><input id="fm-domicilio" type="text" value="${m?.domicilio_fiscal||''}" placeholder="Calle, número, colonia, municipio, estado" /></div>
+      <div class="form-group"><label>Código postal</label><input id="fm-cp" type="text" value="${m?.cp||''}" placeholder="52140" maxlength="5" /></div>
+      <div class="form-group full" style="border-top:1.5px solid var(--border);padding-top:10px;margin-top:4px;"><label style="font-weight:700;color:var(--primary-dark)"><i class="fas fa-phone-volume" style="margin-right:6px;color:var(--red)"></i>Contacto de emergencia</label></div>
+      <div class="form-group"><label>Nombre</label><input id="fm-ce-nombre" type="text" value="${m?.contacto_emergencia_nombre||''}" placeholder="Nombre del contacto" /></div>
+      <div class="form-group"><label>Teléfono</label><input id="fm-ce-tel" type="tel" value="${m?.contacto_emergencia_tel||''}" placeholder="722-000-0000" /></div>
       <div class="form-actions">
         <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
         <button class="btn-save" onclick="saveMaestro(${m?.id||'null'})">${m?'Guardar cambios':'Registrar maestro'}</button>
@@ -2229,8 +2298,19 @@ function formMaestroHTML(m) {
 async function saveMaestro(id) {
   const nombre = document.getElementById('fm-nombre').value.trim();
   if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
-  const data = { nombre, materia: document.getElementById('fm-materia').value, nivel: document.getElementById('fm-nivel').value, tel: document.getElementById('fm-tel').value, email: document.getElementById('fm-correo').value, estado: 'Activo' };
-  const rpcMaestro = { p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id||null, p_nombre: data.nombre, p_materia: data.materia, p_nivel: data.nivel, p_tel: data.tel, p_email: data.email };
+  const data = {
+    nombre, materia: document.getElementById('fm-materia').value, nivel: document.getElementById('fm-nivel').value,
+    tel: document.getElementById('fm-tel').value, email: document.getElementById('fm-correo').value, estado: 'Activo',
+    curp: document.getElementById('fm-curp').value.trim().toUpperCase(), rfc: document.getElementById('fm-rfc').value.trim().toUpperCase(),
+    domicilio_fiscal: document.getElementById('fm-domicilio').value, cp: document.getElementById('fm-cp').value,
+    contacto_emergencia_nombre: document.getElementById('fm-ce-nombre').value, contacto_emergencia_tel: document.getElementById('fm-ce-tel').value,
+  };
+  const rpcMaestro = {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass, p_id: id||null, p_nombre: data.nombre, p_materia: data.materia,
+    p_nivel: data.nivel, p_tel: data.tel, p_email: data.email, p_curp: data.curp||null, p_rfc: data.rfc||null,
+    p_domicilio_fiscal: data.domicilio_fiscal||null, p_cp: data.cp||null,
+    p_contacto_emergencia_nombre: data.contacto_emergencia_nombre||null, p_contacto_emergencia_tel: data.contacto_emergencia_tel||null,
+  };
   if (id) {
     const { error } = await _sb.rpc('staff_guardar_maestro', rpcMaestro);
     if (error) { showToast('Error al actualizar maestro: ' + error.message, 'error'); return; }
@@ -2245,6 +2325,58 @@ async function saveMaestro(id) {
   }
   closeModal();
   renderMaestrosTable();
+}
+
+// ── AUTOSERVICIO "Mi expediente" (Miss con acceso 'maestros_perfil') ──
+// Cada maestra ve y edita SOLO su propio registro; el backend (staff_mi_perfil_maestro /
+// staff_guardar_mi_perfil_maestro) lo resuelve por su usuario_id, nunca por un id que
+// mande el cliente, así que no hay forma de que edite el expediente de otra persona.
+async function cargarMiPerfilMaestro() {
+  const host = document.getElementById('mi-perfil-maestro-host');
+  if (!host) return;
+  const { data, error } = await _sb.rpc('staff_mi_perfil_maestro', { p_usuario: currentUser.usuario, p_pass: currentUser.pass });
+  if (error) { host.innerHTML = `<div class="empty-state"><i class="fas fa-triangle-exclamation"></i><p>No se pudo cargar tu expediente.</p><small>${cfgEsc(error.message)}</small></div>`; return; }
+  host.innerHTML = miPerfilMaestroFormHTML(data || null);
+}
+function miPerfilMaestroFormHTML(m) {
+  return `
+    <div class="fw-form">
+      <div class="form-group full" style="background:var(--off-white);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--gray)"><i class="fas fa-circle-info" style="color:var(--primary);margin-right:6px"></i>Este es tu propio expediente — solo tú puedes verlo y editarlo. Direcciones lo usan para trámites de personal.</div>
+      <div class="form-group full"><label>Nombre completo *</label><input id="mp-nombre" type="text" value="${m?.nombre||cfgEsc(currentUser.nombre||'')}" placeholder="Nombre completo" /></div>
+      <div class="form-group"><label>Teléfono</label><input id="mp-tel" type="tel" value="${m?.tel||''}" placeholder="722-000-0000" /></div>
+      <div class="form-group"><label>Nivel / grupo</label><input type="text" value="${m?.nivel||nivelesPermitidos().join(', ')||''}" disabled style="background:var(--off-white)" /></div>
+      <div class="form-group full" style="border-top:1.5px solid var(--border);padding-top:10px;margin-top:4px;"><label style="font-weight:700;color:var(--primary-dark)"><i class="fas fa-id-card" style="margin-right:6px;color:var(--gold)"></i>Datos personales y fiscales</label></div>
+      <div class="form-group"><label>CURP</label><input id="mp-curp" type="text" value="${m?.curp||''}" placeholder="18 caracteres" maxlength="18" style="text-transform:uppercase" /></div>
+      <div class="form-group"><label>RFC</label><input id="mp-rfc" type="text" value="${m?.rfc||''}" placeholder="13 caracteres" maxlength="13" style="text-transform:uppercase" /></div>
+      <div class="form-group full"><label>Domicilio fiscal</label><input id="mp-domicilio" type="text" value="${m?.domicilio_fiscal||''}" placeholder="Calle, número, colonia, municipio, estado" /></div>
+      <div class="form-group"><label>Código postal</label><input id="mp-cp" type="text" value="${m?.cp||''}" placeholder="52140" maxlength="5" /></div>
+      <div class="form-group full" style="border-top:1.5px solid var(--border);padding-top:10px;margin-top:4px;"><label style="font-weight:700;color:var(--primary-dark)"><i class="fas fa-phone-volume" style="margin-right:6px;color:var(--red)"></i>Contacto de emergencia</label></div>
+      <div class="form-group"><label>Nombre</label><input id="mp-ce-nombre" type="text" value="${m?.contacto_emergencia_nombre||''}" placeholder="Nombre del contacto" /></div>
+      <div class="form-group"><label>Teléfono</label><input id="mp-ce-tel" type="tel" value="${m?.contacto_emergencia_tel||''}" placeholder="722-000-0000" /></div>
+      <div class="form-actions">
+        <button class="btn-save" onclick="guardarMiPerfilMaestro()"><i class="fas fa-save"></i> Guardar mis datos</button>
+      </div>
+    </div>`;
+}
+async function guardarMiPerfilMaestro() {
+  const nombre = document.getElementById('mp-nombre').value.trim();
+  if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
+  const payload = {
+    p_usuario: currentUser.usuario, p_pass: currentUser.pass,
+    p_nombre: nombre, p_tel: document.getElementById('mp-tel').value,
+    p_curp: document.getElementById('mp-curp').value.trim().toUpperCase() || null,
+    p_rfc: document.getElementById('mp-rfc').value.trim().toUpperCase() || null,
+    p_domicilio_fiscal: document.getElementById('mp-domicilio').value || null,
+    p_cp: document.getElementById('mp-cp').value || null,
+    p_contacto_emergencia_nombre: document.getElementById('mp-ce-nombre').value || null,
+    p_contacto_emergencia_tel: document.getElementById('mp-ce-tel').value || null,
+  };
+  const { data, error } = await _sb.rpc('staff_guardar_mi_perfil_maestro', payload);
+  if (error) { showToast('Error al guardar tus datos: ' + error.message, 'error'); return; }
+  currentUser.nombre = nombre;
+  showToast('Tus datos se guardaron correctamente', 'success');
+  const host = document.getElementById('mi-perfil-maestro-host');
+  if (host) host.innerHTML = miPerfilMaestroFormHTML(data);
 }
 
 function deleteMaestro(id) {
@@ -2315,7 +2447,7 @@ function openAddComunicado() {
     <div class="fw-form single">
       <div class="form-group"><label>Título *</label><input id="fc-titulo" type="text" placeholder="Título del comunicado" /></div>
       <div class="form-group"><label>Destinatarios</label>
-        <select id="fc-dest"><option>Todos los niveles</option><option>Maternal</option><option>Preescolar</option><option>Primaria</option><option>Secundaria</option><option>Primaria y Secundaria</option></select>
+        <select id="fc-dest"><option>Todos los niveles</option><option>Maternal</option><option>Kinder</option><option>Primaria</option><option>Secundaria</option><option>Primaria y Secundaria</option></select>
       </div>
       <div class="form-group"><label>Contenido *</label><textarea id="fc-preview" placeholder="Escribe el contenido del comunicado..." style="min-height:120px;"></textarea></div>
       <div class="form-actions">
@@ -2745,7 +2877,7 @@ function openAddEvento() {
       <div class="form-group"><label>Fecha de inicio *</label><input id="fe-inicio" type="date" /></div>
       <div class="form-group"><label>Fecha de fin</label><input id="fe-fin" type="date" /></div>
       <div class="form-group"><label>Nivel</label>
-        <select id="fe-nivel"><option>Todos</option><option>Maternal</option><option>Preescolar</option><option>Primaria</option><option>Secundaria</option></select>
+        <select id="fe-nivel"><option>Todos</option><option>Maternal</option><option>Kinder</option><option>Primaria</option><option>Secundaria</option></select>
       </div>
       <div class="form-group"><label>Descripción</label><textarea id="fe-desc" placeholder="Detalles del evento (opcional)" style="min-height:80px;"></textarea></div>
       <div class="form-actions">
@@ -4259,7 +4391,7 @@ function aiFindAlumno(raw){
 
 function aiDetectaNivel(q){
   if(q.indexOf('maternal')>-1) return 'Maternal';
-  if(q.indexOf('preescolar')>-1||q.indexOf('kinder')>-1) return 'Preescolar';
+  if(q.indexOf('preescolar')>-1||q.indexOf('kinder')>-1) return 'Kinder';
   if(q.indexOf('primaria')>-1) return 'Primaria';
   if(q.indexOf('secundaria')>-1) return 'Secundaria';
   return null;
@@ -4400,7 +4532,7 @@ function aiAlumnosResumen(){
   if(!aiPuede('alumnos')) return aiSinPermiso('Alumnos');
   var vis = alumnosVisibles();
   if(!vis.length) return aiH('🔔 Sin alumnos')+'<div style="font-size:.82rem;color:var(--gray)">Aún no hay alumnos registrados. Agrégalos en el módulo <b>Alumnos</b>.</div>';
-  var niveles = {Maternal:0,Preescolar:0,Primaria:0,Secundaria:0};
+  var niveles = {Maternal:0,Kinder:0,Primaria:0,Secundaria:0};
   vis.forEach(function(a){ if(niveles[a.nivel]!=null) niveles[a.nivel]++; });
   var alCorriente = vis.filter(function(a){return a.pago==='Pagado';}).length;
   return aiH('📋 Población estudiantil'+(tieneTodasLasSecciones(currentUser)?'':' (tus niveles)'))+
@@ -4616,10 +4748,10 @@ async function eliminarCambridge(id){
   refreshWindow('cambridge'); showToast('Registro eliminado','success');
 }
 
-// ── EVALUACIONES CUALITATIVAS (Preescolar) ──
+// ── EVALUACIONES CUALITATIVAS (Kínder) ──
 function evalCualRender(){
-  var pre=alumnosVisibles().filter(function(a){ return a.nivel==='Preescolar' || a.nivel==='Maternal'; });
-  if(!pre.length) return '<div class="empty-state"><i class="fas fa-child-reaching"></i><p>No hay alumnos de Preescolar/Maternal visibles.</p><small>Registra alumnos de preescolar para capturar sus evaluaciones cualitativas.</small></div>';
+  var pre=alumnosVisibles().filter(function(a){ return a.nivel==='Kinder' || a.nivel==='Maternal'; });
+  if(!pre.length) return '<div class="empty-state"><i class="fas fa-child-reaching"></i><p>No hay alumnos de Kínder/Maternal visibles.</p><small>Registra alumnos de Maternal o Kínder para capturar sus evaluaciones cualitativas.</small></div>';
   return '<div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">'+
     '<div class="form-group" style="margin:0;min-width:260px"><label>Alumno</label><select id="ec-alumno" onchange="evalCualLoad()">'+pre.map(function(a){return '<option value="'+a.id+'">'+cfgEsc(a.nombre)+' — '+a.nivel+' '+(a.grado||'')+'</option>';}).join('')+'</select></div>'+
     '<div class="form-group" style="margin:0"><label>Periodo</label><select id="ec-periodo" onchange="evalCualLoad()">'+PERIODOS_LPI.map(function(p){return '<option>'+p+'</option>';}).join('')+'</select></div>'+
@@ -4770,18 +4902,31 @@ const windowConfigs = {
 
   alumnos: {
     title:'Alumnos', icon:'<i class="fas fa-user-graduate"></i>', color:'var(--primary)', w:880, h:520,
-    toolbar: '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar alumno..." oninput="filterTable(\'alumnos-table\',this.value)" /></div>' +
-      '<select class="fw-select" onchange="filterByColumn(\'alumnos-table\',1,this.value)"><option value="">Todos los niveles</option><option>Maternal</option><option>Preescolar</option><option>Primaria</option><option>Secundaria</option></select>' +
-      '<button class="fw-btn-action" onclick="openAddAlumno()"><i class="fas fa-plus"></i> Nuevo alumno</button>' +
-      '<button class="fw-btn-action gold" onclick="exportReporteExcel()"><i class="fas fa-file-excel"></i> Excel</button>',
+    toolbar: function() {
+      return '<div class="fw-search"><i class="fas fa-search"></i><input type="text" id="alumnos-search-input" placeholder="Buscar alumno..." oninput="filtrarAlumnosTabla()" /></div>' +
+        '<select class="fw-select" id="alumnos-filtro-nivel" onchange="onFiltroNivelAlumnosChange()">' + opcionesNivelFiltroAlumnos() + '</select>' +
+        '<select class="fw-select" id="alumnos-filtro-grado" onchange="filtrarAlumnosTabla()">' + opcionesGradoFiltroAlumnos('') + '</select>' +
+        '<button class="fw-btn-action" onclick="openAddAlumno()"><i class="fas fa-plus"></i> Nuevo alumno</button>' +
+        '<button class="fw-btn-action gold" onclick="exportReporteExcel()"><i class="fas fa-file-excel"></i> Excel</button>';
+    },
     content: function() { return '<table class="data-table" id="alumnos-table"><thead><tr><th>Alumno</th><th>Nivel</th><th>Grado</th><th>Tutor</th><th>Pago</th><th>Asistencia</th><th>Acciones</th></tr></thead><tbody></tbody></table><script>setTimeout(renderAlumnosTable,0)<\/script>'; }
   },
 
   maestros: {
-    title:'Maestros', icon:'<i class="fas fa-chalkboard-teacher"></i>', color:'var(--gold)', w:840, h:490,
-    toolbar: '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar maestro..." oninput="filterTable(\'maestros-table\',this.value)" /></div>' +
-      '<button class="fw-btn-action gold" onclick="openAddMaestro()"><i class="fas fa-plus"></i> Nuevo maestro</button>',
-    content: function() { return '<table class="data-table" id="maestros-table"><thead><tr><th>Maestro</th><th>Materia</th><th>Nivel</th><th>Teléfono</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table><script>setTimeout(renderMaestrosTable,0)<\/script>'; }
+    title:'Maestros', icon:'<i class="fas fa-chalkboard-teacher"></i>', color:'var(--gold)', w:840, h:520,
+    // Direcciones/Coordinación (acceso 'maestros') ven el directorio completo. Las Miss
+    // que solo tienen 'maestros_perfil' ven nada más su propio expediente (autoservicio).
+    toolbar: function() {
+      if (!usuarioPuede(currentUser,'maestros')) return '';
+      return '<div class="fw-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar maestro..." oninput="filterTable(\'maestros-table\',this.value)" /></div>' +
+        '<button class="fw-btn-action gold" onclick="openAddMaestro()"><i class="fas fa-plus"></i> Nuevo maestro</button>';
+    },
+    content: function() {
+      if (usuarioPuede(currentUser,'maestros')) {
+        return '<table class="data-table" id="maestros-table"><thead><tr><th>Maestro</th><th>Materia</th><th>Nivel</th><th>Teléfono</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table><script>setTimeout(renderMaestrosTable,0)<\/script>';
+      }
+      return '<div id="mi-perfil-maestro-host"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando tu expediente…</p></div></div><script>setTimeout(cargarMiPerfilMaestro,0)<\/script>';
+    }
   },
 
   calificaciones: {
@@ -5239,7 +5384,7 @@ function modBanner(icon, color, titulo, sub, stats){
 // ─────────── ESTADÍSTICAS E INDICADORES ───────────
 function renderEstadisticas(){
   var totalA = alumnos.length;
-  var porNivel = {Maternal:0,Preescolar:0,Primaria:0,Secundaria:0};
+  var porNivel = {Maternal:0,Kinder:0,Primaria:0,Secundaria:0};
   alumnos.forEach(function(a){ if(porNivel[a.nivel]!=null) porNivel[a.nivel]++; });
   var alCorriente = alumnos.filter(function(a){return a.pago==='Pagado';}).length;
   var morosos = alumnos.filter(function(a){return a.pago==='Vencido';}).length;
@@ -5247,7 +5392,7 @@ function renderEstadisticas(){
   var pendiente = pagos.filter(function(p){return p.estado!=='Pagado';}).reduce(function(a,b){return a+b.monto;},0);
   var efic = (cobrado+pendiente)>0 ? Math.round(cobrado/(cobrado+pendiente)*100) : 0;
   var asistProm = alumnos.length ? Math.round(alumnos.reduce(function(s,a){return s + (parseInt(a.asist)||0);},0)/alumnos.length) : 0;
-  var maxNivel = Math.max(1, porNivel.Maternal, porNivel.Preescolar, porNivel.Primaria, porNivel.Secundaria);
+  var maxNivel = Math.max(1, porNivel.Maternal, porNivel.Kinder, porNivel.Primaria, porNivel.Secundaria);
 
   var kpis = [
     ['fa-user-graduate','#1B3D7A', totalA, 'Alumnos inscritos'],
@@ -5257,7 +5402,7 @@ function renderEstadisticas(){
     ['fa-user-times','#E84040', morosos, 'Alumnos morosos'],
     ['fa-chalkboard-teacher','#8E44AD', maestros.filter(function(m){return m.estado==='Activo';}).length, 'Docentes activos']
   ];
-  var barras = ['Maternal','Preescolar','Primaria','Secundaria'].map(function(n){
+  var barras = ['Maternal','Kinder','Primaria','Secundaria'].map(function(n){
     var pct = Math.round(porNivel[n]/maxNivel*100);
     return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px"><span style="font-weight:600">' + n + '</span><span style="color:var(--gray)">' + porNivel[n] + ' alumnos</span></div>' +
       '<div style="height:14px;background:var(--off-white);border-radius:8px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:8px;transition:width .8s"></div></div></div>';
@@ -5303,7 +5448,7 @@ function openAddInscripcion(){
   openModal('Nueva solicitud de inscripción',
     '<div class="fw-form">' +
     '<div class="form-group"><label>Nombre del aspirante *</label><input id="if-alumno" type="text" placeholder="Nombre y apellidos" /></div>' +
-    '<div class="form-group"><label>Nivel *</label><select id="if-nivel">' + ['Maternal','Preescolar','Primaria','Secundaria'].map(function(n){return '<option>'+n+'</option>';}).join('') + '</select></div>' +
+    '<div class="form-group"><label>Nivel *</label><select id="if-nivel">' + ['Maternal','Kinder','Primaria','Secundaria'].map(function(n){return '<option>'+n+'</option>';}).join('') + '</select></div>' +
     '<div class="form-group"><label>Grado</label><input id="if-grado" type="text" placeholder="Ej: 1°" /></div>' +
     '<div class="form-group"><label>Tutor *</label><input id="if-tutor" type="text" placeholder="Nombre del tutor" /></div>' +
     '<div class="form-group"><label>Teléfono</label><input id="if-tel" type="text" placeholder="722..." /></div>' +
@@ -5424,7 +5569,7 @@ function renderAcadGrupos(){
 function renderAcadPlanes(){
   var planes = [
     ['Maternal','Estimulación temprana, motricidad, lenguaje y socialización'],
-    ['Preescolar','Campos formativos SEP + Inglés Cambridge Starters'],
+    ['Kínder','Campos formativos SEP + Inglés Cambridge Starters'],
     ['Primaria','Plan SEP 2022 + Cambridge Primary + Robótica'],
     ['Secundaria','Plan SEP + Cambridge Secondary + MUN + Programa NASA']
   ];
@@ -5712,7 +5857,8 @@ const SYSTEM_TABS = [
   {key:'asistencia',label:'Inasistencias',icon:'fa-clipboard-check'},
   {key:'horarios',label:'Horarios',icon:'fa-calendar-alt'},
   {key:'aulas',label:'Aulas y Espacios',icon:'fa-door-open'},
-  {key:'maestros',label:'Maestros',icon:'fa-chalkboard-teacher'},
+  {key:'maestros',label:'Maestros (directorio completo)',icon:'fa-chalkboard-teacher'},
+  {key:'maestros_perfil',label:'Maestros — solo mi expediente',icon:'fa-id-card'},
   {key:'personal',label:'Personal y RH',icon:'fa-id-badge'},
   {key:'pagos',label:'Pagos y Cobranza',icon:'fa-dollar-sign'},
   {key:'facturacion',label:'Facturación CFDI',icon:'fa-file-invoice'},
@@ -5973,7 +6119,7 @@ function applyPermisos(){
     var oc=it.getAttribute('onclick')||'';
     var m=oc.match(/openWindow\('([^']+)'/);
     if(!m) return; // Dashboard siempre visible
-    it.style.display = usuarioPuede(u, m[1]) ? '' : 'none';
+    it.style.display = (m[1]==='maestros' ? puedeAbrirMaestros(u) : usuarioPuede(u, m[1])) ? '' : 'none';
   });
   var canCfg = usuarioPuede(u,'config');
   document.querySelectorAll('[onclick]').forEach(function(el){
@@ -6043,7 +6189,7 @@ function renderNivelesPanel(){
         '<td style="text-align:right;white-space:nowrap"><button class="btn-cancel" style="padding:5px 10px" onclick="openNivelCfg('+ix+')"><i class="fas fa-pen"></i></button> '+
         '<button class="btn-cancel" style="padding:5px 10px;color:var(--red)" onclick="delNivelCfg('+ix+')"><i class="fas fa-trash"></i></button></td></tr>';
       }).join('')+'</tbody></table>'
-    : cfgEmpty('Aún no hay niveles. Agrega Maternal, Preescolar, Primaria, Secundaria… cuando los definan.');
+    : cfgEmpty('Aún no hay niveles. Agrega Maternal, Kínder, Primaria, Secundaria… cuando los definan.');
   el.innerHTML='<div class="dash-card">'+cfgCardHead('fa-layer-group','Niveles educativos','Define los niveles y sus grados','Nuevo nivel','openNivelCfg()')+body+'</div>';
 }
 function openNivelCfg(ix){
@@ -6187,7 +6333,7 @@ async function renderWhatsappPanel(){
     '<div style="font-weight:700;color:var(--primary-dark);margin-bottom:4px;"><i class="fab fa-whatsapp" style="margin-right:7px;color:#25D366"></i>Números de WhatsApp</div>' +
     '<div style="font-size:.78rem;color:var(--gray);margin-bottom:16px;">Estos números se usan en los botones de "Inscribirme" y contacto de la página web, y como número de la escuela. Incluye lada de país (52) + 1 + el número a 10 dígitos. Ej: 521 722 648 9373.</div>' +
     '<div class="fw-form">' +
-      '<div class="form-group"><label>Maternal y Preescolar</label><input id="wa-maternal" type="text" value="'+cfgEsc(wa.maternal||'')+'" placeholder="5217220000000" /></div>' +
+      '<div class="form-group"><label>Maternal y Kínder</label><input id="wa-maternal" type="text" value="'+cfgEsc(wa.maternal||'')+'" placeholder="5217220000000" /></div>' +
       '<div class="form-group"><label>Primaria y Secundaria</label><input id="wa-primaria" type="text" value="'+cfgEsc(wa.primaria||'')+'" placeholder="5217220000000" /></div>' +
     '</div>' +
     '<div class="form-actions" style="justify-content:flex-start;margin-top:10px;">' +
