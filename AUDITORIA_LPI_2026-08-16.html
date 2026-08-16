@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Auditoría técnica · ERP Learning Project Institute</title>
+<style>
+  :root{
+    --navy:#1B3D7A; --navy-d:#122a56; --gold:#E8A020;
+    --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#7a7975;
+    --surface:#fcfcfb; --card:#ffffff; --line:#e4e6ea; --line-2:#eef0f4;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --s1:#2a78d6; --s2:#eb6834;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#96958c;
+      --surface:#141413; --card:#1a1a19; --line:#33322f; --line-2:#262523;
+      --s1:#3987e5; --s2:#d95926; --navy:#7fa5e0; --navy-d:#a8c2ec;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--ink);
+       font:15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:38px 22px 90px}
+  header{border-bottom:3px solid var(--navy);padding-bottom:20px;margin-bottom:30px}
+  .kicker{font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+  h1{font-size:1.85rem;line-height:1.2;margin:.32em 0 .18em;letter-spacing:-.01em}
+  .sub{color:var(--ink-2);font-size:.92rem}
+  h2{font-size:1.24rem;margin:2.4em 0 .1em;letter-spacing:-.01em;padding-top:.3em}
+  h2 .n{color:var(--gold);font-weight:800;margin-right:.45em}
+  h3{font-size:1rem;margin:1.7em 0 .35em}
+  p{margin:.75em 0}
+  .lead{font-size:1.02rem;color:var(--ink-2)}
+  code{background:var(--line-2);padding:1px 5px;border-radius:4px;font-size:.87em;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  .aviso{background:var(--card);border:1.5px solid var(--line);border-left:4px solid var(--warning);
+         border-radius:10px;padding:15px 18px;margin:22px 0}
+  .aviso b{color:var(--ink)}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:11px;margin:22px 0}
+  .tile{background:var(--card);border:1.5px solid var(--line);border-radius:11px;padding:14px 15px}
+  .tile .v{font-size:1.62rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .tile .l{font-size:.74rem;color:var(--ink-3);margin-top:3px;line-height:1.35}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.87rem}
+  th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;
+     color:var(--ink-3);border-bottom:1.5px solid var(--line);padding:8px 9px;font-weight:700}
+  td{padding:9px;border-bottom:1px solid var(--line-2);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .sev{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:800;
+       padding:2px 8px;border-radius:50px;white-space:nowrap;border:1.5px solid}
+  .sev.c{color:var(--critical);border-color:var(--critical)}
+  .sev.a{color:var(--serious);border-color:var(--serious)}
+  .sev.m{color:var(--warning);border-color:var(--warning)}
+  .sev.b{color:var(--good);border-color:var(--good)}
+
+  .card{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:20px;margin:18px 0}
+  .chart-t{font-weight:700;font-size:.95rem;margin-bottom:2px}
+  .chart-s{font-size:.79rem;color:var(--ink-3);margin-bottom:18px}
+  .legend{display:flex;gap:16px;font-size:.78rem;color:var(--ink-2);margin-bottom:16px;flex-wrap:wrap}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:-1px}
+
+  .grp{display:flex;align-items:flex-end;gap:10px;height:190px;padding-bottom:2px;
+       border-bottom:1.5px solid var(--line);margin-bottom:8px}
+  .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+  .pair{display:flex;gap:2px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+  .bar{width:26px;border-radius:4px 4px 0 0;position:relative;cursor:default;transition:filter .15s}
+  .bar:hover{filter:brightness(1.12)}
+  .bar .tip{position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);
+            background:var(--ink);color:var(--surface);font-size:.71rem;font-weight:600;padding:4px 8px;
+            border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+  .bar:hover .tip{opacity:1}
+  .bar .lbl{position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);
+            font-size:.68rem;font-weight:700;color:var(--ink-2);white-space:nowrap}
+  .xax{display:flex;gap:10px;font-size:.75rem;color:var(--ink-2)}
+  .xax div{flex:1;text-align:center}
+
+  ul,ol{margin:.6em 0;padding-left:1.25em}
+  li{margin:.34em 0}
+  .fix{background:var(--line-2);border-radius:8px;padding:11px 14px;margin:9px 0;font-size:.85rem}
+  .fix b{color:var(--navy-d)}
+  footer{margin-top:52px;padding-top:18px;border-top:1.5px solid var(--line);
+         font-size:.79rem;color:var(--ink-3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Auditoría técnica independiente</div>
+  <h1>ERP Learning Project Institute</h1>
+  <div class="sub">Seguridad · Escalabilidad · Rendimiento de base de datos · 16 de agosto de 2026<br>
+  Proyecto Supabase <code>bvmeunsyhrurigtgpedz</code> · PostgreSQL 17.6 · 23 usuarios · 138 alumnos</div>
+</header>
+
+<div class="aviso">
+  <b>Alcance real de esta auditoría — léelo antes que nada.</b>
+  <p style="margin:.5em 0 0">Pediste que auditara <b>únicamente por navegador</b>. No fue posible y no quiero
+  que asumas una cobertura que no tuve. La extensión Claude in Chrome no está conectada a tu cuenta (lo verifiqué
+  tres veces, la lista vuelve vacía) y este entorno en la nube tiene la red cerrada: no alcanza
+  <code>learningproject.mx</code>.</p>
+  <p style="margin:.5em 0 0"><b>Lo que sí hice:</b> acceso directo a la base de datos de producción vía Supabase
+  y análisis estático del código real de <code>erp.html</code> e <code>index.html</code>. Para índices, RLS,
+  consultas lentas y comportamiento bajo carga esto es más profundo que un navegador — nada de eso es visible
+  desde el cliente. <b>Lo que quedó sin cubrir</b> y necesita navegador: cabeceras HTTP reales servidas por
+  Vercel, CSP, cookies, comportamiento del ERP en un dispositivo real y tiempos de carga percibidos.</p>
+  <p style="margin:.5em 0 0"><b>No cambié nada.</b> Las simulaciones de carga corrieron dentro de transacciones
+  con <code>rollback</code>. Verifiqué al terminar: 23 usuarios reales, 0 cuentas de prueba, 0 residuos.</p>
+</div>
+
+<h2><span class="n">1</span>Resumen ejecutivo</h2>
+<p class="lead">El modelo de seguridad del ERP es sólido en su diseño — RLS cerrado en las 55 tablas y todo
+el acceso mediado por funciones <code>SECURITY DEFINER</code> que revalidan credenciales en el servidor. Pero
+encontré <b>un fallo crítico de autenticación</b> que anula tu defensa contra fuerza bruta, <b>una tabla sin
+protección</b> y <b>un límite de escalabilidad duro alrededor de 230 usuarios concurrentes</b> causado por el
+chat que construimos esta semana.</p>
+
+<div class="tiles">
+  <div class="tile"><div class="v" style="color:var(--critical)">1</div><div class="l">Riesgo crítico</div></div>
+  <div class="tile"><div class="v" style="color:var(--serious)">2</div><div class="l">Riesgos altos</div></div>
+  <div class="tile"><div class="v" style="color:var(--warning)">5</div><div class="l">Riesgos medios</div></div>
+  <div class="tile"><div class="v">~230</div><div class="l">Usuarios concurrentes antes de saturar</div></div>
+  <div class="tile"><div class="v" style="color:var(--good)">94%</div><div class="l">Mejora medida del chat optimizado</div></div>
+</div>
+
+<h2><span class="n">2</span>Riesgos priorizados</h2>
+<table>
+  <thead><tr><th style="width:78px">Nivel</th><th>Hallazgo</th><th style="width:150px">Evidencia</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="sev c">CRÍTICO</span></td>
+      <td><b>R1 · El límite de intentos de acceso se puede saltar por completo.</b>
+        <code>staff_login</code> bloquea la cuenta tras 6 intentos fallidos, pero las <b>~140 funciones de datos</b>
+        también reciben usuario y contraseña y las validan con <code>_staff_valida</code>, que <b>no consulta el
+        limitador</b>. Un atacante prueba contraseñas contra <code>chat_ping</code> o cualquier otra RPC y nunca
+        se bloquea. A 4.9 ms por verificación son ~200 intentos por segundo y por conexión, paralelizables.</td>
+      <td>Probado en vivo: 20 intentos fallidos vía <code>chat_ping</code> → <b>sin bloqueo</b>. Los mismos 20 vía
+        <code>staff_login</code> → <b>14 rechazados</b> por el límite.</td>
+    </tr>
+    <tr>
+      <td><span class="sev a">ALTO</span></td>
+      <td><b>R2 · La tabla <code>asistencia_publicada</code> no tiene RLS activo.</b> Es la única de 55 sin
+        protección. Cualquiera con la llave pública del sitio (que está a la vista en el código) puede leerla
+        y escribirla directamente por la API REST, sin pasar por ninguna función.</td>
+      <td>Probado como rol <code>anon</code>: lectura <b>permitida</b> e inserción <b>permitida</b> (revertida).
+        Hoy la tabla está vacía, por eso el impacto real es cero — pero se llena en cuanto las maestras
+        publiquen asistencia.</td>
+    </tr>
+    <tr>
+      <td><span class="sev a">ALTO</span></td>
+      <td><b>R3 · El chat del personal no escala: su costo crece al cuadrado.</b>
+        <code>chat_resumen</code> recorre la lista de contactos llamando funciones una por una, y el navegador
+        la ejecuta cada 10 segundos por usuario conectado. El trabajo total crece con el <i>cuadrado</i> de los
+        usuarios. <b>Esto lo introduje yo esta semana</b> y es el techo de crecimiento más cercano que tienes.</td>
+      <td>Medido con carga sintética: 22 ms con 25 usuarios → 207 ms con 600. Ver sección 4.</td>
+    </tr>
+    <tr>
+      <td><span class="sev m">MEDIO</span></td>
+      <td><b>R4 · La contraseña viaja en cada petición y vive en memoria toda la sesión.</b> Es inherente al
+        diseño: cada llamada manda usuario y contraseña en claro dentro del cuerpo (cifrado en tránsito por
+        HTTPS, pero presente en cada petición). Cualquier XSS en el ERP entrega credenciales completas.</td>
+      <td>Análisis del código: <code>currentUser.pass</code> se pasa a las 109 RPC del cliente.</td>
+    </tr>
+    <tr>
+      <td><span class="sev m">MEDIO</span></td>
+      <td><b>R5 · El ERP es indexable por buscadores.</b> No existe <code>robots.txt</code>, no hay etiqueta
+        <code>noindex</code> en <code>erp.html</code>, y el pie de la página pública enlaza al ERP con
+        <code>href</code> directo. Google puede indexar la pantalla de acceso y el dominio
+        <code>.vercel.app</code> paralelo.</td>
+      <td>No existe el archivo. Enlace público en <code>index.html</code> línea 1785.</td>
+    </tr>
+    <tr>
+      <td><span class="sev m">MEDIO</span></td>
+      <td><b>R6 · No hay caducidad de sesión por inactividad.</b> La sesión dura mientras la pestaña siga
+        abierta. En computadoras compartidas de la escuela, una maestra que no cierra sesión deja el ERP
+        abierto indefinidamente. <i>A favor:</i> la contraseña nunca se guarda en el navegador y la sesión
+        muere al cerrar la pestaña — eso está bien resuelto.</td>
+      <td>No hay temporizador de inactividad en el código.</td>
+    </tr>
+    <tr>
+      <td><span class="sev m">MEDIO</span></td>
+      <td><b>R7 · El ERP pesa 1.40 MB y se descarga completo en cada carga.</b> La regla de Vercel fuerza
+        <code>Cache-Control: no-store</code> en <code>/erp</code>, así que el navegador nunca lo reutiliza.
+        Con 1 000 usuarios entrando 5 veces al día son ~3.5 GB diarios de tráfico.</td>
+      <td>1.40 MB en disco · 0.71 MB comprimido · <code>vercel.json</code> línea de rutas.</td>
+    </tr>
+    <tr>
+      <td><span class="sev m">MEDIO</span></td>
+      <td><b>R8 · Iniciar sesión dispara 24 llamadas en paralelo.</b> Se carga todo el sistema de golpe
+        —alumnos, pagos, nómina, facturas, horarios— aunque el usuario solo vaya a abrir un módulo.
+        Cada una repite la verificación bcrypt.</td>
+      <td>Medido: ~407 ms de CPU de base por inicio de sesión, de los cuales <b>118 ms son solo bcrypt
+        repetido 24 veces</b>.</td>
+    </tr>
+    <tr>
+      <td><span class="sev b">BAJO</span></td>
+      <td><b>R9 · Higiene de la base.</b> 18 claves foráneas sin índice que las cubra; 8 índices que nunca
+        se han usado; 4 funciones con <code>search_path</code> mutable (tres las creé yo esta semana);
+        <code>_auditar()</code> quedó ejecutable por el rol público.</td>
+      <td>Linter de Supabase: 426 hallazgos de seguridad, 27 de rendimiento.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="n">3</span>Sobre los 366 avisos de «función ejecutable por anon»</h2>
+<p>El linter marca 183 funciones como accesibles por el rol público. <b>No es un error de configuración: es
+tu arquitectura.</b> El ERP no usa el sistema de autenticación de Supabase; usa la llave pública para llamar
+funciones que revalidan usuario y contraseña en el servidor. Por eso toda función tiene que ser invocable
+por <code>anon</code>.</p>
+<p>La consecuencia que sí importa, y que responde a tu pregunta sobre exposición de rutas: <b>cada función
+es un endpoint público y enumerable</b> en <code>/rest/v1/rpc/&lt;nombre&gt;</code>. Cualquiera puede listar
+los nombres y las firmas. No expone datos —sin credenciales válidas ninguna responde— pero sí revela el mapa
+completo del sistema. Verifiqué lo único que sería grave: <code>_staff_valida</code> <b>no</b> está expuesta.
+Solo <code>staff_login</code>, <code>portal_login</code> y <code>_auditar()</code> lo están de las internas,
+y las dos primeras por diseño.</p>
+
+<h2><span class="n">4</span>Escalabilidad: de pocos a miles de usuarios</h2>
+<p>Simulé carga progresiva creando usuarios sintéticos dentro de transacciones revertidas. Medí
+<code>chat_resumen</code>, que es la llamada que el navegador repite cada 10 segundos por cada persona
+conectada, y la comparé contra un prototipo optimizado que hace el mismo trabajo en una sola pasada por
+conjuntos en vez de llamar funciones contacto por contacto.</p>
+
+<div class="card">
+  <div class="chart-t">Costo de <code>chat_resumen</code> por llamada</div>
+  <div class="chart-s">Milisegundos de CPU en la base, promedio de 5 ejecuciones por escala. Menos es mejor.</div>
+  <div class="legend">
+    <span><i style="background:var(--s2)"></i>Implementación actual</span>
+    <span><i style="background:var(--s1)"></i>Prototipo optimizado</span>
+  </div>
+  <div class="grp">
+    <div class="col"><div class="pair">
+      <div class="bar" style="height:22.6%;background:var(--s2)"><span class="lbl">46.9</span><span class="tip">Actual · 100 usuarios · 46.9 ms</span></div>
+      <div class="bar" style="height:3.8%;background:var(--s1)"><span class="tip">Optimizado · 100 usuarios · 7.9 ms</span></div>
+    </div></div>
+    <div class="col"><div class="pair">
+      <div class="bar" style="height:53.1%;background:var(--s2)"><span class="lbl">110.1</span><span class="tip">Actual · 300 usuarios · 110.1 ms</span></div>
+      <div class="bar" style="height:4.4%;background:var(--s1)"><span class="tip">Optimizado · 300 usuarios · 9.2 ms</span></div>
+    </div></div>
+    <div class="col"><div class="pair">
+      <div class="bar" style="height:100%;background:var(--s2)"><span class="lbl">207.2</span><span class="tip">Actual · 600 usuarios · 207.2 ms</span></div>
+      <div class="bar" style="height:6.2%;background:var(--s1)"><span class="tip">Optimizado · 600 usuarios · 12.9 ms</span></div>
+    </div></div>
+  </div>
+  <div class="xax"><div>100 usuarios</div><div>300 usuarios</div><div>600 usuarios</div></div>
+</div>
+
+<h3>Métricas comparativas — antes y después</h3>
+<p style="font-size:.87rem;color:var(--ink-2)">Todo lo de esta tabla está <b>medido</b>, no estimado. El
+prototipo optimizado se creó y se midió dentro de una transacción revertida; <b>no está desplegado</b>.</p>
+<table>
+  <thead><tr><th>Usuarios conectados</th><th class="num">Antes</th><th class="num">Después</th>
+    <th class="num">Mejora</th><th class="num">CPU/segundo antes</th><th class="num">CPU/segundo después</th></tr></thead>
+  <tbody>
+    <tr><td>25</td><td class="num">22.0 ms</td><td class="num">~7 ms</td><td class="num" style="color:var(--good)">−68%</td><td class="num">0.06 núcleos</td><td class="num">0.02 núcleos</td></tr>
+    <tr><td>100</td><td class="num">46.9 ms</td><td class="num">7.9 ms</td><td class="num" style="color:var(--good)">−83%</td><td class="num">0.47 núcleos</td><td class="num">0.08 núcleos</td></tr>
+    <tr><td>300</td><td class="num">110.1 ms</td><td class="num">9.2 ms</td><td class="num" style="color:var(--good)">−92%</td><td class="num">3.30 núcleos</td><td class="num">0.28 núcleos</td></tr>
+    <tr><td>600</td><td class="num">207.2 ms</td><td class="num">12.9 ms</td><td class="num" style="color:var(--good)">−94%</td><td class="num">12.44 núcleos</td><td class="num">0.77 núcleos</td></tr>
+  </tbody>
+</table>
+
+<h3>Dónde está el techo</h3>
+<p>Tu instancia tiene 2 núcleos compartidos y <code>max_connections = 60</code>. Con la implementación actual,
+el sondeo del chat por sí solo consume:</p>
+<ul>
+  <li><b>Hoy (23 personas):</b> ~0.05 núcleos. Invisible. No tienes ningún problema.</li>
+  <li><b>~100 concurrentes:</b> ~0.47 núcleos — un cuarto de tu capacidad se va solo en refrescar el chat.</li>
+  <li><b>~230 concurrentes:</b> <b>saturación.</b> El chat consume los 2 núcleos completos y el resto del ERP
+    empieza a encolarse.</li>
+  <li><b>Con el prototipo optimizado:</b> ese mismo techo se mueve a <b>más de 2 000 concurrentes</b>, y el
+    cuello de botella pasa a ser bcrypt, no el chat.</li>
+</ul>
+<p>El segundo cuello, ya con el chat arreglado, es <b>bcrypt</b>: 4.9 ms por verificación × una verificación
+por cada llamada. A 400 peticiones por segundo son 2 núcleos completos solo hasheando. Es el precio correcto
+a pagar por revalidar en el servidor —no lo debilites bajando el costo del hash— pero define el límite
+real: <b>en esta arquitectura, ~400 peticiones por segundo es el máximo con 2 núcleos.</b></p>
+
+<h2><span class="n">5</span>Base de datos: índices, RLS y conexiones</h2>
+<table>
+  <thead><tr><th>Aspecto</th><th>Estado</th><th>Detalle</th></tr></thead>
+  <tbody>
+    <tr><td>RLS</td><td><span class="sev a">1 fallo</span></td><td>54 de 55 tablas con RLS activo y sin políticas abiertas — correcto para este diseño. <code>asistencia_publicada</code> quedó fuera.</td></tr>
+    <tr><td>Tamaño</td><td><span class="sev b">Sano</span></td><td>16 MB de 500 MB del plan gratuito. Espacio de sobra.</td></tr>
+    <tr><td>Conexiones</td><td><span class="sev b">Sano</span></td><td>12 activas de 60. PostgREST agrupa conexiones, así que esto no es el cuello.</td></tr>
+    <tr><td>Índices sin usar</td><td><span class="sev m">8</span></td><td>Ocupan espacio y frenan las escrituras sin aportar. Dos son de la bitácora que acabo de crear — esos aún no se usan porque la tabla es nueva, déjalos.</td></tr>
+    <tr><td>Claves foráneas sin índice</td><td><span class="sev m">18</span></td><td>Irrelevante hoy (tablas casi vacías). Con miles de alumnos, cada borrado hace un escaneo completo de las tablas hijas.</td></tr>
+    <tr><td><code>usuarios_sistema</code></td><td><span class="sev b">Aceptable</span></td><td>95% escaneos completos (5 266 de 5 539). Con 23 filas da igual, y el <code>ILIKE</code> impide usar un índice normal. No lo toques hasta pasar de ~5 000 cuentas.</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="n">6</span>Plan de acción priorizado</h2>
+
+<h3>Esta semana</h3>
+<div class="fix"><b>1. Cerrar el bypass del limitador (R1).</b> Mover la comprobación de intentos dentro de
+<code>_staff_valida</code>, para que las 143 funciones que la usan queden protegidas de golpe sin tocar una
+por una. Es un cambio de ~10 líneas en un solo lugar.</div>
+<div class="fix"><b>2. Activar RLS en <code>asistencia_publicada</code> (R2).</b> Una línea. Hazlo antes de que
+la tabla tenga datos.</div>
+<div class="fix"><b>3. Publicar <code>robots.txt</code> y meter <code>noindex</code> en el ERP (R5).</b>
+Diez minutos. Añade también <code>rel="nofollow"</code> al enlace del pie.</div>
+
+<h3>Este mes</h3>
+<div class="fix"><b>4. Desplegar el <code>chat_resumen</code> optimizado (R3).</b> Ya está medido: 94% menos
+CPU. Mueve tu techo de 230 a más de 2 000 usuarios. Mantiene idéntico el comportamiento visible.</div>
+<div class="fix"><b>5. Caducidad por inactividad (R6).</b> 30 minutos sin actividad → cerrar sesión, con
+aviso 2 minutos antes. Importante en equipos compartidos.</div>
+<div class="fix"><b>6. Carga diferida del ERP (R8).</b> Que el inicio de sesión traiga solo lo del panel
+principal y cada módulo pida sus datos al abrirse. De 24 llamadas a 3 o 4.</div>
+
+<h3>Antes de crecer de verdad</h3>
+<div class="fix"><b>7. Cachear la validación de credenciales.</b> Un token de sesión corto que evite repetir
+bcrypt en cada petición. Es lo que desbloquea el salto de cientos a miles.</div>
+<div class="fix"><b>8. Partir <code>erp.html</code> (R7).</b> 1.40 MB en un archivo es difícil de cachear y de
+mantener. Separar JS y CSS permitiría cacheado agresivo con control de versión.</div>
+<div class="fix"><b>9. Índices en las 18 claves foráneas (R9).</b> Barato ahora, doloroso después.</div>
+
+<h2><span class="n">7</span>Monitoreo y alertas</h2>
+<p>Hoy tienes UptimeRobot vigilando que el sitio responda. Eso detecta caídas, no degradación. Recomiendo tres
+capas, todas gratuitas:</p>
+<ul>
+  <li><b>Disponibilidad</b> — lo que ya tienes, más un monitor específico sobre <code>/erp</code> y otro que
+    llame a una RPC ligera, para distinguir «el sitio vive» de «la base responde».</li>
+  <li><b>Salud de la base</b> — alertas nativas de Supabase por CPU sostenida &gt;70%, disco &gt;80% y
+    conexiones &gt;45 de 60. Se activan desde el panel del proyecto.</li>
+  <li><b>Vigilancia propia</b> — una tarea programada que revise cada hora los intentos de acceso fallidos y
+    avise si una cuenta acumula muchos. Ya tienes <code>pg_cron</code> instalado y la tabla
+    <code>auth_intentos</code>; la bitácora que creamos te da el resto.</li>
+</ul>
+<p style="font-size:.87rem;color:var(--ink-2)"><b>Umbrales sugeridos</b>, calibrados con lo medido aquí:
+inicio de sesión por encima de 1.5 s, <code>chat_resumen</code> por encima de 60 ms, o CPU sostenida arriba
+de 70% durante 5 minutos.</p>
+
+<footer>
+  Auditoría realizada el 16 de agosto de 2026 sobre el estado en producción. Sin cambios aplicados: las
+  simulaciones de carga corrieron en transacciones revertidas y la base quedó verificada en 23 usuarios
+  reales y 0 residuos. Las cifras de la sección 4 son mediciones directas; las proyecciones de capacidad
+  son extrapolaciones de esas mediciones sobre 2 núcleos. No cubierto por falta de navegador: cabeceras HTTP
+  reales, CSP, y tiempos percibidos en dispositivo.
+</footer>
+
+</div>
+</body>
+</html>

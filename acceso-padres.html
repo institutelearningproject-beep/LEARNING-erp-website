@@ -299,6 +299,8 @@ var S = { al:null, u:null, p:null, view:'inicio', resumen:null, cache:{} };
 var K_HIJOS = 'lpi_hijos_dispositivo';
 var K_SES   = 'lpi_sesion_v2';
 var PERIODOS_LPI = ['1er Trimestre','2do Trimestre','3er Trimestre'];
+var PERIODOS_BOLETA_INTERNA = ['1er','2do','3er'];
+var CAMPOS_FORMATIVOS_PREESCOLAR = ['Lenguajes','Saberes y Pensamiento Científico','Ética, Naturaleza y Sociedad','De lo Humano y lo Comunitario','Inglés','Apoyo','Comentarios'];
 function pivotBoleta(filas){
   var porMateria = {}, orden = [];
   (filas||[]).forEach(function(x){
@@ -463,7 +465,13 @@ async function go(v){
   try{
     if(v==='inicio')       box.innerHTML = await vistaInicio();
     else if(v==='pagos')   box.innerHTML = await vistaPagos();
-    else if(v==='escolar') { box.innerHTML = await vistaEscolar(); await subEscolar(S.subEsc||'califs'); }
+    else if(v==='escolar') {
+      box.innerHTML = await vistaEscolar();
+      var esPre=S.al&&(S.al.nivel==='Maternal'||S.al.nivel==='Kinder');
+      if(esPre && S.subEsc==='califs') S.subEsc='informe';
+      if(!esPre && S.subEsc==='informe') S.subEsc='califs';
+      await subEscolar(S.subEsc||(esPre?'informe':'califs'));
+    }
     else if(v==='avisos')  box.innerHTML = await vistaAvisos();
     else if(v==='cuenta')  box.innerHTML = await vistaCuenta();
   }catch(e){
@@ -731,13 +739,46 @@ async function enviarPago(pagoId){
 
 /* ── ESCOLAR ────────────────────────────────────────────────── */
 async function vistaEscolar(){
+  var esPreescolar = S.al && (S.al.nivel==='Maternal' || S.al.nivel==='Kinder');
   return '<div class="subtabs">'+
-    '<button class="subtab" data-s="califs"  onclick="subEscolar(\'califs\',this)">Calificaciones</button>'+
+    (esPreescolar
+      ? '<button class="subtab" data-s="informe" onclick="subEscolar(\'informe\',this)">Informe preescolar</button>'
+      : '<button class="subtab" data-s="califs"  onclick="subEscolar(\'califs\',this)">Calificaciones</button>')+
+    '<button class="subtab" data-s="tareas"  onclick="subEscolar(\'tareas\',this)">Actividades</button>'+
     '<button class="subtab" data-s="asist"   onclick="subEscolar(\'asist\',this)">Inasistencias</button>'+
     '<button class="subtab" data-s="incid"   onclick="subEscolar(\'incid\',this)">Incidencias</button>'+
+    '<button class="subtab" data-s="salud"   onclick="subEscolar(\'salud\',this)">Salud</button>'+
     '<button class="subtab" data-s="horario" onclick="subEscolar(\'horario\',this)">Horario</button>'+
     '<button class="subtab" data-s="calend"  onclick="subEscolar(\'calend\',this)">Calendario</button>'+
     '</div><div id="es-body"></div>';
+}
+function renderAsistCard(a, verTodo){
+  var ordenada = a.slice().sort(function(x,y){ return x.fecha<y.fecha?1:-1; });
+  var faltas = a.filter(function(x){ return x.estado==='F'; }).length;
+  var tardes = a.filter(function(x){ return x.estado==='T'; }).length;
+  var asistio = a.filter(function(x){ return x.estado==='A'; }).length;
+  var nom = {F:'Faltó',T:'Tarde',A:'Asistió'};
+  var filas = verTodo ? ordenada : ordenada.filter(function(x){ return x.estado!=='A'; });
+  var ultimaPub = a.reduce(function(max,x){ return (x.publicado_at && (!max || x.publicado_at>max)) ? x.publicado_at : max; }, null);
+  return '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Inasistencias</h3>'+
+    '<div style="display:flex;gap:14px;justify-content:center;margin-bottom:14px">'+
+    '<div style="text-align:center"><div style="font-size:1.7rem;font-weight:800;color:var(--red,#C0392B)">'+faltas+'</div><div style="font-size:.72rem;color:var(--gray)">Faltas</div></div>'+
+    '<div style="text-align:center"><div style="font-size:1.7rem;font-weight:800;color:var(--gold,#E8A020)">'+tardes+'</div><div style="font-size:.72rem;color:var(--gray)">Tardes</div></div>'+
+    '<div style="text-align:center"><div style="font-size:1.7rem;font-weight:800;color:var(--green,#27AE60)">'+asistio+'</div><div style="font-size:.72rem;color:var(--gray)">Asistencias</div></div>'+
+    '</div>'+
+    (filas.length ? '<table class="tbl"><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+
+      filas.map(function(x){ var cl=x.estado==='T'?'mid':(x.estado==='F'?'low':'ok');
+        return '<tr><td>'+fecha(x.fecha)+'</td><td class="g '+cl+'">'+(nom[x.estado]||esc(x.estado))+'</td></tr>'; }).join('')+
+      '</tbody></table>'
+      : '<div class="s" style="text-align:center;color:var(--gray);padding:10px">Sin faltas ni tardes registradas. ¡Buena asistencia!</div>')+
+    '<button class="btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="toggleAsistVerTodo()"><i class="fas fa-'+(verTodo?'eye-slash':'table-list')+'"></i> '+(verTodo?'Ver solo inasistencias':'Ver asistencias completas')+'</button>'+
+    '<div style="font-size:.72rem;color:var(--gray);margin-top:10px"><i class="fas fa-circle-check" style="color:var(--green)"></i> Última actualización'+(ultimaPub?(' el '+fecha(ultimaPub)):'')+'</div>'+
+    '</div>';
+}
+function toggleAsistVerTodo(){
+  S.asistVerTodo = !S.asistVerTodo;
+  var b = $('es-body'); if(!b) return;
+  b.innerHTML = renderAsistCard(S.cache.asistFilas||[], S.asistVerTodo);
 }
 async function subEscolar(t, btn){
   S.subEsc = t;
@@ -745,7 +786,28 @@ async function subEscolar(t, btn){
   var b = $('es-body'); if(!b) return;
   b.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>';
   try{
-    if(t==='califs'){
+    if(t==='informe'){
+      var inf = await rpc('portal_boleta_interna', conCreds()) || [];
+      if(!inf.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-child-reaching"></i>Aún no hay un informe de evaluación publicado por la escuela.</div></div>'; return; }
+      S.cache.informeFilas = inf;
+      var ordenP = {'1er':1,'2do':2,'3er':3};
+      var filasOrdenadas = inf.slice().sort(function(x,y){ return (ordenP[x.periodo]||9)-(ordenP[y.periodo]||9); });
+      var ultimaInf = filasOrdenadas[filasOrdenadas.length-1];
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-child-reaching"></i> Informe de Evaluación Preescolar</h3>'+
+        filasOrdenadas.map(function(f){
+          var obs = f.observaciones||{};
+          var camposConDato = CAMPOS_FORMATIVOS_PREESCOLAR.filter(function(c){ return obs[c]; });
+          return '<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)">'+
+            '<div style="font-weight:800;color:var(--primary);font-size:.85rem;margin-bottom:8px"><i class="fas fa-calendar-check"></i> '+esc(f.periodo)+' trimestre</div>'+
+            (camposConDato.length ? camposConDato.map(function(c){
+              return '<div class="row"><div class="bd" style="width:100%"><div class="t" style="font-size:.78rem">'+esc(c)+'</div><div class="s" style="margin-top:2px">'+esc(obs[c])+'</div></div></div>';
+            }).join('') : '<div class="s" style="color:var(--gray)">Sin observaciones capturadas.</div>')+
+            (f.compromisos?('<div class="s" style="margin-top:8px;background:var(--off-white,#f8f9fc);border-radius:8px;padding:8px 10px"><b>Compromisos:</b> '+esc(f.compromisos)+'</div>'):'')+
+            '</div>';
+        }).join('')+
+        '<div style="font-size:.72rem;color:var(--gray)"><i class="fas fa-circle-check" style="color:var(--green)"></i> Última actualización'+(ultimaInf&&ultimaInf.publicado_at?(' el '+fecha(ultimaInf.publicado_at)):'')+'</div>'+
+        '</div>';
+    } else if(t==='califs'){
       var r = await rpc('portal_calificaciones', conCreds()) || [];
       if(!r.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-star-half-stroke"></i>Aún no hay calificaciones publicadas.</div></div>'; return; }
       S.cache.boletaFilas = r;
@@ -765,21 +827,42 @@ async function subEscolar(t, btn){
         '<div style="font-size:.72rem;color:var(--gray);margin-top:10px"><i class="fas fa-circle-check" style="color:var(--green)"></i> Última actualización'+(ultimaPub?(' el '+fecha(ultimaPub)):'')+'</div>'+
         '<button class="btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="verBoletaOficial()"><i class="fas fa-file-invoice"></i> Ver / imprimir boleta oficial</button>'+
         '</div>';
+    } else if(t==='tareas'){
+      var ta = await rpc('portal_tareas', conCreds()) || [];
+      if(!ta.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-book-open"></i>Aún no hay actividades o tareas asignadas.</div></div>'; return; }
+      var hoy = new Date().toISOString().slice(0,10);
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-book-open"></i> Actividades y tareas</h3>'+
+        ta.map(function(x){
+          var vencida = x.fecha_entrega && x.fecha_entrega < hoy;
+          return '<div class="row"><div class="ic"><i class="fas fa-pen-ruler"></i></div><div class="bd" style="width:100%">'+
+            '<div class="t" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+
+            '<span>'+esc(x.titulo)+(x.materia?(' <span style="font-size:.72rem;color:var(--gray)">· '+esc(x.materia)+'</span>'):'')+'</span>'+
+            '<span class="s" style="font-size:.72rem;color:'+(vencida?'var(--red,#C0392B)':'var(--gray)')+'">'+(x.fecha_entrega?('Entrega: '+fecha(x.fecha_entrega)):'')+'</span></div>'+
+            (x.descripcion?('<div class="s" style="margin-top:4px">'+esc(x.descripcion)+'</div>'):'')+
+            '<div class="s" style="margin-top:4px;font-size:.7rem;color:var(--gray)">'+(x.creado_por?('Asignó: '+esc(x.creado_por)):'')+'</div></div></div>';
+        }).join('')+'</div>';
+    } else if(t==='salud'){
+      var sa = await rpc('portal_enfermeria', conCreds()) || [];
+      if(!sa.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-briefcase-medical"></i>No hay visitas a enfermería registradas.</div></div>'; return; }
+      var clUrg = {Leve:'ok', Moderado:'mid', Urgente:'low', Emergencia:'low'};
+      b.innerHTML = '<div class="card"><h3><i class="fas fa-briefcase-medical"></i> Enfermería</h3>'+
+        sa.map(function(x){
+          return '<div class="row"><div class="bd" style="width:100%">'+
+            '<div class="t" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+
+            '<span class="g '+(clUrg[x.urgencia]||'mid')+'" style="padding:2px 8px;border-radius:6px;font-size:.72rem;margin-right:6px">'+esc(x.urgencia)+'</span>'+
+            '<span class="s" style="font-size:.72rem;color:var(--gray)">'+fecha(x.fecha)+(x.hora?(' '+String(x.hora).slice(0,5)):'')+'</span></div>'+
+            '<div class="s" style="margin-top:4px"><b>Motivo:</b> '+esc(x.motivo||'')+'</div>'+
+            (x.atencion?('<div class="s" style="margin-top:2px"><b>Atención:</b> '+esc(x.atencion)+'</div>'):'')+
+            (x.medicamento?('<div class="s" style="margin-top:2px"><b>Medicamento:</b> '+esc(x.medicamento)+'</div>'):'')+
+            (x.enviado_casa?'<div class="s" style="margin-top:2px;color:var(--red,#C0392B)">Se envió a casa</div>':'')+
+            (x.seguimiento?('<div class="s" style="margin-top:2px"><b>Seguimiento:</b> '+esc(x.seguimiento)+'</div>'):'')+
+            '</div></div>';
+        }).join('')+'</div>';
     } else if(t==='asist'){
       var a = await rpc('portal_asistencia', conCreds()) || [];
-      if(!a.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-clipboard-check"></i>No hay inasistencias registradas. ¡Buena asistencia!</div></div>'; return; }
-      var faltas = a.filter(function(x){ return x.estado==='F'; }).length;
-      var tardes = a.filter(function(x){ return x.estado==='T'; }).length;
-      var nom = {F:'Faltó',T:'Tarde'};
-      b.innerHTML = '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Inasistencias</h3>'+
-        '<div style="display:flex;gap:14px;justify-content:center;margin-bottom:14px">'+
-        '<div style="text-align:center"><div style="font-size:1.7rem;font-weight:800;color:var(--red,#C0392B)">'+faltas+'</div><div style="font-size:.72rem;color:var(--gray)">Faltas</div></div>'+
-        '<div style="text-align:center"><div style="font-size:1.7rem;font-weight:800;color:var(--gold,#E8A020)">'+tardes+'</div><div style="font-size:.72rem;color:var(--gray)">Tardes</div></div>'+
-        '</div>'+
-        '<table class="tbl"><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+
-        a.map(function(x){ var cl=x.estado==='T'?'mid':'low';
-          return '<tr><td>'+fecha(x.fecha)+'</td><td class="g '+cl+'">'+(nom[x.estado]||esc(x.estado))+'</td></tr>'; }).join('')+
-        '</tbody></table></div>';
+      S.cache.asistFilas = a;
+      if(!a.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-clipboard-check"></i>Aún no hay asistencia publicada por la escuela para este mes.</div></div>'; return; }
+      b.innerHTML = renderAsistCard(a, S.asistVerTodo);
     } else if(t==='incid'){
       var inc = await rpc('portal_incidencias', conCreds()) || [];
       if(!inc.length){ b.innerHTML='<div class="card"><div class="empty"><i class="fas fa-clipboard-list"></i>No hay incidencias registradas.</div></div>'; return; }
@@ -974,6 +1057,33 @@ function cambiarHijo(usuario){
   $('u').value = usuario;
   if(s && s.u===usuario && s.p){ $('p').value=s.p; login(); } else { $('p').focus(); }
 }
+// Catálogo SAT de Régimen Fiscal (c_RegimenFiscal, CFDI 4.0) — se muestra completo para
+// que el papá/mamá elija el que le corresponde según su constancia de situación fiscal.
+var REGIMENES_SAT = [
+  ['601','General de Ley Personas Morales'],
+  ['603','Personas Morales con Fines no Lucrativos'],
+  ['605','Sueldos y Salarios e Ingresos Asimilados a Salarios'],
+  ['606','Arrendamiento'],
+  ['608','Demás ingresos'],
+  ['610','Residentes en el Extranjero sin Establecimiento Permanente en México'],
+  ['611','Ingresos por Dividendos (socios y accionistas)'],
+  ['612','Personas Físicas con Actividades Empresariales y Profesionales'],
+  ['614','Ingresos por intereses'],
+  ['615','Régimen de los ingresos por obtención de premios'],
+  ['616','Sin obligaciones fiscales'],
+  ['620','Sociedades Cooperativas de Producción'],
+  ['621','Incorporación Fiscal'],
+  ['622','Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras'],
+  ['625','Actividades Empresariales con ingresos a través de Plataformas Tecnológicas'],
+  ['626','Régimen Simplificado de Confianza (RESICO)']
+];
+// Catálogo SAT de Uso de CFDI más comunes para un pago de colegiatura.
+var USOS_CFDI = [
+  ['D10','Pago de servicios educativos (colegiaturas)'],
+  ['G03','Gastos en general'],
+  ['S01','Sin efectos fiscales'],
+  ['P01','Por definir']
+];
 async function cargarFacturas(){
   var b = $('fc-body'); if(!b) return;
   try{
@@ -984,13 +1094,23 @@ async function cargarFacturas(){
       if(!p.factura_id){
         acciones = '<button class="btn-sm" onclick="toggleFactForm('+p.pago_id+')"><i class="fas fa-file-invoice"></i> Solicitar factura</button>';
         form = '<div class="hide" id="ff-'+p.pago_id+'" style="margin-top:12px;border-top:1px dashed var(--line);padding-top:12px">'+
-          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">RFC</label>'+
-          '<input type="text" id="ff-rfc-'+p.pago_id+'" maxlength="13" placeholder="XAXX010101000" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem">'+
-          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Nombre o razón social</label>'+
-          '<input type="text" id="ff-razon-'+p.pago_id+'" placeholder="Nombre completo" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem">'+
-          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Código postal fiscal</label>'+
+          '<p style="font-size:.72rem;color:var(--gray);margin-bottom:10px;line-height:1.4">Captura tus datos fiscales tal como aparecen en tu constancia de situación fiscal del SAT.</p>'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">RFC *</label>'+
+          '<input type="text" id="ff-rfc-'+p.pago_id+'" maxlength="13" placeholder="XAXX010101000" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem;text-transform:uppercase">'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Nombre o razón social *</label>'+
+          '<input type="text" id="ff-razon-'+p.pago_id+'" placeholder="Nombre completo, tal como en el SAT" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem">'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Régimen fiscal *</label>'+
+          '<select id="ff-regimen-'+p.pago_id+'" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem;background:#fff">'+
+          '<option value="">Selecciona tu régimen…</option>'+
+          REGIMENES_SAT.map(function(x){ return '<option value="'+x[0]+'">'+x[0]+' — '+esc(x[1])+'</option>'; }).join('')+
+          '</select>'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Código postal fiscal *</label>'+
           '<input type="text" id="ff-cp-'+p.pago_id+'" maxlength="5" placeholder="52140" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem">'+
-          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Correo para envío</label>'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Uso de CFDI *</label>'+
+          '<select id="ff-uso-'+p.pago_id+'" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:.85rem;background:#fff">'+
+          USOS_CFDI.map(function(x,i){ return '<option value="'+x[0]+'"'+(i===0?' selected':'')+'>'+x[0]+' — '+esc(x[1])+'</option>'; }).join('')+
+          '</select>'+
+          '<label style="font-size:.72rem;font-weight:700;color:var(--dark);display:block;margin-bottom:5px">Correo para envío *</label>'+
           '<input type="text" id="ff-correo-'+p.pago_id+'" value="'+esc(S.al.email||'')+'" placeholder="correo@ejemplo.com" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:11px;font-size:.85rem">'+
           '<button class="btn-sm" style="width:100%;justify-content:center" onclick="solicitarFactura('+p.pago_id+')"><i class="fas fa-paper-plane"></i> Enviar solicitud</button>'+
           '</div>';
@@ -1016,15 +1136,19 @@ function toggleFactForm(id){ var e=$('ff-'+id); if(e) e.classList.toggle('hide')
 async function solicitarFactura(pagoId){
   var rfc = ($('ff-rfc-'+pagoId).value||'').trim().toUpperCase();
   var razon = ($('ff-razon-'+pagoId).value||'').trim();
+  var regimen = ($('ff-regimen-'+pagoId).value||'').trim();
   var cp = ($('ff-cp-'+pagoId).value||'').trim();
+  var usoCfdi = ($('ff-uso-'+pagoId).value||'').trim();
   var correo = ($('ff-correo-'+pagoId).value||'').trim();
   if(rfc.length<12){ toast('Escribe un RFC válido'); return; }
   if(!razon){ toast('Escribe el nombre o razón social'); return; }
+  if(!regimen){ toast('Selecciona tu régimen fiscal'); return; }
   if(cp.length!==5){ toast('El CP fiscal son 5 dígitos'); return; }
+  if(!usoCfdi){ toast('Selecciona el uso de CFDI'); return; }
   if(!correo){ toast('Escribe un correo'); return; }
   try{
     await rpc('portal_solicitar_factura', conCreds({
-      p_pago_id:pagoId, p_rfc:rfc, p_razon:razon, p_cp:cp, p_uso_cfdi:'D10', p_correo:correo
+      p_pago_id:pagoId, p_rfc:rfc, p_razon:razon, p_regimen:regimen, p_cp:cp, p_uso_cfdi:usoCfdi, p_correo:correo
     }));
     toast('Solicitud enviada');
     cargarFacturas();
